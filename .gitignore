@@ -1,7 +1,7 @@
-target/**
-bin/**
-doc/**
-gen/**
+**/target/**
+**/bin/**
+**/doc/**
+**/gen/**
 .DS_Store
 Thumbs.db
 gdb.setup
