@@ -1,5 +1,7 @@
 package org.beavers;
 
+import java.io.Serializable;
+
 import javax.microedition.khronos.opengles.GL10;
 
 import org.anddev.andengine.engine.Engine;
@@ -21,13 +23,22 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
+import org.beavers.gameplay.Game;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Surface;
 
-public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener {
+public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4784458358379390926L;
 	
 	/**
 	 * @name camera constants
@@ -168,6 +179,13 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		switch(pMenuItem.getID()) {
 		case MENU_START:
 			System.out.println("Start game");
+			
+			Intent intent = new Intent(AppActivity.this, Game.class);
+
+			intent.putExtra("app", this);
+			
+			startActivity(intent);
+			
 			return true;
 		case MENU_JOIN:
 			System.out.println("Join game");

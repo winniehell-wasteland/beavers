@@ -1,7 +1,32 @@
 package org.beavers.gameplay;
 
-public class Game {
+import java.io.FileNotFoundException;
 
+import org.anddev.andengine.engine.Engine;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
+import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.opengl.texture.TextureManager;
+import org.beavers.AppActivity;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+
+public class Game extends Activity {
+
+	Engine engine = null;
+	TMXTiledMap map;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		
+		Intent intent = this.getIntent();
+		engine = ((AppActivity)intent.getExtras().getSerializable("app")).getEngine();
+	}
+	
 	public String getID()
 	{
 		return null;
@@ -25,5 +50,20 @@ public class Game {
 	public int getInitialActionPoints()
 	{
 		return -1;
+	}
+	
+	private void loadMap(String name)
+	{
+		TMXLoader loader = new TMXLoader(this, engine.getTextureManager());
+		
+		try {
+			map = loader.load(openFileInput(name + ".tmx"));
+		} catch (TMXLoadException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
