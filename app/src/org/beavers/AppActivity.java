@@ -10,18 +10,21 @@ import org.anddev.andengine.entity.scene.background.ColorBackground;
 import org.anddev.andengine.entity.scene.menu.MenuScene;
 import org.anddev.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
 import org.anddev.andengine.entity.scene.menu.item.IMenuItem;
-import org.anddev.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.anddev.andengine.entity.util.FPSLogger;
+import org.anddev.andengine.opengl.font.Font;
+import org.anddev.andengine.opengl.texture.Texture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.beavers.gameplay.Game;
+import org.beavers.ui.MenuItem;
 
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -33,16 +36,6 @@ import android.view.Surface;
 public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Parcelable {	
 	
 	private final IBinder binder = new EngineBinder();
-    
-	/**
-	 * @name camera constants
-	 * @{ 
-	 */
-	private static final int CAMERA_WIDTH = 720;
-	private static final int CAMERA_HEIGHT = 480;
-	/**
-	 * @}
-	 */
 	
 	/**
 	 * @name menu constants
@@ -64,18 +57,8 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	protected MenuScene menuScene;
 
-	private BitmapTextureAtlas menuTexture;
-	protected TextureRegion menuStartTextureRegion;
-	protected TextureRegion menuJoinTextureRegion;
-	protected TextureRegion menuQuitTextureRegion;
-	
-	/*
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-    }
-    */
+	private Texture fontTexture;
+	private Font menuFont;
 	
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
@@ -100,16 +83,16 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		return new Engine(new EngineOptions(true, orientation, 
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), this.camera));
 	}
-
+	
 	@Override
 	public void onLoadResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
-		this.menuTexture = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		this.menuStartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.menuTexture, this, "menu_start.png", 50, 0);
-		this.menuJoinTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.menuTexture, this, "menu_join.png", 50, 64);
-		this.menuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.menuTexture, this, "menu_quit.png", 50, 128);
-		this.mEngine.getTextureManager().loadTexture(this.menuTexture);
+		fontTexture = new BitmapTextureAtlas(512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);		
+		menuFont = new Font(fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 100, true, Color.BLACK);
+		
+		getTextureManager().loadTexture(this.fontTexture);
+		getFontManager().loadFont(menuFont);
 	}
 
 	@Override
@@ -129,19 +112,20 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		this.mainScene.setChildScene(this.menuScene, false, true, true);
 	}
 
+	
 	protected void createMenuScene() {
 		this.menuScene = new MenuScene(this.camera);
-
+		
 		// menu item "start"
-		final SpriteMenuItem startMenuItem = new SpriteMenuItem(MENU_START, this.menuStartTextureRegion);
-		this.menuScene.addMenuItem(startMenuItem);
+		final MenuItem startMenuItem = new MenuItem(MENU_START, camera.getWidth(), menuFont, "Start");
+		this.menuScene.addMenuItem(startMenuItem);		
 
 		// menu item "join"
-		final SpriteMenuItem joinMenuItem = new SpriteMenuItem(MENU_JOIN, this.menuJoinTextureRegion);
+		final MenuItem joinMenuItem = new MenuItem(MENU_JOIN, camera.getWidth(), menuFont, "Join");
 		this.menuScene.addMenuItem(joinMenuItem);
 		
 		// menu item "quit"
-		final SpriteMenuItem quitMenuItem = new SpriteMenuItem(MENU_QUIT, this.menuQuitTextureRegion);
+		final MenuItem quitMenuItem = new MenuItem(MENU_QUIT, camera.getWidth(), menuFont, "Quit");
 		this.menuScene.addMenuItem(quitMenuItem);
 		
 		this.menuScene.buildAnimations();
