@@ -1,6 +1,28 @@
 package org.beavers.gameplay;
 
-public class Game {
+
+import org.anddev.andengine.engine.Engine;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
+import org.beavers.AppActivity;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+
+public class Game extends Activity {
+
+	Engine engine = null;
+	TMXTiledMap map;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		Intent intent = getIntent();		
+		AppActivity app = intent.getParcelableExtra("app");
+		
+		engine = app.getEngine();
+	}
 
 	public String getID()
 	{
