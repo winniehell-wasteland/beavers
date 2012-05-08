@@ -20,11 +20,12 @@ public class Game extends Activity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		
-		Intent intent = this.getIntent();
-		engine = ((AppActivity)intent.getExtras().getSerializable("app")).getEngine();
+		Intent intent = getIntent();		
+		AppActivity app = intent.getParcelableExtra("app");
+		
+		engine = app.getEngine();
 	}
 	
 	public String getID()
