@@ -21,7 +21,6 @@ import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.beavers.gameplay.Game;
 import org.beavers.ui.Menu;
 
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -38,14 +37,15 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	
 	private final IBinder binder = new EngineBinder();
 
-	protected Camera camera;
+	private Camera camera;
 
-	protected Scene mainScene;
-
-	protected Menu menuScene;
+	private Scene mainScene;
+	private Menu menuScene;
+	private Game gameScene;
 
 	private Texture fontTexture;
 	private Font menuFont;
+
 	
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
@@ -86,12 +86,13 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	public Scene onLoadScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 
-		this.menuScene = new Menu(this.camera, this, menuFont);
-
 		this.mainScene = new Scene();
 		this.mainScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
+
+		this.menuScene = new Menu(this.camera, this, menuFont);
+		this.gameScene = new Game(getEngine());
 		
-		this.mainScene.setChildScene(this.menuScene, false, true, true);
+		this.mainScene.setChildScene(this.menuScene);
 		
 		return mainScene;
 	}
@@ -103,13 +104,11 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	@Override
 	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
+		
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
-			if(this.mainScene.hasChildScene()) {
-				/* Remove the menu and reset it. */
-				this.menuScene.back();
-			} else {
-				/* Attach the menu. */
-				this.mainScene.setChildScene(this.menuScene, false, true, true);
+			if(this.mainScene.getChildScene() == this.gameScene) {
+				this.gameScene.back();
+				this.mainScene.setChildScene(this.menuScene);
 			}
 			return true;
 		} else {
@@ -124,11 +123,8 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		case Menu.START:
 			System.out.println("Start game");
 			
-			Intent intent = new Intent(AppActivity.this, Game.class);
-
-			intent.putExtra("app", AppActivity.this);
-						
-			startActivity(intent);
+			this.menuScene.back();
+			this.mainScene.setChildScene(gameScene);
 
 			return true;
 		case Menu.JOIN:
@@ -136,7 +132,9 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			return true;
 		case Menu.QUIT:
 			System.out.println("Quit game");
+			
 			this.finish();
+			
 			return true;
 		default:
 			return false;
