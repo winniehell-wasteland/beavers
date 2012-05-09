@@ -10,18 +10,21 @@ import org.anddev.andengine.entity.scene.background.ColorBackground;
 import org.anddev.andengine.entity.scene.menu.MenuScene;
 import org.anddev.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
 import org.anddev.andengine.entity.scene.menu.item.IMenuItem;
-import org.anddev.andengine.entity.scene.menu.item.SpriteMenuItem;
 import org.anddev.andengine.entity.util.FPSLogger;
+import org.anddev.andengine.opengl.font.Font;
+import org.anddev.andengine.opengl.texture.Texture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
+
 import org.beavers.gameplay.Game;
+import org.beavers.ui.Menu;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -33,49 +36,16 @@ import android.view.Surface;
 public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Parcelable {	
 	
 	private final IBinder binder = new EngineBinder();
-    
-	/**
-	 * @name camera constants
-	 * @{ 
-	 */
-	private static final int CAMERA_WIDTH = 720;
-	private static final int CAMERA_HEIGHT = 480;
-	/**
-	 * @}
-	 */
-	
-	/**
-	 * @name menu constants
-	 * @{
-	 */
-	protected static final int MENU_START = 0;
-	protected static final int MENU_JOIN = 1;
-	protected static final int MENU_LOAD = 2;
-	protected static final int MENU_OPTIONS = 3;
-	protected static final int MENU_HELP = 4;
-	protected static final int MENU_QUIT = 5;
-	/**
-	 * @}
-	 */
 
-	protected Camera camera;
+	private Camera camera;
 
-	protected Scene mainScene;
+	private Scene mainScene;
+	private Menu menuScene;
+	private Game gameScene;
 
-	protected MenuScene menuScene;
+	private Texture fontTexture;
+	private Font menuFont;
 
-	private BitmapTextureAtlas menuTexture;
-	protected TextureRegion menuStartTextureRegion;
-	protected TextureRegion menuJoinTextureRegion;
-	protected TextureRegion menuQuitTextureRegion;
-	
-	/*
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-    }
-    */
 	
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
@@ -100,66 +70,45 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		return new Engine(new EngineOptions(true, orientation, 
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), this.camera));
 	}
-
+	
 	@Override
 	public void onLoadResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
-		this.menuTexture = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		this.menuStartTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.menuTexture, this, "menu_start.png", 50, 0);
-		this.menuJoinTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.menuTexture, this, "menu_join.png", 50, 64);
-		this.menuQuitTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(this.menuTexture, this, "menu_quit.png", 50, 128);
-		this.mEngine.getTextureManager().loadTexture(this.menuTexture);
+		fontTexture = new BitmapTextureAtlas(512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);		
+		menuFont = new Font(fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 100, true, Color.BLACK);
+		
+		getTextureManager().loadTexture(this.fontTexture);
+		getFontManager().loadFont(menuFont);
 	}
 
 	@Override
 	public Scene onLoadScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 
-		this.createMenuScene();
-
 		this.mainScene = new Scene();
 		this.mainScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
+
+		this.menuScene = new Menu(this.camera, this, menuFont);
+		this.gameScene = new Game(this, getEngine());
+		
+		this.mainScene.setChildScene(this.menuScene);
 		
 		return mainScene;
 	}
 
 	@Override
 	public void onLoadComplete() {
-		this.mainScene.setChildScene(this.menuScene, false, true, true);
-	}
-
-	protected void createMenuScene() {
-		this.menuScene = new MenuScene(this.camera);
-
-		// menu item "start"
-		final SpriteMenuItem startMenuItem = new SpriteMenuItem(MENU_START, this.menuStartTextureRegion);
-		this.menuScene.addMenuItem(startMenuItem);
-
-		// menu item "join"
-		final SpriteMenuItem joinMenuItem = new SpriteMenuItem(MENU_JOIN, this.menuJoinTextureRegion);
-		this.menuScene.addMenuItem(joinMenuItem);
 		
-		// menu item "quit"
-		final SpriteMenuItem quitMenuItem = new SpriteMenuItem(MENU_QUIT, this.menuQuitTextureRegion);
-		this.menuScene.addMenuItem(quitMenuItem);
-		
-		this.menuScene.buildAnimations();
-
-		this.menuScene.setBackgroundEnabled(false);
-
-		this.menuScene.setOnMenuItemClickListener(this);
 	}
 
 	@Override
 	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
+		
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
-			if(this.mainScene.hasChildScene()) {
-				/* Remove the menu and reset it. */
-				this.menuScene.back();
-			} else {
-				/* Attach the menu. */
-				this.mainScene.setChildScene(this.menuScene, false, true, true);
+			if(this.mainScene.getChildScene() == this.gameScene) {
+				this.gameScene.back();
+				this.mainScene.setChildScene(this.menuScene);
 			}
 			return true;
 		} else {
@@ -171,21 +120,21 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	public boolean onMenuItemClicked(MenuScene pMenuScene, IMenuItem pMenuItem,
 			float pMenuItemLocalX, float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
-		case MENU_START:
+		case Menu.START:
 			System.out.println("Start game");
 			
-			Intent intent = new Intent(AppActivity.this, Game.class);
+			this.menuScene.back();
+			this.mainScene.setChildScene(gameScene);
 
-			intent.putExtra("app", AppActivity.this);
-						
-			startActivity(intent);
 			return true;
-		case MENU_JOIN:
+		case Menu.JOIN:
 			System.out.println("Join game");
 			return true;
-		case MENU_QUIT:
+		case Menu.QUIT:
 			System.out.println("Quit game");
+			
 			this.finish();
+			
 			return true;
 		default:
 			return false;
