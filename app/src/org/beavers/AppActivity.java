@@ -18,6 +18,7 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 
+import org.beavers.communication.Client;
 import org.beavers.gameplay.Game;
 import org.beavers.ui.Menu;
 
@@ -26,6 +27,7 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -34,6 +36,8 @@ import android.view.KeyEvent;
 import android.view.Surface;
 
 public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Parcelable {	
+	
+	private Client client;
 	
 	private final IBinder binder = new EngineBinder();
 
@@ -49,6 +53,12 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
+	}
+	
+	protected void onCreate(Bundle pSavedInstanceState) {
+		super.onCreate(pSavedInstanceState);
+
+		client = new Client(this, null);
 	}
 
 	@Override
