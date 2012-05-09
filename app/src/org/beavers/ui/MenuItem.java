@@ -15,9 +15,7 @@ public class MenuItem extends Rectangle implements IMenuItem {
 		 
 		this.ID = pID;
 				
-		this.text = new Text(0, 0, pFont, pText);
-		this.text.setPosition(pWidth/2 - this.text.getWidth()/2, 0);
-				
+		this.text = new Text(pWidth/2 - pFont.getStringWidth(pText)/2, 0, pFont, pText);				
 		attachChild(text);
 	}
 
@@ -38,4 +36,9 @@ public class MenuItem extends Rectangle implements IMenuItem {
 		
 	}
 	
+	@Override
+	public void reset() {
+		
+		super.reset();
+	}
 }
