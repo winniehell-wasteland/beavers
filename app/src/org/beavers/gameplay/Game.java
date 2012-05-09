@@ -6,26 +6,22 @@ import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
-import org.anddev.andengine.opengl.texture.TextureManager;
-import org.beavers.AppActivity;
+import org.anddev.andengine.entity.scene.Scene;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
+import android.content.Context;
 
-public class Game extends Activity {
+public class Game extends Scene {
 
-	Engine engine = null;
-	TMXTiledMap map;
+	private Context context;
+	private Engine engine;
+	private TMXTiledMap map;
 	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		Intent intent = getIntent();		
-		AppActivity app = intent.getParcelableExtra("app");
-		
-		engine = app.getEngine();
+	public Game(final Context pContext, final Engine pEngine)
+	{
+		super();
+
+		this.context = pContext;
+		this.engine = pEngine;
 	}
 	
 	public String getID()
@@ -55,10 +51,10 @@ public class Game extends Activity {
 	
 	private void loadMap(String name)
 	{
-		TMXLoader loader = new TMXLoader(this, engine.getTextureManager());
+		TMXLoader loader = new TMXLoader(this.context, engine.getTextureManager());
 		
 		try {
-			map = loader.load(openFileInput(name + ".tmx"));
+			map = loader.load(this.context.openFileInput(name + ".tmx"));
 		} catch (TMXLoadException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
