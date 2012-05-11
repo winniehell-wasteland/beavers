@@ -1,5 +1,7 @@
 package org.beavers;
 
+import java.util.UUID;
+
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.Camera;
 import org.anddev.andengine.engine.options.EngineOptions;
@@ -19,7 +21,11 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextur
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 
 import org.beavers.communication.Client;
+import org.beavers.communication.Server;
 import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameID;
+import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.PlayerID;
 import org.beavers.ui.Menu;
 
 import android.content.pm.ActivityInfo;
@@ -34,23 +40,10 @@ import android.os.Parcelable;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Surface;
+import android.widget.Toast;
 
 public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Parcelable {	
-	
-	private Client client;
-	
-	private final IBinder binder = new EngineBinder();
 
-	private Camera camera;
-
-	private Scene mainScene;
-	private Menu menuScene;
-	private Game gameScene;
-
-	private Texture fontTexture;
-	private Font menuFont;
-
-	
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
 	}
@@ -58,12 +51,16 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	protected void onCreate(Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
 
+		playerID = new PlayerID(UUID.randomUUID().toString());
+		
 		client = new Client(this);
+		server = new Server(this);
 	}
 	
 	@Override
 	protected void onDestroy() {
 		client.disconnect();
+		server.disconnect();
 		
 		super.onDestroy();
 	}
@@ -138,14 +135,27 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			float pMenuItemLocalX, float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
 		case Menu.START:
-			System.out.println("Start game");
+			Toast.makeText(this, "Start game", Toast.LENGTH_SHORT).show();
 			
 			this.menuScene.back();
 			this.mainScene.setChildScene(gameScene);
+			
+			GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
+			
+			server.initiateGame(newGame);
 
 			return true;
 		case Menu.JOIN:
-			System.out.println("Join game");
+			Toast.makeText(this, "Join game", Toast.LENGTH_SHORT).show();
+
+			if(client.announcedGames.isEmpty())
+			{
+				Toast.makeText(this, "No announced games", Toast.LENGTH_LONG).show();
+			}
+			else
+			{
+				client.joinGame(client.announcedGames.get(client.announcedGames.size() - 1));
+			}
 			return true;
 		case Menu.QUIT:
 			System.out.println("Quit game");
@@ -202,4 +212,32 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
     private AppActivity(Parcel in) {
         mEngine = ((EngineBinder) in.readStrongBinder()).getEngine();
     }
+
+	public PlayerID getPlayerID() {
+		return playerID;
+	}
+
+	public Client getClient() {
+		return client;
+	}
+	
+	public Server getServer() {
+		return server;
+	}
+	
+	private PlayerID playerID;
+
+	private Client client;
+	private Server server;
+	
+	private final IBinder binder = new EngineBinder();
+
+	private Camera camera;
+
+	private Scene mainScene;
+	private Menu menuScene;
+	private Game gameScene;
+
+	private Texture fontTexture;
+	private Font menuFont;
 }

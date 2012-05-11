@@ -4,7 +4,7 @@ package org.beavers.gameplay;
  * @author winniehell
  * class to uniquely identify a game within a server
  */
-public class GameID {
+public final class GameID {
 
 	private final String ID; 
 
@@ -16,7 +16,7 @@ public class GameID {
 	public boolean equals(Object other) {
 		if(other instanceof GameID)
 		{
-			return (ID == ((GameID)other).ID);
+			return ID.equals(((GameID)other).ID);
 		}
 		else
 		{

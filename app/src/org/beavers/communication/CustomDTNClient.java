@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import de.tubs.ibr.dtn.api.CallbackMode;
 import de.tubs.ibr.dtn.api.DTNClient;
+import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 public class CustomDTNClient extends DTNClient {
@@ -97,4 +99,8 @@ public class CustomDTNClient extends DTNClient {
 			}
 		}
 	};
+
+	public void initialize(Registration pRegistration) throws ServiceNotAvailableException {
+		super.initialize(context, pRegistration);
+	}
 }
