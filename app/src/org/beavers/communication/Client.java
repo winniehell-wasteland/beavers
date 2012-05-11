@@ -1,21 +1,25 @@
 package org.beavers.communication;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.beavers.AppActivity;
 import org.beavers.gameplay.DecisionContainer;
-import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameID;
+import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
+import org.beavers.gameplay.PlayerID;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
-
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
@@ -28,7 +32,7 @@ import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 public class Client {
 
-	public Client(final Context pContext, final Player pPlayer)
+	public Client(final AppActivity pContext)
 	{
 		this.context = pContext;
 		
@@ -49,23 +53,28 @@ public class Client {
 		}
 	}
 	
-	protected void finalize() throws Throwable {
+	public void disconnect() {
 		// unregister intent receiver
 		context.unregisterReceiver(dtnReceiver);
 		
 		// unregister at the daemon
 		dtnClient.unregister();
 		
-		// stop executor
-		dtnExecutor.shutdown();
+		try {
+			// stop executor
+			dtnExecutor.shutdown();
 
-		// ... and wait until all jobs are done
-		if (!dtnExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-			dtnExecutor.shutdownNow();
+			// ... and wait until all jobs are done
+			if (!dtnExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+				dtnExecutor.shutdownNow();
+			}
+
+			// destroy DTN client
+			dtnClient.terminate();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-
-		// destroy DTN client
-		dtnClient.terminate();
 		
 		// clear all variables
 		dtnExecutor = null;
@@ -76,7 +85,7 @@ public class Client {
 	 * server has announced new game
 	 * @param game
 	 */
-	public void receiveGameInfo(Game game)
+	public void receiveGameInfo(GameInfo game)
 	{
 		
 	}
@@ -85,7 +94,7 @@ public class Client {
 	 * joins a game
 	 * @param game
 	 */
-	public void joinGame(Game game)
+	public void joinGame(GameInfo game)
 	{
 		
 	}
@@ -94,7 +103,7 @@ public class Client {
 	 * responds to server
 	 * @param game
 	 */
-	public void acknowledgeGameReady(Game game)
+	public void acknowledgeGameReady(GameInfo game)
 	{
 		
 	}
@@ -102,7 +111,7 @@ public class Client {
 	/**
 	 * start planning phase
 	 */
-	public void startPlanningPhase(Game game)
+	public void startPlanningPhase(GameInfo game)
 	{
 		
 		
@@ -113,7 +122,7 @@ public class Client {
 	 * @param game
 	 * @param decisions
 	 */
-	public void sendDecisions(Game game, DecisionContainer decisions)
+	public void sendDecisions(GameInfo game, DecisionContainer decisions)
 	{
 		
 	}
@@ -121,7 +130,7 @@ public class Client {
 	/**
 	 * receive outcome from server
 	 */
-	public void receiveOutcome(Game game, OutcomeContainer outcome)
+	public void receiveOutcome(GameInfo game, OutcomeContainer outcome)
 	{
 		
 	}
@@ -130,7 +139,7 @@ public class Client {
 	 * quit game
 	 * @param player
 	 */
-	public void abortGame(Game game)
+	public void abortGame(GameInfo game)
 	{
 		
 	}
@@ -138,7 +147,7 @@ public class Client {
 	 * server has quit, inform clients about new server
 	 * @param player
 	 */
-	public void receiveNewServer(Game game, Player player)
+	public void receiveNewServer(GameInfo game, PlayerID player)
 	{
 		game.setServer(player);
 		// TODO: ...
@@ -149,7 +158,7 @@ public class Client {
 		return null;
 	}
 	
-	private Context context;
+	private final AppActivity context;
 	
 	private class LocalDTNClient extends DTNClient
 	{
@@ -230,7 +239,37 @@ public class Client {
 
 		@Override
 		public void payload(byte[] data) {
-			System.out.println("Got: " + new String(data));
+			
+			final byte[] tmpData = data.clone();
+			
+			// process data asynchronously
+			dtnExecutor.execute(new Runnable() {
+		        public void run() {
+					try {
+						DataInputStream reader = new DataInputStream(new ByteArrayInputStream(tmpData));
+
+						String command = reader.readLine();
+
+						if(command == "ANNOUNCE")
+						{
+							PlayerID server = new PlayerID(reader.readLine());
+							GameID game = new GameID(reader.readLine());
+							
+							receiveGameInfo(new GameInfo(server, game));
+						}
+						else
+						{
+							System.out.println("Got: " + new String(tmpData));
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		        }
+			});
 		}
 
 		@Override

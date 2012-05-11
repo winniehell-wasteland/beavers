@@ -17,13 +17,8 @@ public class Game extends Scene {
 		this.engine = pEngine;
 	}
 
-	public String getID()
+	public GameInfo getInfo()
 	{
-		return null;
-	}
-
-	public Player getServer() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
