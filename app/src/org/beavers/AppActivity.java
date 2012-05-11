@@ -58,7 +58,14 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	protected void onCreate(Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
 
-		client = new Client(this, null);
+		client = new Client(this);
+	}
+	
+	@Override
+	protected void onDestroy() {
+		client.disconnect();
+		
+		super.onDestroy();
 	}
 
 	@Override

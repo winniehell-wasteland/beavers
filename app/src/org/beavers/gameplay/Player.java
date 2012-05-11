@@ -1,14 +1,14 @@
 package org.beavers.gameplay;
 
 public class Player {
-	public String getID()
+		
+	public PlayerID getID()
 	{
 		return null;
 	}
 
 	public boolean isServer(Game game) {
-		// TODO Auto-generated method stub
-		return (game.getServer() == this);
+		return this.equals(game.getInfo().getServer());
 	}
 	
 	public int getActionPoints(Game game)
@@ -19,5 +19,22 @@ public class Player {
 	public void resetActionPoints(Game game)
 	{
 		game.getInitialActionPoints();
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+
+		if(other instanceof Player)
+		{
+			return (getID() == ((Player)other).getID());
+		}
+		else if(other instanceof PlayerID)
+		{
+			return (getID() == (PlayerID)other);
+		}
+		else
+		{
+			return false;
+		}
 	}
 }
