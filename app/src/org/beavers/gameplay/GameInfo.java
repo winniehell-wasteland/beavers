@@ -4,7 +4,7 @@ package org.beavers.gameplay;
  * @author winniehell
  * class to uniquely identify a game
  */
-public class GameInfo {
+public final class GameInfo {
 
 	private PlayerID server;
 	private final GameID game;
@@ -30,11 +30,15 @@ public class GameInfo {
 	public boolean equals(Object other) {
 		if(other instanceof GameInfo)
 		{
-			return (server == ((GameInfo)other).server) && (game == ((GameInfo)other).game);
+			return server.equals(((GameInfo)other).server) && game.equals(((GameInfo)other).game);
 		}
 		else
 		{
 			return false;
 		}
+	}
+
+	public GameID getID() {
+		return game;
 	}
 }

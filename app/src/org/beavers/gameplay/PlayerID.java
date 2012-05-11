@@ -4,7 +4,7 @@ package org.beavers.gameplay;
  * @author winniehell
  * class to uniquely identify a player (i.e. a playing device)
  */
-public class PlayerID {
+public final class PlayerID {
 
 	private final String ID; 
 	
@@ -16,7 +16,7 @@ public class PlayerID {
 	public boolean equals(Object other) {
 		if(other instanceof PlayerID)
 		{
-			return (ID == ((PlayerID)other).ID);
+			return ID.equals(((PlayerID)other).ID);
 		}
 		else
 		{

@@ -2,7 +2,6 @@ package org.beavers.communication;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -14,13 +13,13 @@ import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
 
-public abstract class CustomDTNDataHandler implements DataHandler {
-
-	abstract void receiveData(DataInputStream reader) throws IOException;
+public class CustomDTNDataHandler implements DataHandler {
 	
-	public CustomDTNDataHandler(final DTNClient pDTNClient) {
+	public CustomDTNDataHandler(final DTNClient pDTNClient, final PayloadHandler pPayloadHandler) {
 		dtnClient = pDTNClient;
-		executor = Executors.newSingleThreadExecutor();	
+		payloadHandler = pPayloadHandler;
+		
+		executor = Executors.newSingleThreadExecutor();
 	}
 	
 	public void stop() {		
@@ -41,6 +40,8 @@ public abstract class CustomDTNDataHandler implements DataHandler {
 	@Override
 	public void startBundle(Bundle pBundle) {
 		bundle = new BundleID( pBundle );	
+		
+		//pBundle.source
 	}
 
 	@Override
@@ -66,7 +67,6 @@ public abstract class CustomDTNDataHandler implements DataHandler {
 	@Override
 	public void startBlock(Block block) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -86,11 +86,16 @@ public abstract class CustomDTNDataHandler implements DataHandler {
 		
 		final byte[] tmpData = data.clone();
 		
+		System.out.println("test1 "+data.length+" "+tmpData.length);
+		
 		// process data asynchronously
 		executor.execute(new Runnable() {
 	        public void run() {
 				try {
-					receiveData(new DataInputStream(new ByteArrayInputStream(tmpData)));
+					System.out.println("test2");
+					final DataInputStream input = new DataInputStream(new ByteArrayInputStream(tmpData));
+					CustomDTNDataHandler.this.payloadHandler.handlePayload(input);
+					System.out.println("test3");
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -122,4 +127,5 @@ public abstract class CustomDTNDataHandler implements DataHandler {
 	private BundleID bundle;
 	private final DTNClient dtnClient;
 	private ExecutorService executor;
+	private final PayloadHandler payloadHandler;
 }
