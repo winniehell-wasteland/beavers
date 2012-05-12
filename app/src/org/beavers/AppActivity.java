@@ -19,7 +19,6 @@ import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
-
 import org.beavers.communication.Client;
 import org.beavers.communication.Server;
 import org.beavers.gameplay.Game;
@@ -32,17 +31,13 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Binder;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Surface;
 import android.widget.Toast;
 
-public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Parcelable {	
+public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener {	
 
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
@@ -178,40 +173,6 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		}
 	}
-	
-    public class EngineBinder extends Binder {
-        Engine getEngine() {
-            // Return this instance of LocalService so clients can call public methods
-            return AppActivity.this.getEngine();
-        }
-    }
-
-	@Override
-	public int describeContents() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeStrongBinder(binder);
-	}
-	
-	// necessary to load Parcelable
-    public static final Parcelable.Creator<AppActivity> CREATOR = new Parcelable.Creator<AppActivity>() {
-        public AppActivity createFromParcel(Parcel in) {
-            return new AppActivity(in);
-        }
-
-        public AppActivity[] newArray(int size) {
-            return new AppActivity[size];
-        }
-    };
-
-    // load activity from Parcel
-    private AppActivity(Parcel in) {
-        mEngine = ((EngineBinder) in.readStrongBinder()).getEngine();
-    }
 
 	public PlayerID getPlayerID() {
 		return playerID;
@@ -229,8 +190,6 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	private Client client;
 	private Server server;
-	
-	private final IBinder binder = new EngineBinder();
 
 	private Camera camera;
 
