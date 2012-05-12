@@ -14,10 +14,8 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.PlayerID;
 
 import de.tubs.ibr.dtn.api.GroupEndpoint;
-import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 
-public class Client implements PayloadHandler {
+public class Client {
 	
 	public static final GroupEndpoint GROUP_EID = new GroupEndpoint("dtn://beavergame.dtn/client");
 	/**
@@ -31,34 +29,9 @@ public class Client implements PayloadHandler {
 	
 	public ArrayList<GameInfo> announcedGames = new ArrayList<GameInfo>();
 
-	public Client(final AppActivity pContext)
+	public Client(final AppActivity pApp)
 	{
-		context = pContext;
-		dtnClient = new CustomDTNClient(context);
-		dtnDataHandler = new CustomDTNDataHandler(dtnClient, this);
-		
-        dtnClient.setDataHandler(dtnDataHandler);
-                
-        try {
-        	final Registration registration = new Registration("game/client");
-        	
-        	registration.add(GROUP_EID);
-        	
-			dtnClient.initialize(registration);
-		} catch (ServiceNotAvailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public void disconnect() {
-		// unregister at the daemon
-		dtnClient.unregister();
-
-		dtnDataHandler.stop();
-		
-		// destroy DTN client
-		dtnClient.terminate();
+		app = pApp;
 	}
 	
 	/**
@@ -83,9 +56,9 @@ public class Client implements PayloadHandler {
 			stream.println("JOIN");
 			stream.println(pGame.getServer().toString());
 			stream.println(pGame.getID().toString());
-			stream.println(context.getPlayerID().toString());
+			stream.println(app.getPlayerID().toString());
 		
-			dtnClient.getSession().send(Server.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
+			app.getDTNSession().send(Server.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
 		
 			buffer.close();
 		} catch (Exception e) {
@@ -147,28 +120,19 @@ public class Client implements PayloadHandler {
 	{
 		pGame.setServer(pPlayer);
 
-		if(context.getPlayerID().equals(pPlayer))
+		if(app.getPlayerID().equals(pPlayer))
 		{
-			context.getServer().startPlanningPhase(pGame);
+			app.getServer().startPlanningPhase(pGame);
 		}
 	}
 	
-	private final AppActivity context;
-	private final CustomDTNClient dtnClient;
-	private final CustomDTNDataHandler dtnDataHandler;
+	private final AppActivity app;
 
-	@Override
 	public void handlePayload(DataInputStream input) throws IOException {
-		System.out.println("hello?");
-		
 		final String command = input.readLine();
 		
-		System.out.println("Command: "+command);
-		
 		if(command.equals("ANNOUNCE"))
-		{
-			System.out.println("announced...");
-			
+		{			
 			final PlayerID server = new PlayerID(input.readLine());
 			final GameID game = new GameID(input.readLine());
 			
@@ -176,7 +140,7 @@ public class Client implements PayloadHandler {
 		}
 		else
 		{
-			System.out.println("Got: "+command);
+			System.out.println("Got: '"+command+"'");
 		}
 	}
 }

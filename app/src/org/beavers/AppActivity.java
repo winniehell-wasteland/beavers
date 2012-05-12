@@ -20,12 +20,19 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.beavers.communication.Client;
+import org.beavers.communication.CustomDTNClient;
+import org.beavers.communication.CustomDTNDataHandler;
 import org.beavers.communication.Server;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.PlayerID;
 import org.beavers.ui.Menu;
+
+import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -50,12 +57,34 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		
 		client = new Client(this);
 		server = new Server(this);
+
+		dtnClient = new CustomDTNClient(this);
+		dtnDataHandler = new CustomDTNDataHandler(dtnClient, server, client);
+		
+        dtnClient.setDataHandler(dtnDataHandler);
+                
+        try {
+        	final Registration registration = new Registration("game/server");
+
+        	registration.add(Server.GROUP_EID);
+        	registration.add(Client.GROUP_EID);
+        	
+			dtnClient.initialize(registration);
+		} catch (ServiceNotAvailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
 	protected void onDestroy() {
-		client.disconnect();
-		server.disconnect();
+		// unregister at the daemon
+		dtnClient.unregister();
+
+		dtnDataHandler.stop();
+		
+		// destroy DTN client
+		dtnClient.terminate();
 		
 		super.onDestroy();
 	}
@@ -182,6 +211,10 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		return client;
 	}
 	
+	public Session getDTNSession() throws SessionDestroyedException, InterruptedException {
+		return dtnClient.getSession();
+	}
+	
 	public Server getServer() {
 		return server;
 	}
@@ -190,6 +223,9 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	private Client client;
 	private Server server;
+	
+	private CustomDTNClient dtnClient;
+	private CustomDTNDataHandler dtnDataHandler;
 
 	private Camera camera;
 

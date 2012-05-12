@@ -2,9 +2,9 @@ package org.beavers.communication;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+
 import org.beavers.AppActivity;
 import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameID;
@@ -13,10 +13,8 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.PlayerID;
 
 import de.tubs.ibr.dtn.api.GroupEndpoint;
-import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 
-public class Server implements PayloadHandler {
+public class Server {
 
 	public static final GroupEndpoint GROUP_EID = new GroupEndpoint("dtn://beavergame.dtn/server");
 
@@ -30,34 +28,9 @@ public class Server implements PayloadHandler {
 	 * @}
 	 */
 	
-	public Server(final AppActivity pContext)
+	public Server(final AppActivity pApp)
 	{
-		context = pContext;
-		dtnClient = new CustomDTNClient(context);
-		dtnDataHandler = new CustomDTNDataHandler(dtnClient, this);
-		
-        dtnClient.setDataHandler(dtnDataHandler);
-                
-        try {
-        	final Registration registration = new Registration("game/server");
-        	
-        	registration.add(GROUP_EID);
-        	
-			dtnClient.initialize(registration);
-		} catch (ServiceNotAvailableException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public void disconnect() {
-		// unregister at the daemon
-		dtnClient.unregister();
-
-		dtnDataHandler.stop();
-		
-		// destroy DTN client
-		dtnClient.terminate();
+		app = pApp;
 	}
 	
 	/**
@@ -73,7 +46,7 @@ public class Server implements PayloadHandler {
 			stream.println(pGame.getServer().toString());
 			stream.println(pGame.getID().toString());
 		
-			dtnClient.getSession().send(Client.GROUP_EID, ANNOUNCEMENT_LIFETIME, buffer.toString());
+			app.getDTNSession().send(Client.GROUP_EID, ANNOUNCEMENT_LIFETIME, buffer.toString());
 		
 			buffer.close();
 		} catch (Exception e) {
@@ -99,14 +72,14 @@ public class Server implements PayloadHandler {
 	public void gameReady(GameInfo pGame)
 	{
 		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		final DataOutputStream output = new DataOutputStream(buffer);
+		final PrintStream stream = new PrintStream(buffer);
 
 		try {
-			output.writeUTF("STARTREQUEST");
-			output.writeUTF(pGame.getServer().toString());
-			output.writeUTF(pGame.getID().toString());
+			stream.println("STARTREQUEST");
+			stream.println(pGame.getServer().toString());
+			stream.println(pGame.getID().toString());
 		
-			dtnClient.getSession().send(Client.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
+			app.getDTNSession().send(Client.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
 		
 			buffer.close();
 		} catch (Exception e) {
@@ -121,14 +94,14 @@ public class Server implements PayloadHandler {
 	public void startPlanningPhase(GameInfo pGame)
 	{
 		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		final DataOutputStream output = new DataOutputStream(buffer);
+		final PrintStream stream = new PrintStream(buffer);
 
 		try {
-			output.writeUTF("PLANNING");
-			output.writeUTF(pGame.getServer().toString());
-			output.writeUTF(pGame.getID().toString());
+			stream.println("PLANNING");
+			stream.println(pGame.getServer().toString());
+			stream.println(pGame.getID().toString());
 		
-			dtnClient.getSession().send(Client.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
+			app.getDTNSession().send(Client.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
 		
 			buffer.close();
 		} catch (Exception e) {
@@ -176,15 +149,15 @@ public class Server implements PayloadHandler {
 	public void announceNewServer(GameInfo pGame, PlayerID pServer)
 	{
 		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		final DataOutputStream output = new DataOutputStream(buffer);
+		final PrintStream stream = new PrintStream(buffer);
 		
 		try {
-			output.writeUTF("NEWSERVER");
-			output.writeUTF(pGame.getServer().toString());
-			output.writeUTF(pGame.getID().toString());
-			output.writeUTF(pServer.toString());
+			stream.println("NEWSERVER");
+			stream.println(pGame.getServer().toString());
+			stream.println(pGame.getID().toString());
+			stream.println(pServer.toString());
 		
-			dtnClient.getSession().send(Client.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
+			app.getDTNSession().send(Client.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
 		
 			buffer.close();
 		} catch (Exception e) {
@@ -193,10 +166,7 @@ public class Server implements PayloadHandler {
 		}
 	}
 
-	@Override
-	public void handlePayload(DataInputStream input) throws IOException {
-		System.out.println("hello server?");
-		
+	public void handlePayload(DataInputStream input) throws IOException {		
 		final String command = input.readLine();
 
 		if(command.equals("JOIN"))
@@ -204,15 +174,13 @@ public class Server implements PayloadHandler {
 			final PlayerID server = new PlayerID(input.readLine());
 			final GameID game = new GameID(input.readLine());
 			final PlayerID player = new PlayerID(input.readLine());
-
-			if(server.equals(context.getPlayerID()))
+			
+			if(server.equals(app.getPlayerID()))
 			{
 				addPlayer(new GameInfo(server, game), player);
 			}
 		}
 	}
 	
-	private final AppActivity context;
-	private final CustomDTNClient dtnClient;
-	private final CustomDTNDataHandler dtnDataHandler;
+	private final AppActivity app;
 }
