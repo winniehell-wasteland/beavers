@@ -15,9 +15,10 @@ import de.tubs.ibr.dtn.api.DataHandler;
 
 public class CustomDTNDataHandler implements DataHandler {
 	
-	public CustomDTNDataHandler(final DTNClient pDTNClient, final PayloadHandler pPayloadHandler) {
+	public CustomDTNDataHandler(final DTNClient pDTNClient, final Server pServer, final Client pClient) {
 		dtnClient = pDTNClient;
-		payloadHandler = pPayloadHandler;
+		server = pServer;
+		client = pClient;
 		
 		executor = Executors.newSingleThreadExecutor();
 	}
@@ -39,15 +40,13 @@ public class CustomDTNDataHandler implements DataHandler {
 
 	@Override
 	public void startBundle(Bundle pBundle) {
-		bundle = new BundleID( pBundle );	
-		
-		//pBundle.source
+		bundle = pBundle;
 	}
 
 	@Override
 	public void endBundle() {
 		
-		final BundleID received = bundle;
+		final BundleID received = new BundleID(bundle);
 
 		// run the queue and delivered process asynchronously
 		executor.execute(new Runnable() {
@@ -85,17 +84,26 @@ public class CustomDTNDataHandler implements DataHandler {
 	public void payload(byte[] data) {
 		
 		final byte[] tmpData = data.clone();
-		
-		System.out.println("test1 "+data.length+" "+tmpData.length);
+		final Bundle tmpBundle = bundle;
 		
 		// process data asynchronously
 		executor.execute(new Runnable() {
 	        public void run() {
 				try {
-					System.out.println("test2");
 					final DataInputStream input = new DataInputStream(new ByteArrayInputStream(tmpData));
-					CustomDTNDataHandler.this.payloadHandler.handlePayload(input);
-					System.out.println("test3");
+					
+					if(tmpBundle.destination.equals(Server.GROUP_EID.toString()))
+					{
+						server.handlePayload(input);
+					}
+					else if(tmpBundle.destination.equals(Client.GROUP_EID.toString()))
+					{
+						client.handlePayload(input);
+					}
+					else
+					{
+						System.out.println("Unknown destination: "+tmpBundle.destination);
+					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -124,8 +132,9 @@ public class CustomDTNDataHandler implements DataHandler {
 		
 	}
 	
-	private BundleID bundle;
+	private Bundle bundle;
 	private final DTNClient dtnClient;
 	private ExecutorService executor;
-	private final PayloadHandler payloadHandler;
+	private final Client client;
+	private final Server server;
 }
