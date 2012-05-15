@@ -1,5 +1,7 @@
 package org.beavers;
 
+import java.util.UUID;
+
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.Camera;
 import org.anddev.andengine.engine.options.EngineOptions;
@@ -17,38 +19,74 @@ import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
-
-import org.beavers.gameplay.Game;
+import org.beavers.communication.Client;
+import org.beavers.communication.CustomDTNClient;
+import org.beavers.communication.CustomDTNDataHandler;
+import org.beavers.communication.Server;
+import org.beavers.gameplay.GameScene;
+import org.beavers.gameplay.GameID;
+import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.PlayerID;
 import org.beavers.ui.Menu;
+
+import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Binder;
-import android.os.IBinder;
-import android.os.Parcel;
-import android.os.Parcelable;
+import android.os.Bundle;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Surface;
+import android.widget.Toast;
 
-public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener, Parcelable {	
-	
-	private final IBinder binder = new EngineBinder();
+public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener {	
 
-	private Camera camera;
-
-	private Scene mainScene;
-	private Menu menuScene;
-	private Game gameScene;
-
-	private Texture fontTexture;
-	private Font menuFont;
-
-	
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
+	}
+	
+	protected void onCreate(Bundle pSavedInstanceState) {
+		super.onCreate(pSavedInstanceState);
+
+		playerID = new PlayerID(UUID.randomUUID().toString());
+		
+		client = new Client(this);
+		server = new Server(this);
+
+		dtnClient = new CustomDTNClient(this);
+		dtnDataHandler = new CustomDTNDataHandler(dtnClient, server, client);
+		
+        dtnClient.setDataHandler(dtnDataHandler);
+                
+        try {
+        	final Registration registration = new Registration("game/server");
+
+        	registration.add(Server.GROUP_EID);
+        	registration.add(Client.GROUP_EID);
+        	
+			dtnClient.initialize(registration);
+		} catch (ServiceNotAvailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	protected void onDestroy() {
+		// unregister at the daemon
+		dtnClient.unregister();
+
+		dtnDataHandler.stop();
+		
+		// destroy DTN client
+		dtnClient.terminate();
+		
+		super.onDestroy();
 	}
 
 	@Override
@@ -90,7 +128,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		this.mainScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
 
 		this.menuScene = new Menu(this.camera, this, menuFont);
-		this.gameScene = new Game(this, getEngine());
+		this.gameScene = new GameScene(this);
 		
 		this.mainScene.setChildScene(this.menuScene);
 		
@@ -121,14 +159,27 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			float pMenuItemLocalX, float pMenuItemLocalY) {
 		switch(pMenuItem.getID()) {
 		case Menu.START:
-			System.out.println("Start game");
+			Toast.makeText(this, "Start game", Toast.LENGTH_SHORT).show();
 			
 			this.menuScene.back();
 			this.mainScene.setChildScene(gameScene);
+			
+			GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
+			
+			server.initiateGame(newGame);
 
 			return true;
 		case Menu.JOIN:
-			System.out.println("Join game");
+			Toast.makeText(this, "Join game", Toast.LENGTH_SHORT).show();
+
+			if(client.announcedGames.isEmpty())
+			{
+				Toast.makeText(this, "No announced games", Toast.LENGTH_LONG).show();
+			}
+			else
+			{
+				client.joinGame(client.announcedGames.get(client.announcedGames.size() - 1));
+			}
 			return true;
 		case Menu.QUIT:
 			System.out.println("Quit game");
@@ -151,38 +202,37 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		}
 	}
-	
-    public class EngineBinder extends Binder {
-        Engine getEngine() {
-            // Return this instance of LocalService so clients can call public methods
-            return AppActivity.this.getEngine();
-        }
-    }
 
-	@Override
-	public int describeContents() {
-		// TODO Auto-generated method stub
-		return 0;
+	public PlayerID getPlayerID() {
+		return playerID;
 	}
 
-	@Override
-	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeStrongBinder(binder);
+	public Client getClient() {
+		return client;
 	}
 	
-	// necessary to load Parcelable
-    public static final Parcelable.Creator<AppActivity> CREATOR = new Parcelable.Creator<AppActivity>() {
-        public AppActivity createFromParcel(Parcel in) {
-            return new AppActivity(in);
-        }
+	public Session getDTNSession() throws SessionDestroyedException, InterruptedException {
+		return dtnClient.getSession();
+	}
+	
+	public Server getServer() {
+		return server;
+	}
+	
+	private PlayerID playerID;
 
-        public AppActivity[] newArray(int size) {
-            return new AppActivity[size];
-        }
-    };
+	private Client client;
+	private Server server;
+	
+	private CustomDTNClient dtnClient;
+	private CustomDTNDataHandler dtnDataHandler;
 
-    // load activity from Parcel
-    private AppActivity(Parcel in) {
-        mEngine = ((EngineBinder) in.readStrongBinder()).getEngine();
-    }
+	private Camera camera;
+
+	private Scene mainScene;
+	private Menu menuScene;
+	private GameScene gameScene;
+
+	private Texture fontTexture;
+	private Font menuFont;
 }
