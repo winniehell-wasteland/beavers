@@ -23,7 +23,7 @@ import org.beavers.communication.Client;
 import org.beavers.communication.CustomDTNClient;
 import org.beavers.communication.CustomDTNDataHandler;
 import org.beavers.communication.Server;
-import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameScene;
 import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.PlayerID;
@@ -128,7 +128,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		this.mainScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
 
 		this.menuScene = new Menu(this.camera, this, menuFont);
-		this.gameScene = new Game(getEngine());
+		this.gameScene = new GameScene(this);
 		
 		this.mainScene.setChildScene(this.menuScene);
 		
@@ -231,7 +231,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	private Scene mainScene;
 	private Menu menuScene;
-	private Game gameScene;
+	private GameScene gameScene;
 
 	private Texture fontTexture;
 	private Font menuFont;
