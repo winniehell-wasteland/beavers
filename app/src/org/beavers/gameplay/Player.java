@@ -7,18 +7,18 @@ public class Player {
 		return null;
 	}
 
-	public boolean isServer(Game game) {
-		return this.equals(game.getInfo().getServer());
+	public boolean isServer(GameInfo pGame) {
+		return this.equals(pGame.getServer());
 	}
 	
-	public int getActionPoints(Game game)
+	public int getActionPoints(GameInfo pGame)
 	{
 		return -1;
 	}
 	
-	public void resetActionPoints(Game game)
+	public void resetActionPoints(GameInfo pGame)
 	{
-		game.getInitialActionPoints();
+		//getInitialActionPoints();
 	}
 	
 	@Override

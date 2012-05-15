@@ -25,6 +25,20 @@ public final class GameInfo {
 	public void setServer(PlayerID pID) {
 		server = pID;
 	}
+
+	public GameID getID() {
+		return game;
+	}
+	
+	public String getFilename()
+	{
+		return null;
+	}
+	
+	public int getInitialActionPoints()
+	{
+		return -1;
+	}
 	
 	@Override
 	public boolean equals(Object other) {
@@ -36,9 +50,5 @@ public final class GameInfo {
 		{
 			return false;
 		}
-	}
-
-	public GameID getID() {
-		return game;
 	}
 }
