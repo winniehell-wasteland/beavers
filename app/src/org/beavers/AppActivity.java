@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.Camera;
+import org.anddev.andengine.engine.camera.SmoothCamera;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -103,7 +104,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
         	orientation = ScreenOrientation.PORTRAIT;
         }
 		
-		this.camera = new Camera(0, 0, display.getWidth(), display.getHeight());
+		this.camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(),250,250,0);
 		
 		return new Engine(new EngineOptions(true, orientation, 
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), this.camera));
@@ -227,7 +228,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	private CustomDTNClient dtnClient;
 	private CustomDTNDataHandler dtnDataHandler;
 
-	private Camera camera;
+	private SmoothCamera camera;
 
 	private Scene mainScene;
 	private Menu menuScene;

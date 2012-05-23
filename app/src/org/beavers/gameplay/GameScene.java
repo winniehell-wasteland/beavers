@@ -65,7 +65,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 	private void loadSoldiers(){
 		c= new Soldier(app,0,0,0);
 		c.createSoldier(this,20,20);
-		float a[]=c.getSceneCoordinates();
+	
 		
 		Toast.makeText(app,""+c.getSprite().getRotation(), Toast.LENGTH_LONG).show();
 		c.move(80,300);
@@ -83,6 +83,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 	
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pTouchEvent) {
+		Toast.makeText(app, "hallo", Toast.LENGTH_SHORT).show();
+		
 		if(pTouchEvent.getAction() == MotionEvent.ACTION_UP){
 			Rectangle r= new Rectangle(pTouchEvent.getMotionEvent().getX(), pTouchEvent.getMotionEvent().getY(), 10, 10);
 			r.setColor(0, 1, 0);
