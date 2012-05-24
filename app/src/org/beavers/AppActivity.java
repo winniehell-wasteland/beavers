@@ -28,7 +28,6 @@ import org.beavers.gameplay.GameScene;
 import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.PlayerID;
-import org.beavers.ui.Menu;
 
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.Registration;
@@ -44,6 +43,9 @@ import android.os.Bundle;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +57,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener {	
+public class AppActivity extends BaseGameActivity {	
 
 	private ListView serverListView;
 
@@ -88,6 +90,13 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.main_menu, menu);
+	    return true;
 	}
 	
 	@Override
@@ -136,17 +145,10 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	@Override
 	public Scene onLoadScene() {
-		this.mEngine.registerUpdateHandler(new FPSLogger());
-
-		this.mainScene = new Scene();
-		this.mainScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
-
-		this.menuScene = new Menu(this.camera, this, menuFont);
-		this.gameScene = new GameScene(this);
+		mEngine.registerUpdateHandler(new FPSLogger());
+		gameScene = new GameScene(this);
 		
-		this.mainScene.setChildScene(this.menuScene);
-		
-		return mainScene;
+		return gameScene;
 	}
 
 	@Override
@@ -157,17 +159,18 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	@Override
 	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
 		
-		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
-		    if(serverListView.getParent() == frameLayout)
-		    {
-		    	frameLayout.addView(mRenderSurfaceView);
-		    	frameLayout.removeView(serverListView);
-		    }
+		if(pKeyCode == KeyEvent.KEYCODE_BACK && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
 			
-			if(this.mainScene.getChildScene() == this.gameScene) {
-				this.gameScene.back();
-				this.mainScene.setChildScene(this.menuScene);
+			if(serverListView.getParent() == frameLayout)
+		    {
+				this.finish();
+		    }
+			else
+			{
+		    	frameLayout.removeAllViews();
+			    frameLayout.addView(serverListView);
 			}
+			
 			return true;
 		} else {
 			return super.onKeyDown(pKeyCode, pEvent);
@@ -175,62 +178,37 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	}
 
 	@Override
-	public boolean onMenuItemClicked(MenuScene pMenuScene, IMenuItem pMenuItem,
-			float pMenuItemLocalX, float pMenuItemLocalY) {
-		switch(pMenuItem.getID()) {
-		case Menu.START:
-			Toast.makeText(this, "Start game", Toast.LENGTH_SHORT).show();
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_start_game:
 			
-			this.menuScene.back();
-			this.mainScene.setChildScene(gameScene);
-			
+		    if(mRenderSurfaceView.getParent() != frameLayout)
+		    {
+		    	frameLayout.removeAllViews();
+		    	
+			    final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
+			    frameLayout.addView(this.mRenderSurfaceView, surfaceViewLayoutParams);
+		    }
+		    						
 			GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
-			
 			server.initiateGame(newGame);
-
-			return true;
-		case Menu.JOIN:
-			//Toast.makeText(this, "Join game", Toast.LENGTH_SHORT).show();
 			
-		    //text.setVisibility(text.getVisibility() == View.VISIBLE?View.INVISIBLE:View.VISIBLE);
-		    
+			return true;
+		case R.id.menu_join_game:
+			
 		    if(serverListView.getParent() != frameLayout)
-		    {    	    
+		    {
+		    	frameLayout.removeAllViews();
 			    frameLayout.addView(serverListView);
-		    	frameLayout.removeView(mRenderSurfaceView);
 		    }
 			
 			return true;
-			/*
-			if(client.announcedGames.isEmpty())
-			{
-				Toast.makeText(this, "No announced games", Toast.LENGTH_LONG).show();
-			}
-			else
-			{
-				client.joinGame(client.announcedGames.get(client.announcedGames.size() - 1));
-			}
-			return true;
-			*/
-		case Menu.QUIT:
-			System.out.println("Quit game");
-			
+		case R.id.menu_quit:
 			this.finish();
 			
 			return true;
 		default:
-			return false;
-		}
-	}
-
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-
-		if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-		} else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+			return super.onOptionsItemSelected(item);
 		}
 	}
 
@@ -255,13 +233,9 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	    frameLayout = new FrameLayout(this);
 	    final FrameLayout.LayoutParams frameLayoutLayoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.FILL_PARENT, FrameLayout.LayoutParams.FILL_PARENT);
 
-	    this.mRenderSurfaceView = new RenderSurfaceView(this);
+	    mRenderSurfaceView = new RenderSurfaceView(this);
 	    mRenderSurfaceView.setRenderer(mEngine);
-	    final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
-	    frameLayout.addView(this.mRenderSurfaceView, surfaceViewLayoutParams);
-
-	    //Create any other views you want here, and add them to the frameLayout.
-	    
+	    	    	    
 	    serverListView = new ListView(this);
 	    serverListView.setPadding(20, 10, 10, 10);
 	    
@@ -338,9 +312,6 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	private CustomDTNDataHandler dtnDataHandler;
 
 	private Camera camera;
-
-	private Scene mainScene;
-	private Menu menuScene;
 	private GameScene gameScene;
 
 	private Texture fontTexture;
