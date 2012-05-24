@@ -13,23 +13,29 @@ import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.input.touch.TouchEvent;
+import org.anddev.andengine.input.touch.detector.HoldDetector;
+import org.anddev.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
+import org.anddev.andengine.input.touch.detector.ScrollDetector;
+import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
+import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.util.Debug;
 import org.beavers.AppActivity;
 import org.beavers.ingame.Soldier;
 
-import android.view.MotionEvent;
+import android.util.Log;
 import android.widget.Toast;
 
-public class GameScene extends Scene implements IOnSceneTouchListener {
-
-	TMXTiledMap map;
+public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDetectorListener, IScrollDetectorListener {
 	
 	public GameScene(final AppActivity pApp)
 	{
 		super();
 		
 		app = pApp;
+		scrollDetector = new SurfaceScrollDetector(10.0f, this);
+		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
+		this.registerUpdateHandler(holdDetector);
 		
 		loadMap("test");
 		loadSoldiers();
@@ -73,48 +79,50 @@ public class GameScene extends Scene implements IOnSceneTouchListener {
 		//Toast.makeText(context,a[0]+" "+a[1] , Toast.LENGTH_LONG).show();
 	}
  
-	float x1=0.0f ;
-	float y1=0.0f ;
-	float x2=0.0f; 
-	float y2=0.0f; 
-	float diffX=0.0f;
-	float diffY=0.0f;
-	int camSpeed=150;
+	final static float CAMERA_SPEED = 1.50f;
 	
 	@Override
-	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pTouchEvent) {
-		Toast.makeText(app, "hallo", Toast.LENGTH_SHORT).show();
-		
-		if(pTouchEvent.getAction() == MotionEvent.ACTION_UP){
-			Rectangle r= new Rectangle(pTouchEvent.getMotionEvent().getX(), pTouchEvent.getMotionEvent().getY(), 10, 10);
-			r.setColor(0, 1, 0);
-			this.attachChild(r);
-			c.move((int)pTouchEvent.getMotionEvent().getX(),(int)pTouchEvent.getMotionEvent().getY());
+	public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
+		if(holdDetector.onSceneTouchEvent(pScene, pSceneTouchEvent)
+				| scrollDetector.onSceneTouchEvent(pScene, pSceneTouchEvent))
+		{
+			return true;
 		}
-		 if(pTouchEvent.getAction() == MotionEvent.ACTION_DOWN)
-	        {
-			
-			x1= pTouchEvent.getMotionEvent().getX();
-			y1= pTouchEvent.getMotionEvent().getY();
-	             
-	        }
-		 else if(pTouchEvent.getAction() == MotionEvent.ACTION_MOVE)
-	        {
-				
-			x2= pTouchEvent.getMotionEvent().getX();
-			y2= pTouchEvent.getMotionEvent().getY();
-			diffX=x1-x2;
-			diffY=y1-y2;
-			if(diffX<4 && diffX >-4)diffX=0;
-			if(diffY<4 && diffY >-4)diffY=0;
-			
-			app.getEngine().getCamera().setCenter(app.getEngine().getCamera().getCenterX()+diffX*camSpeed,app.getEngine().getCamera().getCenterY()+diffY*camSpeed);
-			x1=x2;
-			y1=y2;
-	        }
-		return true;
+		else
+		{
+			return false;
+		}
  	}
 
 	private final AppActivity app;
+	private final SurfaceScrollDetector scrollDetector;
+	private final HoldDetector holdDetector;
+
+	private TMXTiledMap map;
 	private Soldier c;
+
+	@Override
+	public void onScroll(ScrollDetector pScollDetector, TouchEvent pTouchEvent,
+			float pDistanceX, float pDistanceY) {		
+		app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
+	}
+
+	@Override
+	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds,
+			float pHoldX, float pHoldY) {
+	}
+
+	@Override
+	public void onHoldFinished(HoldDetector pHoldDetector,
+			long pHoldTimeMilliseconds, float pHoldX, float pHoldY) {
+		
+		Log.d("onHoldFinished", "t="+pHoldTimeMilliseconds);
+
+		Rectangle r= new Rectangle(pHoldX, pHoldY, 10, 10);
+		r.setColor(0, 1, 0);
+		GameScene.this.attachChild(r);
+		
+		c.stop();
+		c.move(Math.round(pHoldX),Math.round(pHoldY));
+	}
 }
