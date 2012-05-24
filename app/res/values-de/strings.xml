@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_start_game">Spiel beginnen</string>
+    <string name="menu_join_game">Spiel beitreten</string>
+    <string name="menu_running_games">Laufende Spiele</string>
+    <string name="menu_help">Hilfe</string>
+    <string name="menu_options">Optionen</string>
+    <string name="menu_quit">Beenden</string>
+</resources>
