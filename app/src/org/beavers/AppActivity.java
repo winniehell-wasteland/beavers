@@ -18,6 +18,7 @@ import org.anddev.andengine.opengl.texture.Texture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.anddev.andengine.opengl.view.RenderSurfaceView;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.beavers.communication.Client;
 import org.beavers.communication.CustomDTNClient;
@@ -36,16 +37,29 @@ import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Surface;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener {	
 
+	private ListView serverListView;
+
+	private ViewGroup frameLayout;
 	public AppActivity() {
 		// TODO Auto-generated constructor stub
 	}
@@ -144,6 +158,12 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
 		
 		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
+		    if(serverListView.getParent() == frameLayout)
+		    {
+		    	frameLayout.addView(mRenderSurfaceView);
+		    	frameLayout.removeView(serverListView);
+		    }
+			
 			if(this.mainScene.getChildScene() == this.gameScene) {
 				this.gameScene.back();
 				this.mainScene.setChildScene(this.menuScene);
@@ -170,8 +190,18 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 			return true;
 		case Menu.JOIN:
-			Toast.makeText(this, "Join game", Toast.LENGTH_SHORT).show();
-
+			//Toast.makeText(this, "Join game", Toast.LENGTH_SHORT).show();
+			
+		    //text.setVisibility(text.getVisibility() == View.VISIBLE?View.INVISIBLE:View.VISIBLE);
+		    
+		    if(serverListView.getParent() != frameLayout)
+		    {    	    
+			    frameLayout.addView(serverListView);
+		    	frameLayout.removeView(mRenderSurfaceView);
+		    }
+			
+			return true;
+			/*
 			if(client.announcedGames.isEmpty())
 			{
 				Toast.makeText(this, "No announced games", Toast.LENGTH_LONG).show();
@@ -181,6 +211,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 				client.joinGame(client.announcedGames.get(client.announcedGames.size() - 1));
 			}
 			return true;
+			*/
 		case Menu.QUIT:
 			System.out.println("Quit game");
 			
@@ -218,6 +249,85 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	public Server getServer() {
 		return server;
 	}
+	
+	@Override
+	protected void onSetContentView() {
+	    frameLayout = new FrameLayout(this);
+	    final FrameLayout.LayoutParams frameLayoutLayoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.FILL_PARENT, FrameLayout.LayoutParams.FILL_PARENT);
+
+	    this.mRenderSurfaceView = new RenderSurfaceView(this);
+	    mRenderSurfaceView.setRenderer(mEngine);
+	    final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
+	    frameLayout.addView(this.mRenderSurfaceView, surfaceViewLayoutParams);
+
+	    //Create any other views you want here, and add them to the frameLayout.
+	    
+	    serverListView = new ListView(this);
+	    serverListView.setPadding(20, 10, 10, 10);
+	    
+	    serverListView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.FILL_PARENT,
+                LinearLayout.LayoutParams.FILL_PARENT
+            ));
+	    	    
+	    serverListView.setAdapter(new ListViewAdapter());
+
+	    this.setContentView(frameLayout, frameLayoutLayoutParams);
+	}
+	
+	class ListViewAdapter extends BaseAdapter {
+   	 
+   	 private LayoutInflater mInflater = LayoutInflater.from(AppActivity.this);
+
+   	 public int getCount() {
+   		 if(client == null)
+   		 {
+   			 return 0;
+   		 }
+   		 
+   	  return client.announcedGames.size();
+   	 }
+
+   	 public Object getItem(int position) {
+   		 if(client == null)
+   		 {
+   			 return null;
+   		 }
+   		 
+   	  return client.announcedGames.get(position);
+   	 }
+
+   	 public long getItemId(int position) {
+   	  return position;
+   	 }
+
+   	 public View getView(int position, View convertView, ViewGroup parent) {
+   	  ViewHolder holder;
+   	  if (convertView == null) {
+   	   convertView = mInflater.inflate(R.layout.custom_row_view, null);
+   	   holder = new ViewHolder();
+   	   holder.txtName = (TextView) convertView.findViewById(R.id.name);
+   	   holder.txtServer = (TextView) convertView.findViewById(R.id.server);
+   	   holder.txtState = (TextView) convertView.findViewById(R.id.state);
+
+   	   convertView.setTag(holder);
+   	  } else {
+   	   holder = (ViewHolder) convertView.getTag();
+   	  }
+   	  
+   	  holder.txtName.setText(client.announcedGames.get(position).getID().toString());
+   	  holder.txtServer.setText(client.announcedGames.get(position).getServer().toString());
+   	  holder.txtState.setText("Waiting...");
+
+   	  return convertView;
+   	 }
+
+   	 class ViewHolder {
+   	  TextView txtName;
+   	  TextView txtServer;
+   	  TextView txtState;
+   	 }	
+   };
 	
 	private PlayerID playerID;
 
