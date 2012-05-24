@@ -32,6 +32,10 @@ public class Client {
 	public Client(final AppActivity pApp)
 	{
 		app = pApp;
+
+		announcedGames.add(new GameInfo(new PlayerID("foo"), new GameID("bar")));
+		announcedGames.add(new GameInfo(new PlayerID("test"), new GameID("game")));
+		announcedGames.add(new GameInfo(new PlayerID("123"), new GameID("456")));
 	}
 	
 	/**
