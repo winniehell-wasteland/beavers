@@ -3,7 +3,6 @@ package org.beavers;
 import java.util.UUID;
 
 import org.anddev.andengine.engine.Engine;
-import org.anddev.andengine.engine.camera.Camera;
 import org.anddev.andengine.engine.camera.SmoothCamera;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
@@ -104,7 +103,7 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
         	orientation = ScreenOrientation.PORTRAIT;
         }
 		
-		this.camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(),250,250,0);
+		this.camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
 		
 		return new Engine(new EngineOptions(true, orientation, 
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), this.camera));
