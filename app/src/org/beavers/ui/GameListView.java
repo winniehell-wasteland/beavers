@@ -1,9 +1,8 @@
 package org.beavers.ui;
 
-import java.util.ArrayList;
-
 import org.beavers.R;
 import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.GameList;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -16,7 +15,7 @@ import android.widget.TextView;
 
 public class GameListView extends ListView {
 
-	public GameListView(final Context pContext, final ArrayList<GameInfo> pList) {
+	public GameListView(final Context pContext, final GameList pList) {
 		super(pContext);
 
 		list = pList;
@@ -30,7 +29,7 @@ public class GameListView extends ListView {
 		setAdapter(new ListViewAdapter(pContext));
 	}
 
-	final private ArrayList<GameInfo> list;
+	final private GameList list;
 
 
 	class ListViewAdapter extends BaseAdapter {
@@ -69,7 +68,7 @@ public class GameListView extends ListView {
 				holder = (ViewHolder) convertView.getTag();
 			}
 
-			final GameInfo item = (GameInfo) getItem(position);
+			final GameInfo item = list.get(position);
 
 			holder.txtName.setText(item.getID().toString());
 			holder.txtServer.setText(item.getServer().toString());

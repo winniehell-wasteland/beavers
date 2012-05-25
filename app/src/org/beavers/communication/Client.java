@@ -4,15 +4,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 
 import org.beavers.AppActivity;
 import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.GameList;
+import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.PlayerID;
 
+import android.util.Log;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 
 public class Client {
@@ -27,26 +29,40 @@ public class Client {
 	 * @}
 	 */
 
-	public final ArrayList<GameInfo> announcedGames;
+	public final GameList announcedGames;
+	public final  GameList runningGames;
 
 	public Client(final AppActivity pApp)
 	{
 		app = pApp;
 
-		announcedGames = new ArrayList<GameInfo>();
+		announcedGames = new GameList();
+		runningGames = new GameList();
 
 		announcedGames.add(new GameInfo(new PlayerID("foo"), new GameID("bar")));
 		announcedGames.add(new GameInfo(new PlayerID("test"), new GameID("game")));
 		announcedGames.add(new GameInfo(new PlayerID("123"), new GameID("456")));
+
+		runningGames.add(new GameInfo(new PlayerID("server1"), new GameID("game1")));
+		runningGames.add(new GameInfo(new PlayerID("server2"), new GameID("game2")));
+		runningGames.add(new GameInfo(new PlayerID("server3"), new GameID("game3")));
+		runningGames.add(new GameInfo(new PlayerID("server4"), new GameID("game4")));
 	}
 
 	/**
 	 * server has announced new game
 	 * @param game
 	 */
-	public void receiveGameInfo(final GameInfo game)
+	public void receiveGameInfo(final GameInfo pGame)
 	{
-		announcedGames.add(game);
+		if(announcedGames.contains(pGame))
+		{
+			Log.e("Client", "Game "+pGame+" was already announced!");
+			return;
+		}
+
+		pGame.setState(GameState.ANNOUNCED);
+		announcedGames.add(pGame);
 	}
 
 	/**
@@ -77,7 +93,7 @@ public class Client {
 	 * responds to server
 	 * @param game
 	 */
-	public void acknowledgeGameReady(final GameInfo game)
+	public void acknowledgeGameReady(final GameInfo pGame)
 	{
 
 	}
@@ -85,7 +101,7 @@ public class Client {
 	/**
 	 * start planning phase
 	 */
-	public void startPlanningPhase(final GameInfo game)
+	public void startPlanningPhase(final GameInfo pGame)
 	{
 
 
@@ -96,7 +112,7 @@ public class Client {
 	 * @param game
 	 * @param decisions
 	 */
-	public void sendDecisions(final GameInfo game, final DecisionContainer decisions)
+	public void sendDecisions(final GameInfo pGame, final DecisionContainer decisions)
 	{
 
 	}
@@ -104,7 +120,7 @@ public class Client {
 	/**
 	 * receive outcome from server
 	 */
-	public void receiveOutcome(final GameInfo game, final OutcomeContainer outcome)
+	public void receiveOutcome(final GameInfo pGame, final OutcomeContainer outcome)
 	{
 
 	}
@@ -113,7 +129,7 @@ public class Client {
 	 * quit game
 	 * @param player
 	 */
-	public void abortGame(final GameInfo game)
+	public void abortGame(final GameInfo pGame)
 	{
 
 	}

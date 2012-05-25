@@ -6,49 +6,78 @@ package org.beavers.gameplay;
  */
 public final class GameInfo {
 
-	private PlayerID server;
-	private final GameID game;
-	
 	/**
 	 * @param pServer server of the game
 	 * @param pGame unique game ID on server
 	 */
 	public GameInfo(final PlayerID pServer, final GameID pGame) {
-		this.server = pServer;
-		this.game = pGame;
+		server = pServer;
+		game = pGame;
+		state = GameState.UNKNOWN;
 	}
 
-	public PlayerID getServer() {
-		return server;
-	}
-
-	public void setServer(PlayerID pID) {
-		server = pID;
-	}
-
-	public GameID getID() {
-		return game;
-	}
-	
-	public String getFilename()
-	{
-		return null;
-	}
-	
-	public int getInitialActionPoints()
-	{
-		return -1;
-	}
-	
 	@Override
-	public boolean equals(Object other) {
+	public boolean equals(final Object other) {
 		if(other instanceof GameInfo)
 		{
-			return server.equals(((GameInfo)other).server) && game.equals(((GameInfo)other).game);
+			return server.equals(((GameInfo)other).server)
+					&& game.equals(((GameInfo)other).game);
 		}
 		else
 		{
 			return false;
 		}
 	}
+
+	/** @return game ID on server */
+	public GameID getID() {
+		return game;
+	}
+
+	// TODO move to Client?
+	public int getInitialActionPoints()
+	{
+		return -1;
+	}
+
+	/** @return name of the map played */
+	public String getMapName()
+	{
+		return null;
+	}
+
+	/** @return server of the game */
+	public PlayerID getServer() {
+		return server;
+	}
+
+	/** @return current game state */
+	public GameState getState() {
+		return state;
+	}
+
+	/**
+	 * change server
+	 * @param pServer new Server
+	 */
+	public void setServer(final PlayerID pServer) {
+		server = pServer;
+	}
+
+	/**
+	 * change game state
+	 * @param pState new state
+	 */
+	public void setState(final GameState pState) {
+		state = pState;
+	}
+
+	@Override
+	public String toString() {
+		return server.toString()+"/"+game.toString();
+	}
+
+	private final GameID game;
+	private PlayerID server;
+	private GameState state;
 }

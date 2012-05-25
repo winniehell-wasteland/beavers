@@ -1,6 +1,5 @@
 package org.beavers;
 
-import java.util.ArrayList;
 import java.util.UUID;
 
 import org.anddev.andengine.engine.Engine;
@@ -44,13 +43,6 @@ public class AppActivity extends BaseGameActivity {
 
 		client = new Client(this);
 		server = new Server(this);
-
-		runningGames = new ArrayList<GameInfo>();
-
-		runningGames.add(new GameInfo(new PlayerID("server1"), new GameID("game1")));
-		runningGames.add(new GameInfo(new PlayerID("server2"), new GameID("game2")));
-		runningGames.add(new GameInfo(new PlayerID("server3"), new GameID("game3")));
-		runningGames.add(new GameInfo(new PlayerID("server4"), new GameID("game4")));
 	}
 
 	@Override
@@ -221,8 +213,7 @@ public class AppActivity extends BaseGameActivity {
 
 	    assert client != null;
 	    announcedGamesView = new GameListView(this, client.announcedGames);
-
-	    runningGamesView = new GameListView(this, runningGames);
+	    runningGamesView = new GameListView(this, client.runningGames);
 
 	    frameLayout = new FrameLayout(this);
 	    final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
@@ -247,7 +238,4 @@ public class AppActivity extends BaseGameActivity {
 
 	private SmoothCamera camera;
 	private GameScene gameScene;
-
-	private final ArrayList<GameInfo> runningGames;
 }
-
