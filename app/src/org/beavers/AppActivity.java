@@ -1,5 +1,6 @@
 package org.beavers;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import org.anddev.andengine.engine.Engine;
@@ -8,16 +9,8 @@ import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.anddev.andengine.entity.scene.Scene;
-import org.anddev.andengine.entity.scene.background.ColorBackground;
-import org.anddev.andengine.entity.scene.menu.MenuScene;
-import org.anddev.andengine.entity.scene.menu.MenuScene.IOnMenuItemClickListener;
-import org.anddev.andengine.entity.scene.menu.item.IMenuItem;
 import org.anddev.andengine.entity.util.FPSLogger;
-import org.anddev.andengine.opengl.font.Font;
-import org.anddev.andengine.opengl.texture.Texture;
-import org.anddev.andengine.opengl.texture.TextureOptions;
-import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.anddev.andengine.opengl.view.RenderSurfaceView;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.beavers.communication.Client;
 import org.beavers.communication.CustomDTNClient;
@@ -27,36 +20,42 @@ import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameScene;
 import org.beavers.gameplay.PlayerID;
-import org.beavers.ui.Menu;
+import org.beavers.ui.GameListView;
 
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.Surface;
-import android.widget.Toast;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
-public class AppActivity extends BaseGameActivity implements IOnMenuItemClickListener {
+public class AppActivity extends BaseGameActivity {
 
-	public AppActivity() {
-		// TODO Auto-generated constructor stub
+	public AppActivity()
+	{
+		playerID = new PlayerID(UUID.randomUUID().toString());
+
+		client = new Client(this);
+		server = new Server(this);
+
+		runningGames = new ArrayList<GameInfo>();
+
+		runningGames.add(new GameInfo(new PlayerID("server1"), new GameID("game1")));
+		runningGames.add(new GameInfo(new PlayerID("server2"), new GameID("game2")));
+		runningGames.add(new GameInfo(new PlayerID("server3"), new GameID("game3")));
+		runningGames.add(new GameInfo(new PlayerID("server4"), new GameID("game4")));
 	}
 
 	@Override
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
-
-		playerID = new PlayerID(UUID.randomUUID().toString());
-
-		client = new Client(this);
-		server = new Server(this);
 
 		dtnClient = new CustomDTNClient(this);
 		dtnDataHandler = new CustomDTNDataHandler(dtnClient, server, client);
@@ -74,6 +73,13 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(final Menu menu) {
+	    final MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.main_menu, menu);
+	    return true;
 	}
 
 	@Override
@@ -111,28 +117,15 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 
 	@Override
 	public void onLoadResources() {
-		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
-		fontTexture = new BitmapTextureAtlas(512, 512, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		menuFont = new Font(fontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), 100, true, Color.BLACK);
-
-		getTextureManager().loadTexture(fontTexture);
-		getFontManager().loadFont(menuFont);
 	}
 
 	@Override
 	public Scene onLoadScene() {
 		mEngine.registerUpdateHandler(new FPSLogger());
-
-		mainScene = new Scene();
-		mainScene.setBackground(new ColorBackground(0.09804f, 0.6274f, 0.8784f));
-
-		menuScene = new Menu(camera, this, menuFont);
 		gameScene = new GameScene(this);
 
-		mainScene.setChildScene(menuScene);
-
-		return mainScene;
+		return gameScene;
 	}
 
 	@Override
@@ -143,11 +136,18 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	@Override
 	public boolean onKeyDown(final int pKeyCode, final KeyEvent pEvent) {
 
-		if(pKeyCode == KeyEvent.KEYCODE_MENU && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
-			if(mainScene.getChildScene() == gameScene) {
-				gameScene.back();
-				mainScene.setChildScene(menuScene);
+		if(pKeyCode == KeyEvent.KEYCODE_BACK && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
+
+			if(runningGamesView.getParent() == frameLayout)
+		    {
+				finish();
+		    }
+			else
+			{
+		    	frameLayout.removeAllViews();
+			    frameLayout.addView(runningGamesView);
 			}
+
 			return true;
 		} else {
 			return super.onKeyDown(pKeyCode, pEvent);
@@ -155,51 +155,46 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 	}
 
 	@Override
-	public boolean onMenuItemClicked(final MenuScene pMenuScene, final IMenuItem pMenuItem,
-			final float pMenuItemLocalX, final float pMenuItemLocalY) {
-		switch(pMenuItem.getID()) {
-		case Menu.START:
-			Toast.makeText(this, "Start game", Toast.LENGTH_SHORT).show();
+	public boolean onOptionsItemSelected(final MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.menu_start_game:
 
-			menuScene.back();
-			mainScene.setChildScene(gameScene);
+		    if(mRenderSurfaceView.getParent() != frameLayout)
+		    {
+		    	frameLayout.removeAllViews();
+
+			    final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
+			    frameLayout.addView(mRenderSurfaceView, surfaceViewLayoutParams);
+		    }
 
 			final GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
-
 			server.initiateGame(newGame);
 
 			return true;
-		case Menu.JOIN:
-			Toast.makeText(this, "Join game", Toast.LENGTH_SHORT).show();
+		case R.id.menu_join_game:
 
-			if(client.announcedGames.isEmpty())
-			{
-				Toast.makeText(this, "No announced games", Toast.LENGTH_LONG).show();
-			}
-			else
-			{
-				client.joinGame(client.announcedGames.get(client.announcedGames.size() - 1));
-			}
+		    if(announcedGamesView.getParent() != frameLayout)
+		    {
+		    	frameLayout.removeAllViews();
+			    frameLayout.addView(announcedGamesView);
+		    }
+
 			return true;
-		case Menu.QUIT:
-			System.out.println("Quit game");
+		case R.id.menu_running_games:
 
+		    if(runningGamesView.getParent() != frameLayout)
+		    {
+		    	frameLayout.removeAllViews();
+			    frameLayout.addView(runningGamesView);
+		    }
+
+			return true;
+		case R.id.menu_quit:
 			finish();
 
 			return true;
 		default:
-			return false;
-		}
-	}
-
-	@Override
-	public void onConfigurationChanged(final Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-
-		if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-		} else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-			setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+			return super.onOptionsItemSelected(item);
 		}
 	}
 
@@ -219,20 +214,40 @@ public class AppActivity extends BaseGameActivity implements IOnMenuItemClickLis
 		return server;
 	}
 
-	private PlayerID playerID;
+	@Override
+	protected void onSetContentView() {
+	    mRenderSurfaceView = new RenderSurfaceView(this);
+	    mRenderSurfaceView.setRenderer(mEngine);
 
-	private Client client;
-	private Server server;
+	    assert client != null;
+	    announcedGamesView = new GameListView(this, client.announcedGames);
+
+	    runningGamesView = new GameListView(this, runningGames);
+
+	    frameLayout = new FrameLayout(this);
+	    final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+	    		FrameLayout.LayoutParams.FILL_PARENT,
+	    		FrameLayout.LayoutParams.FILL_PARENT);
+	    setContentView(frameLayout, layoutParams);
+
+	    frameLayout.addView(runningGamesView);
+	}
+
+	private final PlayerID playerID;
+
+	private final Client client;
+	private final Server server;
 
 	private CustomDTNClient dtnClient;
 	private CustomDTNDataHandler dtnDataHandler;
 
-	private SmoothCamera camera;
+	private ViewGroup frameLayout;
+	private GameListView announcedGamesView;
+	private GameListView runningGamesView;
 
-	private Scene mainScene;
-	private Menu menuScene;
+	private SmoothCamera camera;
 	private GameScene gameScene;
 
-	private Texture fontTexture;
-	private Font menuFont;
+	private final ArrayList<GameInfo> runningGames;
 }
+

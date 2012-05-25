@@ -3,5 +3,11 @@
 
     <string name="hello">Hello World, AppActivity!</string>
     <string name="app_name">App</string>
+    <string name="menu_start_game">Start game</string>
+    <string name="menu_join_game">Join game</string>
+    <string name="menu_quit">Quit</string>
+    <string name="menu_running_games">Running games</string>
+    <string name="menu_help">Help</string>
+    <string name="menu_options">Options</string>
 
 </resources>
