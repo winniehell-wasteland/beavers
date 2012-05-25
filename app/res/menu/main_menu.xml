@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/main_menu">
+    <item android:id="@+id/menu_start_game" android:visible="true" android:titleCondensed="@string/menu_start_game" android:title="@string/menu_start_game" android:enabled="true"></item>
+    <item android:id="@+id/menu_join_game" android:visible="true" android:titleCondensed="@string/menu_join_game" android:title="@string/menu_join_game" android:enabled="true"></item>
+    <item android:id="@+id/menu_running_games" android:visible="true" android:titleCondensed="@string/menu_running_games" android:title="@string/menu_running_games" android:enabled="true"></item>    
+    <item android:id="@+id/menu_options" android:visible="false" android:titleCondensed="@string/menu_options" android:title="@string/menu_options" android:enabled="true"></item>
+	<item android:id="@+id/menu_help" android:visible="false" android:titleCondensed="@string/menu_help" android:title="@string/menu_help" android:enabled="true"></item>
+    <item android:id="@+id/menu_quit" android:visible="true" android:titleCondensed="@string/menu_quit" android:title="@string/menu_quit" android:enabled="true"></item>
+</menu>
