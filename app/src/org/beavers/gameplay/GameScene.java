@@ -75,6 +75,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 		
 		Toast.makeText(app,""+c.getSprite().getRotation(), Toast.LENGTH_LONG).show();
 		c.move(80,300);
+		this.registerTouchArea(c.getSprite());
+		this.setTouchAreaBindingEnabled(true);
 		//c.move(-200,40);
 		//Toast.makeText(context,a[0]+" "+a[1] , Toast.LENGTH_LONG).show();
 	}

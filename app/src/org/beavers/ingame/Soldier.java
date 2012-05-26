@@ -2,15 +2,21 @@ package org.beavers.ingame;
 
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
+import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
+import org.anddev.andengine.entity.scene.Scene.IOnAreaTouchListener;
+import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
+import org.anddev.andengine.entity.scene.Scene.ITouchArea;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
+import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.beavers.AppActivity;
+import org.beavers.gameplay.GameScene;
 
-public class Soldier extends GameObject {
+public class Soldier extends GameObject  {
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion playerTextureRegion;
@@ -29,7 +35,13 @@ public class Soldier extends GameObject {
 	}
 	
 	public void createSoldier(Scene s,int x, int y){
-		sprite=new AnimatedSprite(x,y,playerTextureRegion);
+		sprite=new AnimatedSprite(x,y,playerTextureRegion){
+			@Override
+			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+				this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+				return true;
+			}
+		};
 		sprite.stopAnimation();
 		sprite.setRotationCenter(sprite.getWidth()/2, sprite.getHeight()/2);
 		s.attachChild(sprite);
@@ -100,6 +112,11 @@ public class Soldier extends GameObject {
 	public String getType() {
 		return this.getClass().getSimpleName();
 	}
+
+
+	
+	
+
 	
 	
 }
