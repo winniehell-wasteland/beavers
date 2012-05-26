@@ -104,8 +104,9 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 	@Override
 	public void onScroll(ScrollDetector pScollDetector, TouchEvent pTouchEvent,
 			float pDistanceX, float pDistanceY) {		
-		app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
+			app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
 	}
+		
 
 	@Override
 	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds,

@@ -31,7 +31,7 @@ public class Soldier extends GameObject {
 	public void createSoldier(Scene s,int x, int y){
 		sprite=new AnimatedSprite(x,y,playerTextureRegion);
 		sprite.stopAnimation();
-		
+		sprite.setRotationCenter(sprite.getWidth()/2, sprite.getHeight()/2);
 		s.attachChild(sprite);
 	}
 	
@@ -46,16 +46,22 @@ public class Soldier extends GameObject {
 	
 	public void move(int x, int y){
 		//Bewegung nach x,y
-		float distx=Math.abs(x-sprite.getX());
-		float disty=Math.abs(y-sprite.getY());
-		MoveModifier mod = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed),sprite.getX(),x, sprite.getY(),y);
+		float distx=Math.abs(x-(sprite.getX()+sprite.getWidth()/2));
+		float disty=Math.abs(y-(sprite.getY()+sprite.getHeight()/2));
+		MoveModifier mod = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed),sprite.getX(),x-sprite.getWidth()/2, sprite.getY(),y-sprite.getHeight()/2);
 		sprite.registerEntityModifier(mod);
 		
 		//Rotation
-		float angleX=x-sprite.getX();
-		float angleY=y-sprite.getY();
+		float angleX=x-(sprite.getX()+sprite.getWidth()/2);
+		float angleY=y-(sprite.getY()+sprite.getHeight()/2);
 		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
-		RotationByModifier rotate= new RotationByModifier(0.2f, angle);
+		RotationByModifier rotate;
+		if(angle>=sprite.getRotation()){
+			rotate= new RotationByModifier(0.2f, angle-sprite.getRotation());
+		}
+		else{
+			rotate= new RotationByModifier(0.2f, -(sprite.getRotation()-angle));
+		}
 		sprite.registerEntityModifier(rotate);
 		
 		sprite.animate(new long[]{200, 200}, 1, 2, true);
