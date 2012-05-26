@@ -56,12 +56,13 @@ public class Soldier extends GameObject {
 		float angleY=y-(sprite.getY()+sprite.getHeight()/2);
 		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
 		RotationByModifier rotate;
-		if(angle>=sprite.getRotation()){
-			rotate= new RotationByModifier(0.2f, angle-sprite.getRotation());
-		}
-		else{
-			rotate= new RotationByModifier(0.2f, -(sprite.getRotation()-angle));
-		}
+	    //if(angle>180)angle=angle-360;
+	    //if(angle<-180)angle=360+angle;
+		if((angle-sprite.getRotation())>180)angle=(angle-sprite.getRotation())-360;
+		else if((angle-sprite.getRotation())<-180)angle=360+(angle-sprite.getRotation());
+		else angle=angle-sprite.getRotation();
+			rotate= new RotationByModifier(0.2f, angle);
+		
 		sprite.registerEntityModifier(rotate);
 		
 		sprite.animate(new long[]{200, 200}, 1, 2, true);
