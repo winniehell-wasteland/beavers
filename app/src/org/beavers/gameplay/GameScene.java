@@ -69,18 +69,25 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 	
 
 	private void loadSoldiers(){
-		c= new Soldier(app,0,0,0);
-		c.createSoldier(this,20,20);
-	
-		
-		Toast.makeText(app,""+c.getSprite().getRotation(), Toast.LENGTH_LONG).show();
-		c.move(80,300);
+		c= new Soldier(app,this,0,0,0);
+		c.createSoldier(20,20);
 		this.registerTouchArea(c.getSprite());
+		this.setTouchAreaBindingEnabled(true);
+		
+		c1= new Soldier(app,this,0,0,0);
+		c1.createSoldier(40,20);
+		this.registerTouchArea(c1.getSprite());
 		this.setTouchAreaBindingEnabled(true);
 		//c.move(-200,40);
 		//Toast.makeText(context,a[0]+" "+a[1] , Toast.LENGTH_LONG).show();
 	}
  
+	public void setSelectedSoldier(Soldier s){
+		if(currentSoldier!=null)currentSoldier.markDeselected();
+		currentSoldier=s;
+	}
+	
+	
 	final static float CAMERA_SPEED = 1.50f;
 	
 	@Override
@@ -101,8 +108,8 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 	private final HoldDetector holdDetector;
 
 	private TMXTiledMap map;
-	private Soldier c;
-
+	private Soldier c,c1;
+	private Soldier currentSoldier=null;
 	@Override
 	public void onScroll(ScrollDetector pScollDetector, TouchEvent pTouchEvent,
 			float pDistanceX, float pDistanceY) {		
@@ -124,8 +131,9 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 		Rectangle r= new Rectangle(pHoldX, pHoldY, 10, 10);
 		r.setColor(0, 1, 0);
 		GameScene.this.attachChild(r);
-		
-		c.stop();
-		c.move(Math.round(pHoldX),Math.round(pHoldY));
-	}
+		if(currentSoldier!=null){
+			currentSoldier.stop();
+			currentSoldier.move(Math.round(pHoldX),Math.round(pHoldY));
+		}
+	}	
 }
