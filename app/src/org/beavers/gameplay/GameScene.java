@@ -9,6 +9,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -21,6 +22,7 @@ import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.util.Debug;
 import org.beavers.AppActivity;
+import org.beavers.ingame.Position;
 import org.beavers.ingame.Soldier;
 
 import android.util.Log;
@@ -60,6 +62,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 		final TMXLayer tmxLayer = this.map.getTMXLayers().get(0);
 		this.attachChild(tmxLayer);
 		
+		
 	}
 	
 	public void playOutcome(OutcomeContainer outcome)
@@ -69,17 +72,15 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 	
 
 	private void loadSoldiers(){
-		c= new Soldier(app,this,0,0,0);
+		c= new Soldier(app,this,0);
 		c.createSoldier(20,20);
 		this.registerTouchArea(c.getSprite());
 		this.setTouchAreaBindingEnabled(true);
 		
-		c1= new Soldier(app,this,0,0,0);
+		c1= new Soldier(app,this,0);
 		c1.createSoldier(40,20);
 		this.registerTouchArea(c1.getSprite());
 		this.setTouchAreaBindingEnabled(true);
-		//c.move(-200,40);
-		//Toast.makeText(context,a[0]+" "+a[1] , Toast.LENGTH_LONG).show();
 	}
  
 	public void setSelectedSoldier(Soldier s){
@@ -121,19 +122,58 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 	public void onHold(HoldDetector pHoldDetector, long pHoldTimeMilliseconds,
 			float pHoldX, float pHoldY) {
 	}
-
+	
+	private Rectangle r;
 	@Override
 	public void onHoldFinished(HoldDetector pHoldDetector,
 			long pHoldTimeMilliseconds, float pHoldX, float pHoldY) {
 		
 		Log.d("onHoldFinished", "t="+pHoldTimeMilliseconds);
 
-		Rectangle r= new Rectangle(pHoldX, pHoldY, 10, 10);
-		r.setColor(0, 1, 0);
-		GameScene.this.attachChild(r);
+		
 		if(currentSoldier!=null){
-			currentSoldier.stop();
-			currentSoldier.move(Math.round(pHoldX),Math.round(pHoldY));
+			
+			if(this.map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY).getTMXTileProperties(map)==null 
+					&&predictCollision(pHoldX,pHoldY,5)
+					/*&this.map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY).getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/){
+				currentSoldier.stop();
+				currentSoldier.move(Math.round(pHoldX),Math.round(pHoldY));
+				
+				if(r!=null)GameScene.this.detachChild(r);
+				r= new Rectangle(pHoldX, pHoldY, 10, 10);
+				r.setColor(0, 1, 0);
+				GameScene.this.attachChild(r);
+				
+			
+			}
+			
 		}
 	}	
+	
+	
+public boolean predictCollision(float x1, float y1, int dist){
+		
+		
+		
+		float angleX=x1-(currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2);
+		float angleY=y1-(currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2);
+			
+		double c= Math.sqrt(angleX*angleX+angleY*angleY);
+		
+		
+		for(;dist<c;dist+=dist){
+			float newX=(float) (dist/c*angleX)+currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2;
+			float newY=(float) (dist/c*angleY)+currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2;
+			
+			//Line l = new Line(sprite.getX()+sprite.getWidth()/2,sprite.getY()+sprite.getHeight()/2,newX,newY);
+			//l.setColor(0, 1, 0);
+			//gscene.attachChild(l);
+			if(this.map.getTMXLayers().get(0).getTMXTileAt(newX, newY).getTMXTileProperties(map)!=null){
+				return false;
+			}
+	}
+		return true;
+	}
+	
+	
 }
