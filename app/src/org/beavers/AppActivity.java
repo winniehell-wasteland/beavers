@@ -117,6 +117,8 @@ public class AppActivity extends BaseGameActivity {
 		mEngine.registerUpdateHandler(new FPSLogger());
 		gameScene = new GameScene(this);
 
+        mRenderSurfaceView.setOnCreateContextMenuListener(gameScene);
+
 		return gameScene;
 	}
 
@@ -206,6 +208,18 @@ public class AppActivity extends BaseGameActivity {
 		return server;
 	}
 
+	public void showGameContextMenu()
+	{
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				mRenderSurfaceView.showContextMenu();
+			}
+		});
+	}
+
+
 	@Override
 	protected void onSetContentView() {
 	    mRenderSurfaceView = new RenderSurfaceView(this);
@@ -223,6 +237,7 @@ public class AppActivity extends BaseGameActivity {
 
 	    frameLayout.addView(runningGamesView);
 	}
+
 
 	private final PlayerID playerID;
 
