@@ -132,46 +132,44 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 
 		
 		if(currentSoldier!=null){
-			
-			if(this.map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY).getTMXTileProperties(map)==null 
-					&&predictCollision(pHoldX,pHoldY,5)
+			if(this.map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY)!=null){
+				if(this.map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY).getTMXTileProperties(map)==null 
+					&&predictCollision(pHoldX,pHoldY,20)
 					/*&this.map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY).getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/){
-				currentSoldier.stop();
-				currentSoldier.move(Math.round(pHoldX),Math.round(pHoldY));
-				
-				if(r!=null)GameScene.this.detachChild(r);
-				r= new Rectangle(pHoldX, pHoldY, 10, 10);
-				r.setColor(0, 1, 0);
-				GameScene.this.attachChild(r);
-				
-			
+					currentSoldier.stop();
+					currentSoldier.move(Math.round(pHoldX),Math.round(pHoldY));
+					
+					if(r!=null)GameScene.this.detachChild(r);
+					r= new Rectangle(pHoldX, pHoldY, 10, 10);
+					r.setColor(0, 1, 0);
+					GameScene.this.attachChild(r);
+				}
 			}
-			
 		}
 	}	
 	
 	
-public boolean predictCollision(float x1, float y1, int dist){
-		
-		
-		
+	public boolean predictCollision(float x1, float y1, int dist){
+
 		float angleX=x1-(currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2);
 		float angleY=y1-(currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2);
 			
 		double c= Math.sqrt(angleX*angleX+angleY*angleY);
 		
 		
-		for(;dist<c;dist+=dist){
-			float newX=(float) (dist/c*angleX)+currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2;
-			float newY=(float) (dist/c*angleY)+currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2;
-			
-			//Line l = new Line(sprite.getX()+sprite.getWidth()/2,sprite.getY()+sprite.getHeight()/2,newX,newY);
-			//l.setColor(0, 1, 0);
-			//gscene.attachChild(l);
-			if(this.map.getTMXLayers().get(0).getTMXTileAt(newX, newY).getTMXTileProperties(map)!=null){
-				return false;
+		for(int step=dist;step<c;step+=dist){
+			float newX=(float) (step/c*angleX)+currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2;
+			float newY=(float) (step/c*angleY)+currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2;
+			//Toast.makeText(app,""+dist/c,Toast.LENGTH_SHORT ).show();
+			Rectangle dot= new Rectangle(newX, newY, 2, 2);
+			dot.setColor(1, 0, 0);
+			GameScene.this.attachChild(dot);
+			if(this.map.getTMXLayers().get(0).getTMXTileAt(newX, newY)!=null){
+				if(this.map.getTMXLayers().get(0).getTMXTileAt(newX, newY).getTMXTileProperties(map)!=null){
+					return false;
+				}
 			}
-	}
+		}
 		return true;
 	}
 	
