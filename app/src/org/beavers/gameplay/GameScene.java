@@ -53,13 +53,13 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 				}
 			});
 			this.map = tmxLoader.loadFromAsset(app, "tmx/"+pMapName+".tmx");
-
 		} catch (final TMXLoadException tmxle) {
 			Debug.e(tmxle);
 		}
 
 		final TMXLayer tmxLayer = this.map.getTMXLayers().get(0);
 		this.attachChild(tmxLayer);
+		
 	}
 	
 	public void playOutcome(OutcomeContainer outcome)

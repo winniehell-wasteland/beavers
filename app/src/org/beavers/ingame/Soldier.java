@@ -14,7 +14,7 @@ import org.beavers.AppActivity;
 import org.beavers.gameplay.GameScene;
 
 
-public class Soldier extends GameObject  {
+public class Soldier extends GameObject {
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion playerTextureRegion;
@@ -37,8 +37,12 @@ public class Soldier extends GameObject  {
 		}
 		else{}
 	}
+	private int targetX;
+	private int targetY;
 	private Rectangle r;	
 	public void createSoldier(int x, int y){
+		targetX=x;
+		targetY=y;
 		sprite=new AnimatedSprite(x,y,playerTextureRegion){
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
@@ -50,19 +54,33 @@ public class Soldier extends GameObject  {
 					gscene.setSelectedSoldier(self);
 				}
 				else{
-					
+				
 					markDeselected();
 					gscene.setSelectedSoldier(null);
 				}
 				
 				return true;
 			}
+			
+			@Override
+            protected void onManagedUpdate(float pSecondsElapsed) {
+                    // TODO Auto-generated method stub
+                    super.onManagedUpdate(pSecondsElapsed);
+                    if(((int)this.getX()+this.getWidth()/2<=targetX && (int)this.getX()+this.getWidth()/2>=targetX)
+                    		&&((int)this.getY()+this.getHeight()/2<=targetY && (int)this.getY()+this.getHeight()/2>=targetY)){
+                    	sprite.stopAnimation();
+                    	sprite.setCurrentTileIndex(0);
+                    }
+            }
+			
+			
 		};
 		sprite.stopAnimation();
 		sprite.setRotationCenter(sprite.getWidth()/2, sprite.getHeight()/2);
 		gscene.attachChild(sprite);
 	}
 	
+
 	public AnimatedSprite getSprite(){
 		return sprite;
 	}
@@ -85,6 +103,8 @@ public class Soldier extends GameObject  {
 	
 	
 	public void move(int x, int y){
+		targetX=x;
+		targetY=y;
 		//Bewegung nach x,y
 		float distx=Math.abs(x-(sprite.getX()+sprite.getWidth()/2));
 		float disty=Math.abs(y-(sprite.getY()+sprite.getHeight()/2));
@@ -96,12 +116,12 @@ public class Soldier extends GameObject  {
 		float angleY=y-(sprite.getY()+sprite.getHeight()/2);
 		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
 		RotationByModifier rotate;
-	    //if(angle>180)angle=angle-360;
-	    //if(angle<-180)angle=360+angle;
+	    
 		if((angle-sprite.getRotation())>180)angle=(angle-sprite.getRotation())-360;
 		else if((angle-sprite.getRotation())<-180)angle=360+(angle-sprite.getRotation());
 		else angle=angle-sprite.getRotation();
-			rotate= new RotationByModifier(0.2f, angle);
+		
+		rotate= new RotationByModifier(0.2f, angle);
 		
 		sprite.registerEntityModifier(rotate);
 		
