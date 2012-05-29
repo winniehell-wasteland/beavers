@@ -2,10 +2,12 @@ package org.beavers.ingame;
 
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.input.touch.TouchEvent;
+import org.anddev.andengine.input.touch.detector.HoldDetector;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -23,8 +25,9 @@ public class Soldier extends GameObject {
 	private boolean isSelected=false;
 	private GameScene gscene;
 	private Soldier self;
+	public float x,y=0;
 	
-	public Soldier(final AppActivity pApp,GameScene s, int team, int x, int y){
+	public Soldier(final AppActivity pApp,GameScene s, int team){
 		gscene=s;
 		self=this;
 		
@@ -46,7 +49,6 @@ public class Soldier extends GameObject {
 		sprite=new AnimatedSprite(x,y,playerTextureRegion){
 			@Override
 			public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-				//this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
 				
 				if(isSelected==false){
 					
@@ -71,6 +73,7 @@ public class Soldier extends GameObject {
                     	sprite.stopAnimation();
                     	sprite.setCurrentTileIndex(0);
                     }
+                  
             }
 			
 			
@@ -83,6 +86,14 @@ public class Soldier extends GameObject {
 
 	public AnimatedSprite getSprite(){
 		return sprite;
+	}
+	
+	public float[] getXY(){
+		
+		float[] pos= new float[2];
+		pos[0]=sprite.getX()+sprite.getWidth()/2;
+		pos[1]=sprite.getY()+sprite.getHeight()/2;
+		return pos;
 	}
 	
 	public void markSelected(){
@@ -101,14 +112,14 @@ public class Soldier extends GameObject {
 		return sprite.convertLocalToSceneCoordinates(10, 10); //10x10 TMX Map
 	}
 	
-	
+	private MoveModifier mod;
 	public void move(int x, int y){
 		targetX=x;
 		targetY=y;
 		//Bewegung nach x,y
 		float distx=Math.abs(x-(sprite.getX()+sprite.getWidth()/2));
 		float disty=Math.abs(y-(sprite.getY()+sprite.getHeight()/2));
-		MoveModifier mod = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed),sprite.getX(),x-sprite.getWidth()/2, sprite.getY(),y-sprite.getHeight()/2);
+		mod = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed),sprite.getX(),x-sprite.getWidth()/2, sprite.getY(),y-sprite.getHeight()/2);
 		sprite.registerEntityModifier(mod);
 		
 		//Rotation
@@ -134,6 +145,7 @@ public class Soldier extends GameObject {
 	public void stop()
 	{
 		sprite.stopAnimation();
+		if(mod!=null)sprite.unregisterEntityModifier(mod);
 	}
 	
 	public int getHealthPercentage()
@@ -162,7 +174,7 @@ public class Soldier extends GameObject {
 	}
 
 
-	
+
 	
 
 	
