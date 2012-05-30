@@ -78,7 +78,7 @@ public class Client {
 	{
 		pGame = announcedGames.find(pGame);
 
-		if(pGame == null)
+		if((pGame == null) || !pGame.getState().equals(GameState.ANNOUNCED))
 		{
 			Log.e(TAG, "Game "+pGame+" was not announced!");
 			return;
@@ -102,6 +102,7 @@ public class Client {
 		}
 
 		pGame.setState(GameState.JOINED);
+		app.updateGame(pGame);
 	}
 
 	/**
@@ -181,7 +182,7 @@ public class Client {
 		}
 
 		pGame.setState(GameState.PLANNING_PHASE);
-		app.updateGameScene(pGame);
+		app.updateGame(pGame);
 	}
 
 	/**

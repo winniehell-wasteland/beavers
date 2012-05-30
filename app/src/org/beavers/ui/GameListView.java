@@ -34,12 +34,19 @@ public abstract class GameListView extends ListView implements OnMenuItemClickLi
 
 		setAdapter(new ListViewAdapter());
 
+		setChoiceMode(CHOICE_MODE_SINGLE);
 		setOnItemClickListener(this);
 	}
 
 	@Override
+	public BaseAdapter getAdapter() {
+		return (BaseAdapter)super.getAdapter();
+	}
+
+	@Override
 	public void onItemClick(final AdapterView<?> pParent, final View pView, final int pPosition, final long pID) {
-		setSelection(pPosition);
+		//setSelection(pPosition);
+		setItemChecked(pPosition, true);
 		showContextMenu();
 	}
 
