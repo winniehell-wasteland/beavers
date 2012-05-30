@@ -1,5 +1,8 @@
 package org.beavers.gameplay;
 
+import java.util.Hashtable;
+
+import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -19,21 +22,31 @@ import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorL
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.util.Debug;
+import org.anddev.andengine.util.path.ITiledMap;
+import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.Path.Step;
+import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
-import org.beavers.R;
+import org.beavers.ingame.EmptyTile;
+import org.beavers.ingame.GameObject;
 import org.beavers.ingame.Soldier;
+import org.beavers.ui.ContextMenuHandler;
 
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
+import android.widget.Toast;
 
-public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDetectorListener, IScrollDetectorListener, OnCreateContextMenuListener, OnMenuItemClickListener {
-
+public class GameScene extends Scene
+	implements ITiledMap<IEntity>,
+		IOnSceneTouchListener,
+		IHoldDetectorListener,
+		IScrollDetectorListener,
+		OnCreateContextMenuListener
+{
 	public GameInfo currentGame;
 
 	public GameScene(final AppActivity pApp)
@@ -41,61 +54,188 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 		super();
 
 		app = pApp;
+
 		scrollDetector = new SurfaceScrollDetector(10.0f, this);
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
 		registerUpdateHandler(holdDetector);
 
+		gameObjects = new Hashtable<TMXTile, GameObject>();
+
 		loadMap("test");
 		loadSoldiers();
+
+		pathFinder = new AStarPathFinder<IEntity>(this, 1600, true);
+
+		wayPointMark = new Rectangle(0, 0, map.getTileWidth(), map.getTileHeight());
+		wayPointMark.setColor(0.0f, 1.0f, 0.0f, 0.5f);
+		wayPointMark.setZIndex(0);
+
+		sortChildren();
 
 		setOnSceneTouchListener(this);
 	}
 
-	public void loadMap(final String pMapName)
-	{
-		try {
-			final TMXLoader tmxLoader = new TMXLoader(app, app.getEngine().getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
-				@Override
-				public void onTMXTileWithPropertiesCreated(final TMXTiledMap pTMXTiledMap, final TMXLayer pTMXLayer, final TMXTile pTMXTile, final TMXProperties<TMXTileProperty> pTMXTileProperties) {
+	public void addWayPoint(final TMXTile pTile) {
+		if(pTile == null)
+		{
+			Log.wtf(TAG, "There is no way to nirvana!");
+		}
+		else if(selectedSoldier == null)
+		{
+			Toast.makeText(app, "No soldier selected!", Toast.LENGTH_SHORT).show();
+		}
+		else if((pTile.getTMXTileProperties(map) != null)
+				/*&& lastContextMenuTile.getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/)
+		{
+			Toast.makeText(app, "Tile is blocked!", Toast.LENGTH_SHORT).show();
+		}
+		else
+		{
+			final Path path = findPath(selectedSoldier, pTile);
 
+			if(path == null)
+			{
+				Toast.makeText(app, "No path found!", Toast.LENGTH_SHORT).show();
+			}
+			else
+			{
+				selectedSoldier.stop();
+				//selectedSoldier.move(pTile);
+				//selectedSoldier.move(map, path);
+
+				for(int i = 0; i < path.getLength(); ++i)
+				{
+					final Step step = path.getStep(i);
+					final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(step.getTileColumn(), step.getTileRow());
+
+					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
+					rect.setColor(1.0f, 1.0f, 0.0f, 0.5f);
+					attachChild(rect);
 				}
-			});
-			map = tmxLoader.loadFromAsset(app, "tmx/"+pMapName+".tmx");
-		} catch (final TMXLoadException tmxle) {
-			Debug.e(tmxle);
+
+				wayPointMark.setPosition(pTile.getTileX(), pTile.getTileY());
+
+				if(!wayPointMark.hasParent())
+				{
+					attachChild(wayPointMark);
+				}
+			}
+		}
+	}
+
+	public TMXTiledMap getMap() {
+		return map;
+	}
+
+	public Soldier getSelectedSoldier() {
+		return selectedSoldier;
+	}
+
+	@Override
+	public float getStepCost(final IEntity pEntity, final int pFromTileColumn,
+			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
+
+		// prevent diagonals at blocked tiles
+		if((Math.abs(pToTileRow - pFromTileRow) == 1)
+				&& (Math.abs(pToTileColumn - pFromTileColumn) == 1))
+		{
+			if(isTileBlocked(pEntity, pFromTileColumn, pToTileRow)
+					|| isTileBlocked(pEntity, pToTileColumn, pFromTileRow))
+			{
+				return 100;
+			}
 		}
 
-		final TMXLayer tmxLayer = map.getTMXLayers().get(0);
-		this.attachChild(tmxLayer);
-
-
+		return 0;
 	}
 
-	public void playOutcome(final OutcomeContainer outcome)
-	{
-
+	@Override
+	public int getTileColumns() {
+		if(map == null)
+		{
+			return 0;
+		}
+		else
+		{
+			return map.getTileColumns();
+		}
 	}
 
-
-	private void loadSoldiers(){
-		c= new Soldier(app,this,0);
-		c.createSoldier(20,20);
-		registerTouchArea(c.getSprite());
-		setTouchAreaBindingEnabled(true);
-
-		c1= new Soldier(app,this,0);
-		c1.createSoldier(40,20);
-		registerTouchArea(c1.getSprite());
-		setTouchAreaBindingEnabled(true);
+	@Override
+	public int getTileRows() {
+		if(map == null)
+		{
+			return 0;
+		}
+		else
+		{
+			return map.getTileRows();
+		}
 	}
 
-	public void setSelectedSoldier(final Soldier s){
-		if(currentSoldier!=null)currentSoldier.markDeselected();
-		currentSoldier=s;
+	@Override
+	public boolean isTileBlocked(final IEntity pEntity, final int pTileColumn, final int pTileRow) {
+		if(map == null)
+		{
+			return false;
+		}
+		else
+		{
+			final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(pTileColumn, pTileRow);
+
+			return ((tile == null) || (tile.getTMXTileProperties(map) != null));
+		}
 	}
 
+	@Override
+	public void onCreateContextMenu(final ContextMenu pMenu, final View pView,
+			final ContextMenuInfo pInfo) {
 
-	final static float CAMERA_SPEED = 1.50f;
+		if(contextMenuHandler != null)
+		{
+	        final MenuInflater inflater = app.getMenuInflater();
+	        inflater.inflate(contextMenuHandler.getMenuID(), pMenu);
+
+	        pMenu.setHeaderTitle(contextMenuHandler.getClass().getSimpleName());
+
+			for(int i = 0; i < pMenu.size(); ++i)
+			{
+				pMenu.getItem(i).setOnMenuItemClickListener(contextMenuHandler);
+			}
+		}
+	}
+
+	@Override
+	public void onHold(final HoldDetector pHoldDetector, final long pHoldTimeMilliseconds,
+			final float pHoldX, final float pHoldY) {
+	}
+
+	@Override
+	public void onHoldFinished(final HoldDetector pHoldDetector,
+			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
+
+		Log.d("onHoldFinished", "t="+pHoldTimeMilliseconds);
+
+		final TMXTile tile = map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY);
+
+		if(tile != null)
+		{
+			if(gameObjects.containsKey(tile))
+			{
+				final GameObject obj = gameObjects.get(tile);
+
+				if(obj instanceof Soldier)
+				{
+					selectSoldier((Soldier) obj);
+				}
+			}
+			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow()))
+			{
+				contextMenuHandler = new EmptyTile(this, tile);
+				app.showGameContextMenu();
+			}
+		}
+	}
 
 	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
@@ -110,147 +250,92 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 		}
  	}
 
-	private final AppActivity app;
-	private final SurfaceScrollDetector scrollDetector;
-	private final HoldDetector holdDetector;
-
-	private TMXTiledMap map;
-	private Soldier c,c1;
-	private Soldier currentSoldier=null;
 	@Override
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
 			app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
 	}
 
-
 	@Override
-	public void onHold(final HoldDetector pHoldDetector, final long pHoldTimeMilliseconds,
-			final float pHoldX, final float pHoldY) {
+	public void onTileVisitedByPathFinder(final int pTileColumn, final int pTileRow) {
+		// TODO Auto-generated method stub
 	}
 
-	@Override
-	public void onHoldFinished(final HoldDetector pHoldDetector,
-			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
-
-		Log.d("onHoldFinished", "t="+pHoldTimeMilliseconds);
-
-		lastContextMenuTile = map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY);
-
-		if(lastContextMenuTile != null)
-		{
-			app.showGameContextMenu();
-		}
-	}
-
-
-	public boolean predictCollision(final float x1, final float y1, final int dist){
-
-		final float angleX=x1-(currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2);
-		final float angleY=y1-(currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2);
-
-		final double c= Math.sqrt(angleX*angleX+angleY*angleY);
-
-
-		for(int step=dist;step<c;step+=dist){
-			final float newX=(float) (step/c*angleX)+currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2;
-			final float newY=(float) (step/c*angleY)+currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2;
-			//Toast.makeText(app,""+dist/c,Toast.LENGTH_SHORT ).show();
-			//final Rectangle dot= new Rectangle(newX, newY, 2, 2);
-			//dot.setColor(1, 0, 0);
-			//GameScene.this.attachChild(dot);
-			if(map.getTMXLayers().get(0).getTMXTileAt(newX, newY)!=null){
-				if(map.getTMXLayers().get(0).getTMXTileAt(newX, newY).getTMXTileProperties(map)!=null){
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	@Override
-	public void onCreateContextMenu(final ContextMenu menu, final View v,
-			final ContextMenuInfo menuInfo) {
-        final MenuInflater inflater = app.getMenuInflater();
-        inflater.inflate(R.menu.context_tile, menu);
-
-        // handle click events
-        for(int i = 0; i < menu.size(); ++i)
-        {
-        	menu.getItem(i).setOnMenuItemClickListener(this);
-        }
-	}
-
-	@Override
-	public boolean onMenuItemClick(final MenuItem pItem) {
-		switch(pItem.getItemId())
-		{
-		case R.id.context_menu_move:
-
-			if((currentSoldier!=null)
-					&& (lastContextMenuTile != null)
-					&& (lastContextMenuTile.getTMXTileProperties(map)==null)
-					/*& lastContextMenuTile.getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/
-					)
-			{
-				final float centerX = lastContextMenuTile.getTileX() + lastContextMenuTile.getTileWidth()/2,
-						centerY = lastContextMenuTile.getTileY() + lastContextMenuTile.getTileHeight()/2;
-
-				if(predictCollision(centerX,centerY,10)){
-					currentSoldier.stop();
-					currentSoldier.move(Math.round(centerX),Math.round(centerY));
-				
-					if(wayPointMark!=null)
-					{
-						GameScene.this.detachChild(wayPointMark);
-					}
-
-					wayPointMark= new Rectangle(centerX-8, centerY-8, 16, 16);
-					wayPointMark.setColor(0, 1, 0);
-					wayPointMark.setZIndex(0);
-					GameScene.this.attachChild(wayPointMark);
-					GameScene.this.sortChildren();
-				}
-			}
-
-			return true;
-		case R.id.context_menu_shoot:
-			if((currentSoldier!=null)
-					&& (lastContextMenuTile != null)
-					&& (lastContextMenuTile.getTMXTileProperties(map)==null)
-					/*& lastContextMenuTile.getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/
-					)
-			{
-				final float centerX = lastContextMenuTile.getTileX() + lastContextMenuTile.getTileWidth()/2,
-						centerY = lastContextMenuTile.getTileY() + lastContextMenuTile.getTileHeight()/2;
-
-				if(predictCollision(centerX,centerY,10)){
-					currentSoldier.stop();
-					//currentSoldier.move(Math.round(centerX),Math.round(centerY));
-					//test shootAt
-					currentSoldier.shootAt(centerX,centerY);
-					if(wayPointMark!=null)
-					{
-						GameScene.this.detachChild(wayPointMark);
-					}
-
-					wayPointMark= new Rectangle(centerX-8, centerY-8, 16, 16);
-					wayPointMark.setColor(0, 1, 0);
-					wayPointMark.setZIndex(0);
-					GameScene.this.attachChild(wayPointMark);
-					GameScene.this.sortChildren();
-				}}
-			return true;
-		default:
-		return false;
-		}
+	public void playOutcome(final OutcomeContainer outcome)
+	{
+		// TODO Auto-generated method stub
 	}
 
 	public void startPlanningPhase() {
 		// TODO Auto-generated method stub
-
 	}
 
-	private Rectangle wayPointMark;
-	private TMXTile lastContextMenuTile;
+	private final static float CAMERA_SPEED = 1.50f;
+	private static final String TAG = "GameScene";
+
+	private final AppActivity app;
+
+	private final SurfaceScrollDetector scrollDetector;
+	private final HoldDetector holdDetector;
+
+	private TMXTiledMap map;
+	private final Hashtable<TMXTile, GameObject> gameObjects;
+	private final AStarPathFinder<IEntity> pathFinder;
+
+	private Soldier selectedSoldier;
+	private final Rectangle wayPointMark;
+
+	private ContextMenuHandler contextMenuHandler;
+
+	private void addSoldier(final Soldier pSoldier)
+	{
+		gameObjects.put(pSoldier.getTile(), pSoldier);
+		attachChild(pSoldier);
+	}
+
+	private Path findPath(final Soldier pSoldier, final TMXTile pTarget)
+	{
+		return pathFinder.findPath(pSoldier, 0,
+        		pSoldier.getTile().getTileColumn(), pSoldier.getTile().getTileRow(),
+        		pTarget.getTileColumn(), pTarget.getTileRow());
+	}
+
+	private void loadMap(final String pMapName)
+	{
+		try {
+			final TMXLoader tmxLoader = new TMXLoader(app, app.getEngine().getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
+				@Override
+				public void onTMXTileWithPropertiesCreated(final TMXTiledMap pTMXTiledMap, final TMXLayer pTMXLayer, final TMXTile pTMXTile, final TMXProperties<TMXTileProperty> pTMXTileProperties) {
+
+				}
+			});
+			map = tmxLoader.loadFromAsset(app, "tmx/"+pMapName+".tmx");
+		} catch (final TMXLoadException tmxle) {
+			Debug.e(tmxle);
+			return;
+		}
+
+		final TMXLayer tmxLayer = map.getTMXLayers().get(0);
+		this.attachChild(tmxLayer);
+	}
+
+
+	private void loadSoldiers(){
+		addSoldier(new Soldier(0, map.getTMXLayers().get(0).getTMXTileAt(20, 20)));
+		addSoldier(new Soldier(0, map.getTMXLayers().get(0).getTMXTileAt(140, 20)));
+	}
+
+	private synchronized void selectSoldier(final Soldier pSoldier) {
+		if(selectedSoldier != pSoldier)
+		{
+			if(selectedSoldier != null)
+			{
+				selectedSoldier.markDeselected();
+			}
+
+			pSoldier.markSelected();
+			selectedSoldier = pSoldier;
+		}
+	}
+
 }
