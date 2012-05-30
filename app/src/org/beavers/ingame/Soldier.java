@@ -13,6 +13,7 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextur
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.beavers.AppActivity;
+import org.beavers.Textures;
 
 
 public class Soldier extends AnimatedSprite implements GameObject {
