@@ -1,6 +1,5 @@
 package org.beavers.gameplay;
 
-
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -34,6 +33,8 @@ import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 
 public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDetectorListener, IScrollDetectorListener, OnCreateContextMenuListener, OnMenuItemClickListener {
+
+	public GameInfo currentGame;
 
 	public GameScene(final AppActivity pApp)
 	{
@@ -173,6 +174,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
         final MenuInflater inflater = app.getMenuInflater();
         inflater.inflate(R.menu.context_tile, menu);
 
+        // handle click events
         for(int i = 0; i < menu.size(); ++i)
         {
         	menu.getItem(i).setOnMenuItemClickListener(this);
@@ -213,6 +215,11 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 		default:
 		return false;
 		}
+	}
+
+	public void startPlanningPhase() {
+		// TODO Auto-generated method stub
+
 	}
 
 	private Rectangle wayPointMark;

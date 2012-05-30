@@ -19,6 +19,7 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 
 public class Client {
 
+	public static final String TAG = "Client";
 	public static final GroupEndpoint GROUP_EID = new GroupEndpoint("dtn://beavergame.dtn/client");
 	/**
 	 * @name lifetimes
@@ -32,6 +33,10 @@ public class Client {
 	public final GameList announcedGames;
 	public final  GameList runningGames;
 
+	/**
+	 * default constructor
+	 * @param pApp
+	 */
 	public Client(final AppActivity pApp)
 	{
 		app = pApp;
@@ -51,13 +56,13 @@ public class Client {
 
 	/**
 	 * server has announced new game
-	 * @param game
+	 * @param pGame new game
 	 */
 	public void receiveGameInfo(final GameInfo pGame)
 	{
 		if(announcedGames.contains(pGame))
 		{
-			Log.e("Client", "Game "+pGame+" was already announced!");
+			Log.e(TAG, "Game "+pGame+" was already announced!");
 			return;
 		}
 
@@ -67,10 +72,18 @@ public class Client {
 
 	/**
 	 * joins a game
-	 * @param game
+	 * @param pGame announced game
 	 */
-	public void joinGame(final GameInfo pGame)
+	public void joinGame(GameInfo pGame)
 	{
+		pGame = announcedGames.find(pGame);
+
+		if(pGame == null)
+		{
+			Log.e(TAG, "Game "+pGame+" was not announced!");
+			return;
+		}
+
 		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		final PrintStream stream = new PrintStream(buffer);
 
@@ -84,32 +97,96 @@ public class Client {
 
 			buffer.close();
 		} catch (final Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e(TAG, "Could not send join request!", e);
+			return;
+		}
+
+		pGame.setState(GameState.JOINED);
+	}
+
+	/**
+	 * server requests ACK
+	 * @param pGame joined game
+	 */
+	public void receiveGameReady(GameInfo pGame)
+	{
+		pGame = announcedGames.find(pGame);
+
+		if(pGame == null)
+		{
+			Log.e(TAG, "Game "+pGame+" was not announced!");
+			return;
+		}
+
+		if(acknowledgeGameReady(pGame))
+		{
+			announcedGames.remove(pGame);
+
+			pGame.setState(GameState.STARTED);
+			runningGames.add(pGame);
 		}
 	}
 
 	/**
 	 * responds to server
-	 * @param game
+	 * @param pGame joined game
 	 */
-	public void acknowledgeGameReady(final GameInfo pGame)
+	public boolean acknowledgeGameReady(final GameInfo pGame)
 	{
+		if(!pGame.getState().equals(GameState.JOINED))
+		{
+			Log.e(TAG, "Game "+pGame+" has wrong state!");
+			return false;
+		}
 
+		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		final PrintStream stream = new PrintStream(buffer);
+
+		try {
+			stream.println("ACK");
+			stream.println(pGame.getServer().toString());
+			stream.println(pGame.getID().toString());
+			stream.println(app.getPlayerID().toString());
+
+			app.getDTNSession().send(Server.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
+
+			buffer.close();
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not send ack!", e);
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
 	 * start planning phase
+	 * @param pGame running game
 	 */
-	public void startPlanningPhase(final GameInfo pGame)
+	public void startPlanningPhase(GameInfo pGame)
 	{
+		pGame = runningGames.find(pGame);
 
+		if(pGame == null)
+		{
+			Log.e(TAG, "Game "+pGame+" is not running!");
+			return;
+		}
 
+		if(!pGame.getState().equals(GameState.STARTED)
+				&& !pGame.getState().equals(GameState.EXECUTION_PHASE))
+		{
+			Log.e(TAG, "Game "+pGame+" has wrong state!");
+			return;
+		}
+
+		pGame.setState(GameState.PLANNING_PHASE);
+		app.updateGameScene(pGame);
 	}
 
 	/**
 	 * send decisions to server
-	 * @param game
+	 * @param pGame running game
 	 * @param decisions
 	 */
 	public void sendDecisions(final GameInfo pGame, final DecisionContainer decisions)
@@ -162,7 +239,7 @@ public class Client {
 		}
 		else
 		{
-			System.out.println("Got: '"+command+"'");
+			Log.w(TAG, "Unknown command: "+command);
 		}
 	}
 }

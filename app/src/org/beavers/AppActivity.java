@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Surface;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
@@ -176,7 +177,7 @@ public class AppActivity extends BaseGameActivity {
 			return true;
 		case R.id.menu_running_games:
 
-		    if(runningGamesView.getParent() != frameLayout)
+		    if(isShowing(runningGamesView))
 		    {
 		    	frameLayout.removeAllViews();
 			    frameLayout.addView(runningGamesView);
@@ -269,6 +270,17 @@ public class AppActivity extends BaseGameActivity {
 	    frameLayout.addView(runningGamesView);
 	}
 
+	/**
+	 * update the visible game
+	 * @param pGame changed game
+	 */
+	public void updateGameScene(final GameInfo pGame) {
+		if(isShowing(mRenderSurfaceView)
+				&& (gameScene.currentGame.equals(pGame)))
+		{
+			gameScene.startPlanningPhase();
+		}
+	}
 
 	private final PlayerID playerID;
 
@@ -284,4 +296,8 @@ public class AppActivity extends BaseGameActivity {
 
 	private SmoothCamera camera;
 	private GameScene gameScene;
+
+	private boolean isShowing(final View pView) {
+		return (pView.getParent().equals(frameLayout));
+	}
 }
