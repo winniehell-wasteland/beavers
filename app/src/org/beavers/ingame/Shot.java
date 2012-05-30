@@ -1,15 +1,11 @@
 package org.beavers.ingame;
 
-import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.MoveModifier;
-import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.opengl.texture.region.TextureRegion;
-import org.anddev.andengine.util.modifier.IModifier;
-import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.beavers.AppActivity;
 import org.beavers.gameplay.GameScene;
 
@@ -37,7 +33,7 @@ public class Shot extends GameObject {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		bulletTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(bulletTextureAtlas, pApp, "bullet.png", 0, 0);
 		pApp.getEngine().getTextureManager().loadTexture(bulletTextureAtlas);
-		bullet=new Sprite(startX+18, startY-5, bulletTextureRegion){
+		bullet=new Sprite(startX, startY, bulletTextureRegion){
 			@Override
 			protected void onManagedUpdate(final float pSecondsElapsed) {
 				// TODO Auto-generated method stub
@@ -46,14 +42,14 @@ public class Shot extends GameObject {
 			}
 		};
 		
-		bullet.setPosition(startX+18, startY-5);
+		bullet.setPosition(startX, startY);
 		scene.attachChild(bullet);
 		move(startX,startY);
 	}
 	
 	public void move(final float startX, final float startY){
 		//Bullet an die Mündung der Waffe setzen
-		bullet.setPosition(soldier.getSprite().getX()+soldier.getSprite().getWidth()/2, soldier.getSprite().getY()+soldier.getSprite().getHeight()/2);
+		/*bullet.setPosition(soldier.getSprite().getX()+soldier.getSprite().getWidth()/2, soldier.getSprite().getY()+soldier.getSprite().getHeight()/2);
 		bullet.setRotationCenter(soldier.getSprite().getX()+soldier.getSprite().getWidth()/2, soldier.getSprite().getY()+soldier.getSprite().getHeight()/2);
 		final RotationByModifier rotate = new RotationByModifier(1f,soldier.getSprite().getRotation());
 		
@@ -71,13 +67,19 @@ public class Shot extends GameObject {
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
 				// TODO Auto-generated method stub
-				final float distx=Math.abs(bullet.getX()-targetX);
-				final float disty=Math.abs(bullet.getY()-targetY);
-				final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed), bullet.getX(), targetX, bullet.getY(), targetY);
-				bullet.registerEntityModifier(moveMod);
+				//final float distx=Math.abs(bullet.getX()-targetX);
+			//	final float disty=Math.abs(bullet.getY()-targetY);
+			//	final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed), bullet.getX(), targetX, bullet.getY(), targetY);
+			//	bullet.registerEntityModifier(moveMod);
 			}
-		});
-	
+		});*/
+		final float distx=Math.abs(bullet.getX()-targetX);
+			final float disty=Math.abs(bullet.getY()-targetY);
+			final float distC=(float) (Math.sqrt(distx*distx+disty*disty));
+			
+			final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/speed), bullet.getX(), targetX, bullet.getY(), targetY);
+			bullet.registerEntityModifier(moveMod);
+			
 	}
 	
 	@Override

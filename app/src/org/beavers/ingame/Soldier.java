@@ -178,7 +178,7 @@ public class Soldier extends GameObject {
 	public void shootAt(final float centerX, final float centerY){
 		faceTarget(centerX, centerY);
 		
-		new Shot(this, pApp,gscene,sprite.getX(),sprite.getY(),centerX,centerY);
+		new Shot(this, pApp,gscene,sprite.getX()+sprite.getWidth()/2,sprite.getY()+sprite.getHeight()/2,centerX,centerY);
 	}
 	
 	public void stop()
