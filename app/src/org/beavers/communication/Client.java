@@ -39,9 +39,9 @@ public class Client {
 		announcedGames = new GameList();
 		runningGames = new GameList();
 
-		announcedGames.add(new GameInfo(new PlayerID("foo"), new GameID("bar")));
-		announcedGames.add(new GameInfo(new PlayerID("test"), new GameID("game")));
-		announcedGames.add(new GameInfo(new PlayerID("123"), new GameID("456")));
+		announcedGames.add(new GameInfo(new PlayerID("foo"), new GameID("bar"))).setState(GameState.ANNOUNCED);
+		announcedGames.add(new GameInfo(new PlayerID("test"), new GameID("game"))).setState(GameState.ANNOUNCED);
+		announcedGames.add(new GameInfo(new PlayerID("123"), new GameID("456"))).setState(GameState.ANNOUNCED);
 
 		runningGames.add(new GameInfo(new PlayerID("server1"), new GameID("game1")));
 		runningGames.add(new GameInfo(new PlayerID("server2"), new GameID("game2")));

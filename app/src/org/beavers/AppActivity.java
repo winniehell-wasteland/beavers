@@ -225,9 +225,40 @@ public class AppActivity extends BaseGameActivity {
 	    mRenderSurfaceView = new RenderSurfaceView(this);
 	    mRenderSurfaceView.setRenderer(mEngine);
 
-	    assert client != null;
-	    announcedGamesView = new GameListView(this, client.announcedGames);
-	    runningGamesView = new GameListView(this, client.runningGames);
+	    announcedGamesView = new GameListView(this, client.announcedGames) {
+			@Override
+			public boolean onMenuItemClick(final MenuItem pItem) {
+				switch(pItem.getItemId())
+				{
+				case R.id.menu_join:
+					client.joinGame((GameInfo) announcedGamesView.getSelectedItem());
+
+					return true;
+				default:
+					return false;
+				}
+			}
+
+			@Override
+			protected int getContextMenuRes() {
+				return R.menu.context_announced_game;
+			}
+
+	    };
+
+	    runningGamesView = new GameListView(this, client.runningGames) {
+			@Override
+			public boolean onMenuItemClick(final MenuItem item) {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			protected int getContextMenuRes() {
+				return R.menu.context_running_game;
+			}
+
+	    };
 
 	    frameLayout = new FrameLayout(this);
 	    final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
