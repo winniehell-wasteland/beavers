@@ -133,7 +133,7 @@ public class AppActivity extends BaseGameActivity {
 
 		if(pKeyCode == KeyEvent.KEYCODE_BACK && pEvent.getAction() == KeyEvent.ACTION_DOWN) {
 
-			if(runningGamesView.getParent() == frameLayout)
+			if(isShowing(runningGamesView))
 		    {
 				finish();
 		    }
@@ -154,7 +154,7 @@ public class AppActivity extends BaseGameActivity {
 		switch (item.getItemId()) {
 		case R.id.menu_start_game:
 
-		    if(mRenderSurfaceView.getParent() != frameLayout)
+		    if(!isShowing(mRenderSurfaceView))
 		    {
 		    	frameLayout.removeAllViews();
 
@@ -168,7 +168,7 @@ public class AppActivity extends BaseGameActivity {
 			return true;
 		case R.id.menu_join_game:
 
-		    if(announcedGamesView.getParent() != frameLayout)
+		    if(!isShowing(announcedGamesView))
 		    {
 		    	frameLayout.removeAllViews();
 			    frameLayout.addView(announcedGamesView);
@@ -177,7 +177,7 @@ public class AppActivity extends BaseGameActivity {
 			return true;
 		case R.id.menu_running_games:
 
-		    if(isShowing(runningGamesView))
+		    if(!isShowing(runningGamesView))
 		    {
 		    	frameLayout.removeAllViews();
 			    frameLayout.addView(runningGamesView);
@@ -232,7 +232,8 @@ public class AppActivity extends BaseGameActivity {
 				switch(pItem.getItemId())
 				{
 				case R.id.menu_join:
-					client.joinGame((GameInfo) announcedGamesView.getSelectedItem());
+					assert announcedGamesView.getCheckedItemIds().length == 1;
+					client.joinGame((GameInfo) announcedGamesView.getItemAtPosition(announcedGamesView.getCheckedItemPosition()));
 
 					return true;
 				default:
@@ -274,11 +275,19 @@ public class AppActivity extends BaseGameActivity {
 	 * update the visible game
 	 * @param pGame changed game
 	 */
-	public void updateGameScene(final GameInfo pGame) {
+	public void updateGame(final GameInfo pGame) {
 		if(isShowing(mRenderSurfaceView)
 				&& (gameScene.currentGame.equals(pGame)))
 		{
 			gameScene.startPlanningPhase();
+		}
+		else if(isShowing(announcedGamesView))
+		{
+			announcedGamesView.getAdapter().notifyDataSetChanged();
+		}
+		else if(isShowing(runningGamesView))
+		{
+			runningGamesView.getAdapter().notifyDataSetChanged();
 		}
 	}
 
@@ -298,6 +307,6 @@ public class AppActivity extends BaseGameActivity {
 	private GameScene gameScene;
 
 	private boolean isShowing(final View pView) {
-		return (pView.getParent().equals(frameLayout));
+		return (pView.getParent() == frameLayout);
 	}
 }

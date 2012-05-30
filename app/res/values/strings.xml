@@ -14,8 +14,10 @@
     <string name="state">State</string>
     <string name="state_unknown">Unknown</string>
     <string name="state_announced">Announced</string>
+    <string name="state_joined">Joined</string>
     <string name="state_started">Started</string>
     <string name="state_planning">Planning Phase</string>
+    <string name="state_execution">Execution Phase</string>
     <string name="state_aborted">Aborted</string>
     <string name="state_won">Won</string>
     <string name="state_lost">Lost</string>

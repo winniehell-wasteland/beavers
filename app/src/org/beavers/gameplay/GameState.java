@@ -35,10 +35,14 @@ public enum GameState {
 			return pContext.getString(R.string.state_unknown);
 		case ANNOUNCED:
 			return pContext.getString(R.string.state_announced);
+		case JOINED:
+			return pContext.getString(R.string.state_joined);
 		case STARTED:
 			return pContext.getString(R.string.state_started);
 		case PLANNING_PHASE:
 			return pContext.getString(R.string.state_planning);
+		case EXECUTION_PHASE:
+			return pContext.getString(R.string.state_execution);
 		case ABORTED:
 			return pContext.getString(R.string.state_aborted);
 		case WON:
