@@ -113,10 +113,19 @@ public class AppActivity extends BaseGameActivity {
 
 	@Override
 	public void onLoadResources() {
-		final BitmapTextureAtlas mBitmapTextureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(mBitmapTextureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
-		getTextureManager().loadTexture(mBitmapTextureAtlas);
+
+		BitmapTextureAtlas textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(4,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
 	}
 
 	@Override

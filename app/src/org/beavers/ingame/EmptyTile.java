@@ -31,12 +31,7 @@ public class EmptyTile implements ContextMenuHandler {
 
 			return true;
 		case R.id.context_menu_shoot:
-			// TODO if(predictCollision(centerX,centerY,10)){
-
-			final float centerX = tile.getTileX() + tile.getTileWidth()/2,
-					centerY = tile.getTileY() + tile.getTileHeight()/2;
-
-			//currentSoldier.shootAt(centerX,centerY);
+			gameScene.fireShot(tile);
 
 			return true;
 		default:
