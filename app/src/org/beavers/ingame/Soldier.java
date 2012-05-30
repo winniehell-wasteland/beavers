@@ -7,12 +7,7 @@ import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
-import org.anddev.andengine.opengl.texture.TextureOptions;
-import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
-import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
-import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
-import org.beavers.AppActivity;
 import org.beavers.Textures;
 
 
@@ -30,17 +25,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		wayPoints = new ArrayList<WayPoint>();
 
-		//selectionMark = new Rectangle(getWidth()/2, getHeight()/2, 10, 10);
-		//selectionMark.setColor(1,0,0);
-
-		final AppActivity pApp = null;
-
 		//Selection Circle
-		final BitmapTextureAtlas circleTextureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-		final TextureRegion circleTextureRegion = BitmapTextureAtlasTextureRegionFactory.createFromAsset(circleTextureAtlas, pApp, "circle.png", 0, 0);
-		pApp.getEngine().getTextureManager().loadTexture(circleTextureAtlas);
-		selectionMark = new Sprite(0, 0, circleTextureRegion);
+		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
 		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
 
 		stopAnimation();
@@ -112,10 +98,10 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		registerEntityModifier(rotateView);
 	}
 
-	public void shootAt(final float centerX, final float centerY){
+	public Shot shootAt(final float centerX, final float centerY){
 		faceTarget(centerX, centerY);
 
-		//new Shot(this, pApp,gscene,sprite.getX()+sprite.getWidth()/2,sprite.getY()+sprite.getHeight()/2,centerX,centerY);
+		return new Shot(this, getX()+getWidth()/2, getY()+getHeight()/2, centerX, centerY);
 	}
 
 	public int getHealthPercentage()
