@@ -5,24 +5,29 @@ import org.beavers.R;
 import android.content.Context;
 
 /**
- * @author winniehell
  * represents the state a game is in
+ *
+ * @author winniehell
  */
 public enum GameState {
 	/** default state */
 	UNKNOWN(0),
 	/** server has broadcasted GameInfo */
 	ANNOUNCED(1),
+	/** client sent join request to server */
+	JOINED(2),
 	/** server is waiting for ACK of players */
-	STARTED(2),
+	STARTED(3),
 	/** game is in planning phase */
-	PLANNING_PHASE(3),
+	PLANNING_PHASE(4),
+	/** game is in execution phase */
+	EXECUTION_PHASE(5),
 	/** lost connection to server (timeout) */
-	ABORTED(4),
+	ABORTED(6),
 	/** won the game */
-	WON(5),
+	WON(7),
 	/** lost the game */
-	LOST(6);
+	LOST(8);
 
 	public String getName(final Context pContext) {
 		switch (this) {
