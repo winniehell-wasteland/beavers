@@ -21,5 +21,6 @@
     <string name="state_aborted">Aborted</string>
     <string name="state_won">Won</string>
     <string name="state_lost">Lost</string>
+    <string name="context_menu_shoot">Shoot</string>
 
 </resources>

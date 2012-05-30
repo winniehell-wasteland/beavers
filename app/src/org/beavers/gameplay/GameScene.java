@@ -156,9 +156,9 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 			final float newX=(float) (step/c*angleX)+currentSoldier.getSprite().getX()+currentSoldier.getSprite().getWidth()/2;
 			final float newY=(float) (step/c*angleY)+currentSoldier.getSprite().getY()+currentSoldier.getSprite().getHeight()/2;
 			//Toast.makeText(app,""+dist/c,Toast.LENGTH_SHORT ).show();
-			final Rectangle dot= new Rectangle(newX, newY, 2, 2);
-			dot.setColor(1, 0, 0);
-			GameScene.this.attachChild(dot);
+			//final Rectangle dot= new Rectangle(newX, newY, 2, 2);
+			//dot.setColor(1, 0, 0);
+			//GameScene.this.attachChild(dot);
 			if(map.getTMXLayers().get(0).getTMXTileAt(newX, newY)!=null){
 				if(map.getTMXLayers().get(0).getTMXTileAt(newX, newY).getTMXTileProperties(map)!=null){
 					return false;
@@ -196,21 +196,50 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 				final float centerX = lastContextMenuTile.getTileX() + lastContextMenuTile.getTileWidth()/2,
 						centerY = lastContextMenuTile.getTileY() + lastContextMenuTile.getTileHeight()/2;
 
-				if(predictCollision(centerX,centerY,20)){
+				if(predictCollision(centerX,centerY,10)){
 					currentSoldier.stop();
 					currentSoldier.move(Math.round(centerX),Math.round(centerY));
-
+				
 					if(wayPointMark!=null)
 					{
 						GameScene.this.detachChild(wayPointMark);
 					}
 
-					wayPointMark= new Rectangle(centerX, centerY, 10, 10);
+					wayPointMark= new Rectangle(centerX-8, centerY-8, 16, 16);
 					wayPointMark.setColor(0, 1, 0);
+					wayPointMark.setZIndex(0);
 					GameScene.this.attachChild(wayPointMark);
+					GameScene.this.sortChildren();
 				}
 			}
 
+			return true;
+		case R.id.context_menu_shoot:
+			if((currentSoldier!=null)
+					&& (lastContextMenuTile != null)
+					&& (lastContextMenuTile.getTMXTileProperties(map)==null)
+					/*& lastContextMenuTile.getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/
+					)
+			{
+				final float centerX = lastContextMenuTile.getTileX() + lastContextMenuTile.getTileWidth()/2,
+						centerY = lastContextMenuTile.getTileY() + lastContextMenuTile.getTileHeight()/2;
+
+				if(predictCollision(centerX,centerY,10)){
+					currentSoldier.stop();
+					//currentSoldier.move(Math.round(centerX),Math.round(centerY));
+					//test shootAt
+					currentSoldier.shootAt(centerX,centerY);
+					if(wayPointMark!=null)
+					{
+						GameScene.this.detachChild(wayPointMark);
+					}
+
+					wayPointMark= new Rectangle(centerX-8, centerY-8, 16, 16);
+					wayPointMark.setColor(0, 1, 0);
+					wayPointMark.setZIndex(0);
+					GameScene.this.attachChild(wayPointMark);
+					GameScene.this.sortChildren();
+				}}
 			return true;
 		default:
 		return false;
