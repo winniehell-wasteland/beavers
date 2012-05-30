@@ -20,9 +20,10 @@ public class GameList {
 	 * insert new game into list
 	 * @param pGame new game
 	 */
-	public void add(final GameInfo pGame)
+	public GameInfo add(final GameInfo pGame)
 	{
 		container.put(pGame.toString(), pGame);
+		return container.get(pGame.toString());
 	}
 
 	/**

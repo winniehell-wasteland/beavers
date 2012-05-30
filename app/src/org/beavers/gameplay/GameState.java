@@ -1,5 +1,9 @@
 package org.beavers.gameplay;
 
+import org.beavers.R;
+
+import android.content.Context;
+
 /**
  * @author winniehell
  * represents the state a game is in
@@ -20,10 +24,30 @@ public enum GameState {
 	/** lost the game */
 	LOST(6);
 
-	@Override
-	public String toString() {
-		return magicValue+"";
-	};
+	public String getName(final Context pContext) {
+		switch (this) {
+		case UNKNOWN:
+			return pContext.getString(R.string.state_unknown);
+		case ANNOUNCED:
+			return pContext.getString(R.string.state_announced);
+		case STARTED:
+			return pContext.getString(R.string.state_started);
+		case PLANNING_PHASE:
+			return pContext.getString(R.string.state_planning);
+		case ABORTED:
+			return pContext.getString(R.string.state_aborted);
+		case WON:
+			return pContext.getString(R.string.state_won);
+		case LOST:
+			return pContext.getString(R.string.state_lost);
+		default:
+			return null;
+		}
+	}
+
+	public int getMagicValue() {
+		return magicValue;
+	}
 
 	/**
 	 * default constructor

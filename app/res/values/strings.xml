@@ -10,5 +10,14 @@
     <string name="menu_help">Help</string>
     <string name="menu_options">Options</string>
     <string name="context_menu_move">Move</string>
+    <string name="menu_join">Join</string>
+    <string name="state">State</string>
+    <string name="state_unknown">Unknown</string>
+    <string name="state_announced">Announced</string>
+    <string name="state_started">Started</string>
+    <string name="state_planning">Planning Phase</string>
+    <string name="state_aborted">Aborted</string>
+    <string name="state_won">Won</string>
+    <string name="state_lost">Lost</string>
 
 </resources>

@@ -1,23 +1,29 @@
 package org.beavers.ui;
 
+import org.beavers.AppActivity;
 import org.beavers.R;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 
-import android.content.Context;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class GameListView extends ListView {
+public abstract class GameListView extends ListView implements OnMenuItemClickListener, OnItemClickListener {
 
-	public GameListView(final Context pContext, final GameList pList) {
-		super(pContext);
+	public GameListView(final AppActivity pApp, final GameList pList) {
+		super(pApp);
 
+		app = pApp;
 		list = pList;
 
 		setPadding(20, 10, 10, 10);
@@ -26,16 +32,40 @@ public class GameListView extends ListView {
 				LinearLayout.LayoutParams.FILL_PARENT
 				));
 
-		setAdapter(new ListViewAdapter(pContext));
+		setAdapter(new ListViewAdapter());
+
+		setOnItemClickListener(this);
 	}
 
-	final private GameList list;
+	@Override
+	public void onItemClick(final AdapterView<?> pParent, final View pView, final int pPosition, final long pID) {
+		setSelection(pPosition);
+		showContextMenu();
+	}
 
+	@Override
+	protected void onCreateContextMenu(final ContextMenu menu) {
+        final MenuInflater inflater = app.getMenuInflater();
+        inflater.inflate(getContextMenuRes(), menu);
+
+        for(int i = 0; i < menu.size(); ++i)
+        {
+        	menu.getItem(i).setOnMenuItemClickListener(this);
+        }
+	}
+
+	/**
+	 * @return the context menu resource ID
+	 */
+	protected abstract int getContextMenuRes();
+
+	private final AppActivity app;
+	private final GameList list;
 
 	class ListViewAdapter extends BaseAdapter {
 
-		public ListViewAdapter(final Context pContext) {
-			 inflater = LayoutInflater.from(pContext);
+		public ListViewAdapter() {
+			 inflater = app.getLayoutInflater();
 		}
 
 		@Override
@@ -72,7 +102,7 @@ public class GameListView extends ListView {
 
 			holder.txtName.setText(item.getID().toString());
 			holder.txtServer.setText(item.getServer().toString());
-			holder.txtState.setText("Unknown...");
+			holder.txtState.setText(app.getString(R.string.state) + ": " + item.getState().getName(app));
 
 			return convertView;
 		}

@@ -171,7 +171,7 @@ public class GameScene extends Scene implements IOnSceneTouchListener, IHoldDete
 	public void onCreateContextMenu(final ContextMenu menu, final View v,
 			final ContextMenuInfo menuInfo) {
         final MenuInflater inflater = app.getMenuInflater();
-        inflater.inflate(R.menu.tile_context_menu, menu);
+        inflater.inflate(R.menu.context_tile, menu);
 
         for(int i = 0; i < menu.size(); ++i)
         {
