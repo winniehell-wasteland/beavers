@@ -2,13 +2,17 @@ package org.beavers.ingame;
 
 import java.util.ArrayList;
 
+import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
+import org.anddev.andengine.util.modifier.IModifier;
+import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.beavers.Textures;
+import org.beavers.gameplay.GameScene;
 
 
 public class Soldier extends AnimatedSprite implements GameObject {
@@ -82,8 +86,9 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		animate(new long[]{200, 200}, 1, 2, true);
 	}
-
-	public void faceTarget(final float faceX,final float faceY){
+	// rotation== true: Rotation wird direkt auf Soldier ausgeführt
+	//rotation == false: Es wird nur ein RotationByModifier zurückgegeben
+	public RotationByModifier faceTarget(final float faceX,final float faceY, final boolean rotation){
 		final float angleX=faceX-(getX()+getWidth()/2);
 		final float angleY=faceY-(getY()+getHeight()/2);
 		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
@@ -92,16 +97,45 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
 		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
 		else angle=angle-getRotation();
-
-		final RotationByModifier rotateView= new RotationByModifier(0.6f, angle);
-
-		registerEntityModifier(rotateView);
+		
+		final RotationByModifier rotate=new RotationByModifier(0.6f, angle);
+		if(rotation){
+			registerEntityModifier(rotate);
+		}
+		
+		return rotate;
+		
+		
 	}
 
-	public Shot shootAt(final float centerX, final float centerY){
-		faceTarget(centerX, centerY);
-
-		return new Shot(this, getX()+getWidth()/2, getY()+getHeight()/2, centerX, centerY);
+	private float shootAtX;
+	private float shootAtY;
+	private final Soldier self =this;
+	private Shot shot;
+	private GameScene scene;
+	public void shootAt(final float centerX, final float centerY, final GameScene scene){
+		this.scene=scene;
+		shootAtX=centerX;
+		shootAtY=centerY;
+		final RotationByModifier rot=faceTarget(centerX, centerY,false);
+		
+		rot.addModifierListener(new IModifierListener<IEntity>() {
+			
+			@Override
+			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+				// TODO Auto-generated method stub
+				shot = new Shot(self,shootAtX, shootAtY);
+				scene.attachChild(shot);
+			}
+		});
+		registerEntityModifier(rot);
+		
 	}
 
 	public int getHealthPercentage()

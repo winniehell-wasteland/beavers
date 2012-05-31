@@ -29,7 +29,6 @@ import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
-import org.beavers.ingame.Shot;
 import org.beavers.ingame.Soldier;
 import org.beavers.ui.ContextMenuHandler;
 
@@ -133,8 +132,8 @@ public class GameScene extends Scene
 			final float centerX = pTile.getTileX() + pTile.getTileWidth()/2,
 					centerY = pTile.getTileY() + pTile.getTileHeight()/2;
 
-			final Shot shot = selectedSoldier.shootAt(centerX, centerY);
-			attachChild(shot);
+			selectedSoldier.shootAt(centerX, centerY, this);
+			//attachChild(shot);
 		}
 	}
 
