@@ -2,6 +2,7 @@ package org.beavers.gameplay;
 
 import java.util.Hashtable;
 
+import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -10,6 +11,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -23,13 +25,13 @@ import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
-import org.anddev.andengine.util.path.Path.Step;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.Shot;
 import org.beavers.ingame.Soldier;
+import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.util.Log;
@@ -123,29 +125,43 @@ public class GameScene extends Scene
 			}
 			else
 			{
-				selectedSoldier.stop();
+				//selectedSoldier.stop();
 				//selectedSoldier.move(pTile);
 				//selectedSoldier.move(map, path);
 
+				/*
+				// draw path
 				for(int i = 0; i < path.getLength(); ++i)
 				{
 					final Step step = path.getStep(i);
-					final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(step.getTileColumn(), step.getTileRow());
+					final TMXTile tile = getTile(step.getTileColumn(), step.getTileRow());
 
 					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
 					rect.setColor(1.0f, 1.0f, 0.0f, 0.5f);
 					rect.setZIndex(0);
 					attachChild(rect);
 				}
+				*/
+
+				final WayPoint waypoint = new WayPoint(path, pTile);
+
+				selectedSoldier.addWayPoint(waypoint);
+
+				gameObjects.put(pTile, waypoint);
+				attachChild(waypoint);
+
+				drawPath(waypoint.getPath(), waypoint);
 
 				sortChildren();
 
+				/*
 				wayPointMark.setPosition(pTile.getTileX(), pTile.getTileY());
 
 				if(!wayPointMark.hasParent())
 				{
 					attachChild(wayPointMark);
 				}
+				*/
 			}
 		}
 	}
@@ -175,7 +191,7 @@ public class GameScene extends Scene
 				for(int i = 0; i < path.getLength(); ++i)
 				{
 					final Step step = path.getStep(i);
-					final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(step.getTileColumn(), step.getTileRow());
+					final TMXTile tile = getTile(step.getTileColumn(), step.getTileRow());
 
 					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
 					rect.setColor(1.0f, 0.0f, 0.0f, 0.5f);
@@ -204,8 +220,8 @@ public class GameScene extends Scene
 	public float getStepCost(final GameObject pObject, final int pFromTileColumn,
 			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
 
-		return pObject.getStepCost(this, map.getTMXLayers().get(0).getTMXTile(pFromTileColumn, pFromTileRow),
-				map.getTMXLayers().get(0).getTMXTile(pToTileColumn, pToTileRow));
+		return pObject.getStepCost(this, tmxLayer.getTMXTile(pFromTileColumn, pFromTileRow),
+				tmxLayer.getTMXTile(pToTileColumn, pToTileRow));
 	}
 
 	@Override
@@ -220,7 +236,7 @@ public class GameScene extends Scene
 
 	@Override
 	public boolean isTileBlocked(final GameObject pObject, final int pTileColumn, final int pTileRow) {
-		final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(pTileColumn, pTileRow);
+		final TMXTile tile = tmxLayer.getTMXTile(pTileColumn, pTileRow);
 
 		return ((tile == null) || (tile.getTMXTileProperties(map) != null));
 	}
@@ -254,7 +270,7 @@ public class GameScene extends Scene
 
 		Log.d("onHoldFinished", "t="+pHoldTimeMilliseconds);
 
-		final TMXTile tile = map.getTMXLayers().get(0).getTMXTileAt(pHoldX, pHoldY);
+		final TMXTile tile = tmxLayer.getTMXTileAt(pHoldX, pHoldY);
 
 		if(tile != null)
 		{
@@ -267,7 +283,8 @@ public class GameScene extends Scene
 					selectSoldier((Soldier) obj);
 				}
 			}
-			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow()))
+			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
+					&& (selectedSoldier != null))
 			{
 				contextMenuHandler = new EmptyTile(this, tile);
 				app.showGameContextMenu();
@@ -324,11 +341,34 @@ public class GameScene extends Scene
 	private final Rectangle wayPointMark;
 
 	private ContextMenuHandler contextMenuHandler;
+	private TMXLayer tmxLayer;
 
 	private void addSoldier(final Soldier pSoldier)
 	{
 		gameObjects.put(pSoldier.getTile(), pSoldier);
 		attachChild(pSoldier);
+	}
+
+	private void drawPath(final Path path, final IEntity pParent) {
+		Path.Step step = path.getStep(0);
+		TMXTile lastTile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
+
+		for(int i = 1; i < path.getLength(); ++i)
+		{
+			step = path.getStep(i);
+			final TMXTile tile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
+
+			final Line line = new Line(getTileCenterX(lastTile) - pParent.getX(), getTileCenterY(lastTile) - pParent.getY(),
+					getTileCenterX(tile) - pParent.getX(), getTileCenterY(tile) - pParent.getY());
+
+			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
+			line.setLineWidth(2);
+			line.setZIndex(0);
+
+			pParent.attachChild(line);
+
+			lastTile = tile;
+		}
 	}
 
 	private void loadMap(final String pMapName)
@@ -346,14 +386,14 @@ public class GameScene extends Scene
 			return;
 		}
 
-		final TMXLayer tmxLayer = map.getTMXLayers().get(0);
+		tmxLayer = map.getTMXLayers().get(0);
 		this.attachChild(tmxLayer);
 	}
 
 
 	private void loadSoldiers(){
-		addSoldier(new Soldier(0, map.getTMXLayers().get(0).getTMXTileAt(20, 20)));
-		addSoldier(new Soldier(0, map.getTMXLayers().get(0).getTMXTileAt(140, 20)));
+		addSoldier(new Soldier(0, tmxLayer.getTMXTileAt(20, 20)));
+		addSoldier(new Soldier(0, tmxLayer.getTMXTileAt(140, 20)));
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
