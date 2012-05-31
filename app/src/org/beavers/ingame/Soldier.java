@@ -11,6 +11,9 @@ import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
+import org.anddev.andengine.util.path.IPathFinder;
+import org.anddev.andengine.util.path.ITiledMap;
+import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameScene;
 
@@ -36,6 +39,33 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		stopAnimation();
 		setRotationCenter(getWidth()/2, getHeight()/2);
 		setZIndex(1);
+	}
+
+	@Override
+	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
+		return pPathFinder.findPath(this, 0, getTile().getTileColumn(), getTile().getTileRow(),
+        		pTarget.getTileColumn(), pTarget.getTileRow());
+	}
+
+	@Override
+	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
+		// prevent diagonals at blocked tiles
+		if((Math.abs(pTo.getTileRow() - pFrom.getTileRow()) == 1)
+				&& (Math.abs(pTo.getTileColumn() - pFrom.getTileColumn()) == 1))
+		{
+			if(pMap.isTileBlocked(this, pFrom.getTileColumn(), pTo.getTileRow())
+					|| pMap.isTileBlocked(this, pTo.getTileColumn(), pFrom.getTileRow()))
+			{
+				return 100;
+			}
+		}
+
+		return 0;
+	}
+
+	@Override
+	public TMXTile getTile() {
+		return tile;
 	}
 
 	@Override
@@ -86,8 +116,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		animate(new long[]{200, 200}, 1, 2, true);
 	}
-	// rotation== true: Rotation wird direkt auf Soldier ausgeführt
-	//rotation == false: Es wird nur ein RotationByModifier zurückgegeben
+	// rotation== true: Rotation wird direkt auf Soldier ausgefï¿½hrt
+	//rotation == false: Es wird nur ein RotationByModifier zurï¿½ckgegeben
 	public RotationByModifier faceTarget(final float faceX,final float faceY, final boolean rotation){
 		final float angleX=faceX-(getX()+getWidth()/2);
 		final float angleY=faceY-(getY()+getHeight()/2);
@@ -97,54 +127,41 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
 		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
 		else angle=angle-getRotation();
-		
+
 		final RotationByModifier rotate=new RotationByModifier(0.6f, angle);
 		if(rotation){
 			registerEntityModifier(rotate);
 		}
-		
+
 		return rotate;
-		
-		
+
+
 	}
 
-	private float shootAtX;
-	private float shootAtY;
-	private final Soldier self =this;
-	private Shot shot;
-	private GameScene scene;
-	public void shootAt(final float centerX, final float centerY, final GameScene scene){
-		this.scene=scene;
-		shootAtX=centerX;
-		shootAtY=centerY;
-		final RotationByModifier rot=faceTarget(centerX, centerY,false);
-		
+	public void fireShot(final Shot pShot, final TMXTile pTarget){
+
+		final RotationByModifier rot=faceTarget(GameScene.getTileCenterX(pTarget), GameScene.getTileCenterY(pTarget),false);
+
 		rot.addModifierListener(new IModifierListener<IEntity>() {
-			
+
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
 				// TODO Auto-generated method stub
-				
+
 			}
-			
+
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				// TODO Auto-generated method stub
-				shot = new Shot(self,shootAtX, shootAtY);
-				scene.attachChild(shot);
+				pShot.fire(pTarget);
 			}
 		});
 		registerEntityModifier(rot);
-		
+
 	}
 
 	public int getHealthPercentage()
 	{
 		return -1;
-	}
-
-	public TMXTile getTile() {
-		return tile;
 	}
 
 	public Weapon getWeapon()
