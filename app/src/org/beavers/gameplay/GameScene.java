@@ -2,7 +2,6 @@ package org.beavers.gameplay;
 
 import java.util.Hashtable;
 
-import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -29,6 +28,7 @@ import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
+import org.beavers.ingame.Shot;
 import org.beavers.ingame.Soldier;
 import org.beavers.ui.ContextMenuHandler;
 
@@ -41,12 +41,29 @@ import android.view.View.OnCreateContextMenuListener;
 import android.widget.Toast;
 
 public class GameScene extends Scene
-	implements ITiledMap<IEntity>,
+	implements ITiledMap<GameObject>,
 		IOnSceneTouchListener,
 		IHoldDetectorListener,
 		IScrollDetectorListener,
 		OnCreateContextMenuListener
 {
+	/**
+	 * @name helper functions
+	 * @{
+	 */
+	public static int getTileCenterX(final TMXTile pTile)
+	{
+		return pTile.getTileX() + pTile.getTileWidth()/2;
+	}
+
+	public static int getTileCenterY(final TMXTile pTile)
+	{
+		return pTile.getTileY() + pTile.getTileHeight()/2;
+	}
+	/**
+	 * @}
+	 */
+
 	public GameInfo currentGame;
 
 	public GameScene(final AppActivity pApp)
@@ -64,7 +81,14 @@ public class GameScene extends Scene
 		loadMap("test");
 		loadSoldiers();
 
-		pathFinder = new AStarPathFinder<IEntity>(this, 1600, true);
+		if(map != null)
+		{
+			pathFinder = new AStarPathFinder<GameObject>(this, 1600, true);
+		}
+		else
+		{
+			pathFinder = null;
+		}
 
 		wayPointMark = new Rectangle(0, 0, map.getTileWidth(), map.getTileHeight());
 		wayPointMark.setColor(0.0f, 1.0f, 0.0f, 0.5f);
@@ -91,7 +115,7 @@ public class GameScene extends Scene
 		}
 		else
 		{
-			final Path path = findPath(selectedSoldier, pTile);
+			final Path path = selectedSoldier.findPath(pathFinder, pTile);
 
 			if(path == null)
 			{
@@ -110,8 +134,11 @@ public class GameScene extends Scene
 
 					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
 					rect.setColor(1.0f, 1.0f, 0.0f, 0.5f);
+					rect.setZIndex(0);
 					attachChild(rect);
 				}
+
+				sortChildren();
 
 				wayPointMark.setPosition(pTile.getTileX(), pTile.getTileY());
 
@@ -127,13 +154,41 @@ public class GameScene extends Scene
 
 		if(selectedSoldier != null)
 		{
-			// TODO if(predictCollision(centerX,centerY,10)){
+			final Shot shot = new Shot(selectedSoldier);
+			final Path path = shot.findPath(pathFinder, pTile);
 
-			final float centerX = pTile.getTileX() + pTile.getTileWidth()/2,
-					centerY = pTile.getTileY() + pTile.getTileHeight()/2;
+			if(path == null)
+			{
+				Toast.makeText(app, "Can not shoot there!", Toast.LENGTH_SHORT).show();
+			}
+			else
+			{
+				/*
+				// draw targetLine
+				shot.targetLine.setColor(1.0f, 0.0f, 0.0f, 0.5f);
+				shot.targetLine.setZIndex(0);
+				attachChild(shot.targetLine);
+				*/
 
-			selectedSoldier.shootAt(centerX, centerY, this);
-			//attachChild(shot);
+				/*
+				// draw bullet path
+				for(int i = 0; i < path.getLength(); ++i)
+				{
+					final Step step = path.getStep(i);
+					final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(step.getTileColumn(), step.getTileRow());
+
+					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
+					rect.setColor(1.0f, 0.0f, 0.0f, 0.5f);
+					rect.setZIndex(0);
+					attachChild(rect);
+				}
+
+				sortChildren();
+				*/
+
+				attachChild(shot);
+				selectedSoldier.fireShot(shot, pTile);
+			}
 		}
 	}
 
@@ -146,59 +201,28 @@ public class GameScene extends Scene
 	}
 
 	@Override
-	public float getStepCost(final IEntity pEntity, final int pFromTileColumn,
+	public float getStepCost(final GameObject pObject, final int pFromTileColumn,
 			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
 
-		// prevent diagonals at blocked tiles
-		if((Math.abs(pToTileRow - pFromTileRow) == 1)
-				&& (Math.abs(pToTileColumn - pFromTileColumn) == 1))
-		{
-			if(isTileBlocked(pEntity, pFromTileColumn, pToTileRow)
-					|| isTileBlocked(pEntity, pToTileColumn, pFromTileRow))
-			{
-				return 100;
-			}
-		}
-
-		return 0;
+		return pObject.getStepCost(this, map.getTMXLayers().get(0).getTMXTile(pFromTileColumn, pFromTileRow),
+				map.getTMXLayers().get(0).getTMXTile(pToTileColumn, pToTileRow));
 	}
 
 	@Override
 	public int getTileColumns() {
-		if(map == null)
-		{
-			return 0;
-		}
-		else
-		{
-			return map.getTileColumns();
-		}
+		return map.getTileColumns();
 	}
 
 	@Override
 	public int getTileRows() {
-		if(map == null)
-		{
-			return 0;
-		}
-		else
-		{
-			return map.getTileRows();
-		}
+		return map.getTileRows();
 	}
 
 	@Override
-	public boolean isTileBlocked(final IEntity pEntity, final int pTileColumn, final int pTileRow) {
-		if(map == null)
-		{
-			return false;
-		}
-		else
-		{
-			final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(pTileColumn, pTileRow);
+	public boolean isTileBlocked(final GameObject pObject, final int pTileColumn, final int pTileRow) {
+		final TMXTile tile = map.getTMXLayers().get(0).getTMXTile(pTileColumn, pTileRow);
 
-			return ((tile == null) || (tile.getTMXTileProperties(map) != null));
-		}
+		return ((tile == null) || (tile.getTMXTileProperties(map) != null));
 	}
 
 	@Override
@@ -294,7 +318,7 @@ public class GameScene extends Scene
 
 	private TMXTiledMap map;
 	private final Hashtable<TMXTile, GameObject> gameObjects;
-	private final AStarPathFinder<IEntity> pathFinder;
+	private final AStarPathFinder<GameObject> pathFinder;
 
 	private Soldier selectedSoldier;
 	private final Rectangle wayPointMark;
@@ -305,13 +329,6 @@ public class GameScene extends Scene
 	{
 		gameObjects.put(pSoldier.getTile(), pSoldier);
 		attachChild(pSoldier);
-	}
-
-	private Path findPath(final Soldier pSoldier, final TMXTile pTarget)
-	{
-		return pathFinder.findPath(pSoldier, 0,
-        		pSoldier.getTile().getTileColumn(), pSoldier.getTile().getTileRow(),
-        		pTarget.getTileColumn(), pTarget.getTileRow());
 	}
 
 	private void loadMap(final String pMapName)
