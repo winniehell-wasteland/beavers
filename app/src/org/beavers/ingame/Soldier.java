@@ -1,6 +1,6 @@
 package org.beavers.ingame;
 
-import java.util.ArrayList;
+import java.util.Stack;
 
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
@@ -20,17 +20,17 @@ import org.beavers.gameplay.GameScene;
 
 public class Soldier extends AnimatedSprite implements GameObject {
 
-	public Soldier(final int pTeam, final TMXTile pTile) {
-		super(pTile.getTileX() + pTile.getTileWidth()/2,
-				pTile.getTileY() + pTile.getTileHeight()/2,
+	public Soldier(final int pTeam, final TMXTile pInitialPosition) {
+		super(GameScene.getTileCenterX(pInitialPosition),
+				GameScene.getTileCenterY(pInitialPosition),
 				getTexture(pTeam));
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
-		tile = pTile;
-		target = pTile;
+		target = pInitialPosition;
 
-		wayPoints = new ArrayList<WayPoint>();
+		wayPoints = new Stack<WayPoint>();
+		wayPoints.push(new WayPoint(null, pInitialPosition));
 
 		//Selection Circle
 		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
@@ -38,34 +38,28 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		stopAnimation();
 		setRotationCenter(getWidth()/2, getHeight()/2);
-		setZIndex(1);
+		setZIndex(10);
+	}
+
+	public void addWayPoint(final WayPoint pWayPoint)
+	{
+		wayPoints.peek().isLast = false;
+		wayPoints.push(pWayPoint);
 	}
 
 	@Override
 	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
-		return pPathFinder.findPath(this, 0, getTile().getTileColumn(), getTile().getTileRow(),
-        		pTarget.getTileColumn(), pTarget.getTileRow());
+		return wayPoints.peek().findPath(pPathFinder, pTarget);
 	}
 
 	@Override
 	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
-		// prevent diagonals at blocked tiles
-		if((Math.abs(pTo.getTileRow() - pFrom.getTileRow()) == 1)
-				&& (Math.abs(pTo.getTileColumn() - pFrom.getTileColumn()) == 1))
-		{
-			if(pMap.isTileBlocked(this, pFrom.getTileColumn(), pTo.getTileRow())
-					|| pMap.isTileBlocked(this, pTo.getTileColumn(), pFrom.getTileRow()))
-			{
-				return 100;
-			}
-		}
-
-		return 0;
+		return wayPoints.peek().getStepCost(pMap, pFrom, pTo);
 	}
 
 	@Override
 	public TMXTile getTile() {
-		return tile;
+		return wayPoints.get(0).getTile();
 	}
 
 	@Override
@@ -87,6 +81,12 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	public void markDeselected(){
 		detachChild(selectionMark);
+
+		for(int i = 1; i < wayPoints.size(); ++i)
+		{
+			wayPoints.get(i).detachChildren();
+			wayPoints.get(i).detachSelf();
+		}
 	}
 
 	public void move(final TMXTile pTarget){
@@ -116,8 +116,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		animate(new long[]{200, 200}, 1, 2, true);
 	}
-	// rotation== true: Rotation wird direkt auf Soldier ausgef�hrt
-	//rotation == false: Es wird nur ein RotationByModifier zur�ckgegeben
+	// rotation== true: Rotation wird direkt auf Soldier ausgeführt
+	//rotation == false: Es wird nur ein RotationByModifier zurückgegeben
 	public RotationByModifier faceTarget(final float faceX,final float faceY, final boolean rotation){
 		final float angleX=faceX-(getX()+getWidth()/2);
 		final float angleY=faceY-(getY()+getHeight()/2);
@@ -169,6 +169,15 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		return null;
 	}
 
+	public void removeWayPoint()
+	{
+		if(wayPoints.size() > 1)
+		{
+			wayPoints.pop();
+			wayPoints.peek().isLast = true;
+		}
+	}
+
 	public void stop()
 	{
 		stopAnimation();
@@ -181,10 +190,9 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	private static final int SPEED = 80;
 
-	private final TMXTile tile;
 	private TMXTile target;
 
-	private final ArrayList<WayPoint> wayPoints;
+	private final Stack<WayPoint> wayPoints;
 
 	private MoveModifier mod;
 	private final Sprite selectionMark;
