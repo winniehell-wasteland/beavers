@@ -17,9 +17,18 @@ import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameScene;
 
-
+/**
+ * soldier sprite
+ * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
+ */
 public class Soldier extends AnimatedSprite implements GameObject {
 
+	/**
+	 * default constructor
+	 * @param pTeam team this soldier is in
+	 * @param pInitialPosition initial position
+	 */
 	public Soldier(final int pTeam, final TMXTile pInitialPosition) {
 		super(GameScene.getTileCenterX(pInitialPosition),
 				GameScene.getTileCenterY(pInitialPosition),
@@ -41,12 +50,20 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		setZIndex(10);
 	}
 
+	/**
+	 * adds a waypoint for this soldier
+	 * @param pWayPoint waypoint to add
+	 */
 	public void addWayPoint(final WayPoint pWayPoint)
 	{
 		wayPoints.peek().isLast = false;
 		wayPoints.push(pWayPoint);
 	}
 
+	/**
+	 * draws the waypoints and paths in between to the scene
+	 * @param pGameScene scene to draw on
+	 */
 	public void drawWaypoints(final GameScene pGameScene) {
 		for(int i = 1; i < wayPoints.size(); ++i)
 		{
@@ -57,16 +74,30 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 	}
 
+	/**
+	 * @param pPathFinder path finder to use
+	 * @param pTarget target position
+	 * @return a path from last waypoint to the target position (or null if there is none)
+	 */
 	@Override
 	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
 		return wayPoints.peek().findPath(pPathFinder, pTarget);
 	}
 
+	/**
+	 * @param pMap tile map to walk on
+	 * @param pFrom start position
+	 * @param pTo end position
+	 * @return step cost for soldier and given tiles
+	 */
 	@Override
 	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
 		return wayPoints.peek().getStepCost(pMap, pFrom, pTo);
 	}
 
+	/**
+	 * @return current soldier position
+	 */
 	@Override
 	public TMXTile getTile() {
 		return wayPoints.get(0).getTile();
@@ -76,8 +107,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
     protected void onManagedUpdate(final float pSecondsElapsed) {
             // TODO Auto-generated method stub
             super.onManagedUpdate(pSecondsElapsed);
-            if(((int)getX()+getWidth()/2<=getTargetX() && (int)getX()+getWidth()/2>=getTargetX())
-            		&&((int)getY()+getHeight()/2<=getTargetY() && (int)getY()+getHeight()/2>=getTargetY())){
+            if(((int)getX()+getWidth()/2<=GameScene.getTileCenterX(target) && (int)getX()+getWidth()/2>=GameScene.getTileCenterX(target))
+            		&&((int)getY()+getHeight()/2<=GameScene.getTileCenterY(target) && (int)getY()+getHeight()/2>=GameScene.getTileCenterY(target))){
             	stopAnimation();
             	// TODO was macht das?
             	setCurrentTileIndex(0);
@@ -85,10 +116,16 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
     }
 
+	/**
+	 * add selectionMark
+	 */
 	public void markSelected(){
 		attachChild(selectionMark);
 	}
 
+	/**
+	 * remove selectionMark and waypoints from GameScene
+	 */
 	public void markDeselected(){
 		detachChild(selectionMark);
 
@@ -103,16 +140,16 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		target = pTarget;
 
 		//Bewegung nach pTarget
-		final float distx = Math.abs(getTargetX() - (getX()+getWidth()/2));
-		final float disty = Math.abs(getTargetY() - (getY()+getHeight()/2));
+		final float distx = Math.abs(GameScene.getTileCenterX(target) - (getX()+getWidth()/2));
+		final float disty = Math.abs(GameScene.getTileCenterY(target) - (getY()+getHeight()/2));
 
 		mod = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED),getX(),
-				getTargetX()-getWidth()/2, getY(),getTargetY()-getHeight()/2);
+				GameScene.getTileCenterX(target)-getWidth()/2, getY(),GameScene.getTileCenterY(target)-getHeight()/2);
 		registerEntityModifier(mod);
 
 		//Rotation
-		final float angleX = getTargetX() - (getX()+getWidth()/2);
-		final float angleY = getTargetY() - (getY()+getHeight()/2);
+		final float angleX = GameScene.getTileCenterX(target) - (getX()+getWidth()/2);
+		final float angleY = GameScene.getTileCenterY(target) - (getY()+getHeight()/2);
 		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
 		RotationByModifier rotate;
 
@@ -217,14 +254,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		default:
 			return null;
 		}
-	}
-
-	private int getTargetX() {
-		return target.getTileX() + target.getTileWidth()/2;
-	}
-
-	private int getTargetY() {
-		return target.getTileY() + target.getTileHeight()/2;
 	}
 
 	// TODO unused?
