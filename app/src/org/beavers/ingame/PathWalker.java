@@ -20,7 +20,6 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 		waypoint = null;
 		stepIndex = 0;
-		wayPointIndex = 0;
 	}
 
 	@Override
@@ -55,7 +54,6 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private final Soldier soldier;
 
 	private WayPoint waypoint;
-	private int wayPointIndex;
 
 	private int stepIndex;
 	private TMXTile tile;
@@ -63,7 +61,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private void nextWaypoint()
 	{
 		stepIndex = 1;
-		waypoint = soldier.getWayPoint(++wayPointIndex);
+		waypoint = soldier.popWayPoint();
 	}
 
 	public void nextTile() {
