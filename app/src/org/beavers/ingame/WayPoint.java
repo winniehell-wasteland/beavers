@@ -5,20 +5,23 @@ import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
+import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.ui.ContextMenuHandler;
 
+import android.view.ContextMenu;
 import android.view.MenuItem;
 
 public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 	public boolean isLast = true;
 
-	public WayPoint(final Path pPath, final TMXTile pTile)
+	public WayPoint(final Soldier pSoldier, final Path pPath, final TMXTile pTile)
 	{
 		super(pTile.getTileX(), pTile.getTileY(), pTile.getTileWidth(), pTile.getTileHeight(), Textures.WAYPOINT.deepCopy());
 
 		path = pPath;
+		soldier = pSoldier;
 		tile = pTile;
 
 		setZIndex(0);
@@ -32,12 +35,15 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 	@Override
 	public int getMenuID() {
-		// TODO Auto-generated method stub
-		return 1/0;
+		return R.menu.context_waypoint;
 	}
 
 	public Path getPath() {
 		return path;
+	}
+
+	public Soldier getSoldier() {
+		return soldier;
 	}
 
 	@Override
@@ -62,11 +68,27 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	}
 
 	@Override
-	public boolean onMenuItemClick(final MenuItem item) {
-		// TODO Auto-generated method stub
-		return false;
+	public void onMenuCreated(final ContextMenu pMenu) {
+		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
+		pMenu.findItem(R.id.context_menu_waypoint_remove).setEnabled(isLast);
+	}
+
+	@Override
+	public boolean onMenuItemClick(final MenuItem pItem) {
+		switch (pItem.getItemId()) {
+		case R.id.context_menu_waypoint_remove:
+			if(isLast)
+			{
+				soldier.removeWayPoint();
+			}
+
+			return true;
+		default:
+			return false;
+		}
 	}
 
 	private final Path path;
+	private final Soldier soldier;
 	private final TMXTile tile;
 }

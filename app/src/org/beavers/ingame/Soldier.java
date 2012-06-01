@@ -30,7 +30,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		target = pInitialPosition;
 
 		wayPoints = new Stack<WayPoint>();
-		wayPoints.push(new WayPoint(null, pInitialPosition));
+		wayPoints.push(new WayPoint(this, null, pInitialPosition));
 
 		//Selection Circle
 		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
@@ -45,6 +45,16 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		wayPoints.peek().isLast = false;
 		wayPoints.push(pWayPoint);
+	}
+
+	public void drawWaypoints(final GameScene pGameScene) {
+		for(int i = 1; i < wayPoints.size(); ++i)
+		{
+			final WayPoint waypoint = wayPoints.get(i);
+
+			pGameScene.drawPath(waypoint.getPath(), waypoint);
+			pGameScene.attachChild(waypoint);
+		}
 	}
 
 	@Override
@@ -173,7 +183,10 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		if(wayPoints.size() > 1)
 		{
-			wayPoints.pop();
+			final WayPoint waypoint = wayPoints.pop();
+			waypoint.detachChildren();
+			waypoint.detachSelf();
+
 			wayPoints.peek().isLast = true;
 		}
 	}
