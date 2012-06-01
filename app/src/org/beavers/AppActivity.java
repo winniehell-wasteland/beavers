@@ -25,6 +25,7 @@ import org.beavers.gameplay.PlayerID;
 import org.beavers.ui.GameListView;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -72,10 +73,21 @@ public class AppActivity extends BaseGameActivity {
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(final Menu menu) {
-	    final MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.main_menu, menu);
-	    return true;
+	public boolean onPrepareOptionsMenu (final Menu menu) {
+		menu.clear();
+
+		if(isShowing(mRenderSurfaceView))
+		{
+			Log.d(TAG, "Game menu");
+			return gameScene.onCreateOptionsMenu(menu);
+		}
+		else
+		{
+		    final MenuInflater inflater = getMenuInflater();
+			inflater.inflate(R.menu.main_menu, menu);
+
+		    return true;
+		}
 	}
 
 	@Override
@@ -174,45 +186,52 @@ public class AppActivity extends BaseGameActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_start_game:
+		if(isShowing(mRenderSurfaceView))
+		{
+			return gameScene.onOptionsItemSelected(item);
+		}
+		else
+		{
+			switch (item.getItemId()) {
+			case R.id.menu_start_game:
 
-		    if(!isShowing(mRenderSurfaceView))
-		    {
-		    	frameLayout.removeAllViews();
+				if(!isShowing(mRenderSurfaceView))
+				{
+					frameLayout.removeAllViews();
 
-			    final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
-			    frameLayout.addView(mRenderSurfaceView, surfaceViewLayoutParams);
-		    }
+					final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
+					frameLayout.addView(mRenderSurfaceView, surfaceViewLayoutParams);
+				}
 
-			final GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
-			server.initiateGame(newGame);
+				final GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
+				server.initiateGame(newGame);
 
-			return true;
-		case R.id.menu_join_game:
+				return true;
+			case R.id.menu_join_game:
 
-		    if(!isShowing(announcedGamesView))
-		    {
-		    	frameLayout.removeAllViews();
-			    frameLayout.addView(announcedGamesView);
-		    }
+				if(!isShowing(announcedGamesView))
+				{
+					frameLayout.removeAllViews();
+					frameLayout.addView(announcedGamesView);
+				}
 
-			return true;
-		case R.id.menu_running_games:
+				return true;
+			case R.id.menu_running_games:
 
-		    if(!isShowing(runningGamesView))
-		    {
-		    	frameLayout.removeAllViews();
-			    frameLayout.addView(runningGamesView);
-		    }
+				if(!isShowing(runningGamesView))
+				{
+					frameLayout.removeAllViews();
+					frameLayout.addView(runningGamesView);
+				}
 
-			return true;
-		case R.id.menu_quit:
-			finish();
+				return true;
+			case R.id.menu_quit:
+				finish();
 
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+			}
 		}
 	}
 
@@ -313,6 +332,8 @@ public class AppActivity extends BaseGameActivity {
 			runningGamesView.getAdapter().notifyDataSetChanged();
 		}
 	}
+
+	private static final String TAG = "AppActivity";
 
 	private final PlayerID playerID;
 
