@@ -67,6 +67,8 @@ public class EmptyTile implements ContextMenuHandler {
 
 				gameScene.drawPath(waypoint.getPath(), waypoint);
 				gameScene.addObject(waypoint);
+
+				gameScene.sortChildren();
 			}
 
 			return true;

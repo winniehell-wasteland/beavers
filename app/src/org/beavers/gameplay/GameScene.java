@@ -30,6 +30,7 @@ import org.beavers.AppActivity;
 import org.beavers.R;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
+import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
@@ -246,7 +247,8 @@ public class GameScene extends Scene
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
-			// do the walking
+			final PathWalker walker = new PathWalker(this, selectedSoldier);
+			walker.start();
 
 			return true;
 		default:
@@ -341,6 +343,8 @@ public class GameScene extends Scene
 			selectedSoldier = pSoldier;
 			selectedSoldier.markSelected();
 			selectedSoldier.drawWaypoints(this);
+
+			sortChildren();
 		}
 	}
 }

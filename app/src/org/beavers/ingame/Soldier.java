@@ -5,7 +5,7 @@ import java.util.Stack;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.modifier.IEntityModifier;
-import org.anddev.andengine.entity.modifier.MoveByModifier;
+import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -158,7 +158,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				Soldier.this.stop();
+				Soldier.this.stopAnimation();
 			}
 		});
 	}
@@ -170,8 +170,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		final float distx = Math.abs(GameScene.getTileCenterX(target) - (getX()+getWidth()/2));
 		final float disty = Math.abs(GameScene.getTileCenterY(target) - (getY()+getHeight()/2));
 
-		final MoveByModifier movement = new MoveByModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED),
-				GameScene.getTileCenterX(target)-getWidth()/2, GameScene.getTileCenterY(target)-getHeight()/2);
+		final MoveModifier movement = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), getX(),
+				GameScene.getTileCenterX(target)-getWidth()/2, getY(), GameScene.getTileCenterY(target)-getHeight()/2);
 
 		if(pListener != null)
 		{
@@ -179,7 +179,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 
 		faceTarget(pTarget, new IModifierListener<IEntity>() {
-
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier,
 					final IEntity pItem) {
@@ -208,15 +207,25 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
 		else angle=angle-getRotation();
 
-		final RotationByModifier rotation = new RotationByModifier(0.6f, angle);
-
-		if(pListener != null)
+		if(angle == 0)
 		{
-			rotation.addModifierListener(pListener);
+			if(pListener != null)
+			{
+				pListener.onModifierFinished(null, this);
+			}
 		}
+		else
+		{
+			final RotationByModifier rotation = new RotationByModifier(0.6f, angle);
 
-		lastModifier = rotation;
-		registerEntityModifier(rotation);
+			if(pListener != null)
+			{
+				rotation.addModifierListener(pListener);
+			}
+
+			lastModifier = rotation;
+			registerEntityModifier(rotation);
+		}
 	}
 
 	public void fireShot(final Shot pShot, final TMXTile pTarget){
