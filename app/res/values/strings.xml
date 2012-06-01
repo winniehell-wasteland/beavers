@@ -1,30 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="hello">Hello World, AppActivity!</string>
     <string name="app_name">App</string>
-    <string name="menu_start_game">Start game</string>
+    <string name="context_menu_empty_tile">Empty Tile</string>
+    <string name="context_menu_focus">Aim at</string>
+    <string name="context_menu_move">Move</string>
+    <string name="context_menu_shoot">Shoot</string>
+    <string name="context_menu_waypoint_remove">Remove</string>
+    <string name="context_menu_waypoint">Waypoint</string>
+    <string name="menu_help">Help</string>
     <string name="menu_join_game">Join game</string>
+    <string name="menu_join">Join</string>
+    <string name="menu_options">Options</string>
     <string name="menu_quit">Quit</string>
     <string name="menu_running_games">Running games</string>
-    <string name="menu_help">Help</string>
-    <string name="menu_options">Options</string>
-    <string name="context_menu_move">Move</string>
-    <string name="menu_join">Join</string>
+    <string name="menu_start_game">Start game</string>
+    <string name="state_aborted">Aborted</string>
+    <string name="state_announced">Announced</string>
+    <string name="state_execution">Execution Phase</string>
+    <string name="state_joined">Joined</string>
+    <string name="state_lost">Lost</string>
+    <string name="state_planning">Planning Phase</string>
+    <string name="state_started">Started</string>
     <string name="state">State</string>
     <string name="state_unknown">Unknown</string>
-    <string name="state_announced">Announced</string>
-    <string name="state_joined">Joined</string>
-    <string name="state_started">Started</string>
-    <string name="state_planning">Planning Phase</string>
-    <string name="state_execution">Execution Phase</string>
-    <string name="state_aborted">Aborted</string>
     <string name="state_won">Won</string>
-    <string name="state_lost">Lost</string>
-    <string name="context_menu_shoot">Shoot</string>
-    <string name="context_menu_empty_tile">Empty Tile</string>
-    <string name="context_menu_waypoint_remove">Remove Waypoint</string>
-    <string name="context_menu_focus">Aim at</string>
-    <string name="context_menu_waypoint">Waypoint</string>
-
 </resources>
