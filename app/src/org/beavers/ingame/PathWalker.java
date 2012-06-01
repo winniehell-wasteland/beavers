@@ -31,7 +31,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 	public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
 		if(pModifier instanceof MoveModifier)
 		{
-			soldier.stopAnimation();
+			soldier.stopAnimation(0);
 
 			nextTile();
 

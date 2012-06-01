@@ -272,12 +272,12 @@ public class GameScene extends Scene
 	@Override
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
-			app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
+		app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
 	}
 
 	@Override
 	public void onTileVisitedByPathFinder(final int pTileColumn, final int pTileRow) {
-		// TODO Auto-generated method stub
+
 	}
 
 	public void playOutcome(final OutcomeContainer outcome)
@@ -328,8 +328,8 @@ public class GameScene extends Scene
 
 
 	private void loadSoldiers(){
-		addObject(new Soldier(0, tmxLayer.getTMXTileAt(20, 20)));
-		addObject(new Soldier(0, tmxLayer.getTMXTileAt(140, 20)));
+		addObject(new Soldier(0, tmxLayer.getTMXTile(0, 0)));
+		addObject(new Soldier(0, tmxLayer.getTMXTile(2, 0)));
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
