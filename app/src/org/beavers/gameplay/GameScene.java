@@ -159,6 +159,10 @@ public class GameScene extends Scene
 		return map.getTileRows();
 	}
 
+	public TMXLayer getTMXLayer() {
+		return tmxLayer;
+	}
+
 	@Override
 	public boolean isTileBlocked(final GameObject pObject, final int pTileColumn, final int pTileRow) {
 		final TMXTile tile = tmxLayer.getTMXTile(pTileColumn, pTileRow);

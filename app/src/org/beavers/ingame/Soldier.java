@@ -4,7 +4,8 @@ import java.util.Stack;
 
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
-import org.anddev.andengine.entity.modifier.MoveModifier;
+import org.anddev.andengine.entity.modifier.IEntityModifier;
+import org.anddev.andengine.entity.modifier.MoveByModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
@@ -103,6 +104,17 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		return wayPoints.get(0).getTile();
 	}
 
+	public WayPoint getWayPoint(final int pIndex) {
+		if(pIndex < wayPoints.size())
+		{
+			return wayPoints.get(pIndex);
+		}
+		else
+		{
+			return null;
+		}
+	}
+
 	@Override
     protected void onManagedUpdate(final float pSecondsElapsed) {
             // TODO Auto-generated method stub
@@ -136,61 +148,79 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 	}
 
-	public void move(final TMXTile pTarget){
+	public void move(final TMXTile pTarget) {
+		move(pTarget, new IModifierListener<IEntity>() {
+			@Override
+			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+				Soldier.this.stop();
+			}
+		});
+	}
+
+	public void move(final TMXTile pTarget, final IModifierListener<IEntity> pListener) {
 		target = pTarget;
 
 		//Bewegung nach pTarget
 		final float distx = Math.abs(GameScene.getTileCenterX(target) - (getX()+getWidth()/2));
 		final float disty = Math.abs(GameScene.getTileCenterY(target) - (getY()+getHeight()/2));
 
-		mod = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED),getX(),
-				GameScene.getTileCenterX(target)-getWidth()/2, getY(),GameScene.getTileCenterY(target)-getHeight()/2);
-		registerEntityModifier(mod);
+		final MoveByModifier movement = new MoveByModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED),
+				GameScene.getTileCenterX(target)-getWidth()/2, GameScene.getTileCenterY(target)-getHeight()/2);
 
-		//Rotation
-		final float angleX = GameScene.getTileCenterX(target) - (getX()+getWidth()/2);
-		final float angleY = GameScene.getTileCenterY(target) - (getY()+getHeight()/2);
-		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
-		RotationByModifier rotate;
-
-		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
-		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
-		else angle=angle-getRotation();
-
-		rotate= new RotationByModifier(0.2f, angle);
-
-		registerEntityModifier(rotate);
-
-		animate(new long[]{200, 200}, 1, 2, true);
-	}
-	// rotation== true: Rotation wird direkt auf Soldier ausgeführt
-	//rotation == false: Es wird nur ein RotationByModifier zurückgegeben
-	public RotationByModifier faceTarget(final float faceX,final float faceY, final boolean rotation){
-		final float angleX=faceX-(getX()+getWidth()/2);
-		final float angleY=faceY-(getY()+getHeight()/2);
-		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
-
-
-		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
-		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
-		else angle=angle-getRotation();
-
-		final RotationByModifier rotate=new RotationByModifier(0.6f, angle);
-		if(rotation){
-			registerEntityModifier(rotate);
+		if(pListener != null)
+		{
+			movement.addModifierListener(pListener);
 		}
 
-		return rotate;
+		faceTarget(pTarget, new IModifierListener<IEntity>() {
+
+			@Override
+			public void onModifierStarted(final IModifier<IEntity> pModifier,
+					final IEntity pItem) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void onModifierFinished(final IModifier<IEntity> pModifier,
+					final IEntity pItem) {
+				lastModifier = movement;
+
+				Soldier.this.registerEntityModifier(movement);
+				animate(new long[]{200, 200}, 1, 2, true);
+			}
+		});
+	}
+
+	public void faceTarget(final TMXTile pTarget, final IModifierListener<IEntity> pListener){
+		final float angleX = GameScene.getTileCenterX(pTarget)-(getX()+getWidth()/2);
+		final float angleY = GameScene.getTileCenterY(pTarget)-(getY()+getHeight()/2);
+		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
 
 
+		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
+		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
+		else angle=angle-getRotation();
+
+		final RotationByModifier rotation = new RotationByModifier(0.6f, angle);
+
+		if(pListener != null)
+		{
+			rotation.addModifierListener(pListener);
+		}
+
+		lastModifier = rotation;
+		registerEntityModifier(rotation);
 	}
 
 	public void fireShot(final Shot pShot, final TMXTile pTarget){
-
-		final RotationByModifier rot=faceTarget(GameScene.getTileCenterX(pTarget), GameScene.getTileCenterY(pTarget),false);
-
-		rot.addModifierListener(new IModifierListener<IEntity>() {
-
+		faceTarget(pTarget, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
 				// TODO Auto-generated method stub
@@ -202,8 +232,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 				pShot.fire(pTarget);
 			}
 		});
-		registerEntityModifier(rot);
-
 	}
 
 	public int getHealthPercentage()
@@ -232,9 +260,10 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		stopAnimation();
 
-		if(mod != null)
+		if(lastModifier != null)
 		{
-			unregisterEntityModifier(mod);
+			unregisterEntityModifier(lastModifier);
+			lastModifier = null;
 		}
 	}
 
@@ -244,7 +273,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	private final Stack<WayPoint> wayPoints;
 
-	private MoveModifier mod;
+	private IEntityModifier lastModifier;
 	private final Sprite selectionMark;
 
 	private static TiledTextureRegion getTexture(final int pTeam) {
