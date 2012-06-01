@@ -24,4 +24,5 @@
     <string name="state">State</string>
     <string name="state_unknown">Unknown</string>
     <string name="state_won">Won</string>
+    <string name="menu_execute">Execute</string>
 </resources>

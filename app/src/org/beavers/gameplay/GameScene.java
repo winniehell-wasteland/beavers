@@ -27,6 +27,7 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
+import org.beavers.R;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.Soldier;
@@ -36,7 +37,9 @@ import org.beavers.ui.ContextMenuHandler;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 
@@ -184,6 +187,13 @@ public class GameScene extends Scene
 		}
 	}
 
+	public boolean onCreateOptionsMenu(final Menu menu) {
+	    final MenuInflater inflater = app.getMenuInflater();
+		inflater.inflate(R.menu.game_menu, menu);
+
+		return true;
+	}
+
 	@Override
 	public void onHold(final HoldDetector pHoldDetector, final long pHoldTimeMilliseconds,
 			final float pHoldX, final float pHoldY) {
@@ -226,6 +236,17 @@ public class GameScene extends Scene
 				contextMenuHandler = new EmptyTile(this, tile);
 				app.showGameContextMenu();
 			}
+		}
+	}
+
+	public boolean onOptionsItemSelected(final MenuItem pItem) {
+		switch (pItem.getItemId()) {
+		case R.id.menu_execute:
+			// do the walking
+
+			return true;
+		default:
+			return false;
 		}
 	}
 
@@ -318,5 +339,4 @@ public class GameScene extends Scene
 			selectedSoldier.drawWaypoints(this);
 		}
 	}
-
 }
