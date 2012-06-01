@@ -55,7 +55,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 			if(pMap.isTileBlocked(this, pFrom.getTileColumn(), pTo.getTileRow())
 					|| pMap.isTileBlocked(this, pTo.getTileColumn(), pFrom.getTileRow()))
 			{
-				return 100;
+				return Integer.MAX_VALUE;
 			}
 		}
 
