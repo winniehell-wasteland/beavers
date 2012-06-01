@@ -25,7 +25,6 @@ import org.beavers.gameplay.PlayerID;
 import org.beavers.ui.GameListView;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -78,7 +77,6 @@ public class AppActivity extends BaseGameActivity {
 
 		if(isShowing(mRenderSurfaceView))
 		{
-			Log.d(TAG, "Game menu");
 			return gameScene.onCreateOptionsMenu(menu);
 		}
 		else
