@@ -1,6 +1,6 @@
 package org.beavers.ingame;
 
-import java.util.Stack;
+import java.util.ArrayDeque;
 
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
@@ -39,7 +39,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		target = pInitialPosition;
 
-		wayPoints = new Stack<WayPoint>();
+		wayPoints = new ArrayDeque<WayPoint>();
 		wayPoints.push(new WayPoint(this, null, pInitialPosition));
 
 		//Selection Circle
@@ -57,8 +57,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	public void addWayPoint(final WayPoint pWayPoint)
 	{
-		wayPoints.peek().isLast = false;
-		wayPoints.push(pWayPoint);
+		wayPoints.getLast().isLast = false;
+		wayPoints.addLast(pWayPoint);
 	}
 
 	/**
@@ -66,9 +66,12 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pGameScene scene to draw on
 	 */
 	public void drawWaypoints(final GameScene pGameScene) {
-		for(int i = 1; i < wayPoints.size(); ++i)
+	    for(final WayPoint waypoint : wayPoints)
 		{
-			final WayPoint waypoint = wayPoints.get(i);
+	    	if(waypoint == wayPoints.getFirst())
+	    	{
+	    		continue;
+	    	}
 
 			pGameScene.drawPath(waypoint.getPath(), waypoint);
 			pGameScene.attachChild(waypoint);
@@ -82,7 +85,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	@Override
 	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
-		return wayPoints.peek().findPath(pPathFinder, pTarget);
+		return wayPoints.getLast().findPath(pPathFinder, pTarget);
 	}
 
 	/**
@@ -93,7 +96,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	@Override
 	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
-		return wayPoints.peek().getStepCost(pMap, pFrom, pTo);
+		return wayPoints.getLast().getStepCost(pMap, pFrom, pTo);
 	}
 
 	/**
@@ -101,18 +104,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	@Override
 	public TMXTile getTile() {
-		return wayPoints.get(0).getTile();
-	}
-
-	public WayPoint getWayPoint(final int pIndex) {
-		if(pIndex < wayPoints.size())
-		{
-			return wayPoints.get(pIndex);
-		}
-		else
-		{
-			return null;
-		}
+		return wayPoints.getFirst().getTile();
 	}
 
 	@Override
@@ -128,6 +120,21 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
     }
 
+	public WayPoint popWayPoint() {
+		wayPoints.getFirst().detachChildren();
+		wayPoints.getFirst().detachSelf();
+
+		if(wayPoints.size() > 1)
+		{
+			wayPoints.removeFirst();
+			return wayPoints.getFirst();
+		}
+		else
+		{
+			return null;
+		}
+	}
+
 	/**
 	 * add selectionMark
 	 */
@@ -141,10 +148,15 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public void markDeselected(){
 		detachChild(selectionMark);
 
-		for(int i = 1; i < wayPoints.size(); ++i)
+	    for(final WayPoint waypoint : wayPoints)
 		{
-			wayPoints.get(i).detachChildren();
-			wayPoints.get(i).detachSelf();
+	    	if(waypoint == wayPoints.getFirst())
+	    	{
+	    		continue;
+	    	}
+
+			waypoint.detachChildren();
+			waypoint.detachSelf();
 		}
 	}
 
@@ -257,11 +269,11 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		if(wayPoints.size() > 1)
 		{
-			final WayPoint waypoint = wayPoints.pop();
+			final WayPoint waypoint = wayPoints.removeLast();
 			waypoint.detachChildren();
 			waypoint.detachSelf();
 
-			wayPoints.peek().isLast = true;
+			wayPoints.getLast().isLast = true;
 		}
 	}
 
@@ -280,7 +292,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	private TMXTile target;
 
-	private final Stack<WayPoint> wayPoints;
+	private final ArrayDeque<WayPoint> wayPoints;
 
 	private IEntityModifier lastModifier;
 	private final Sprite selectionMark;
