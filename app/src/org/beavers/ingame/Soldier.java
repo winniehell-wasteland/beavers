@@ -37,8 +37,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
-		target = pInitialPosition;
-
 		wayPoints = new ArrayDeque<WayPoint>();
 		wayPoints.push(new WayPoint(this, null, pInitialPosition));
 
@@ -46,7 +44,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
 		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
 
-		stopAnimation();
+		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
 		setZIndex(10);
 	}
@@ -79,6 +77,42 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	}
 
 	/**
+	 * turn soldier to face target tile
+	 * @param pTarget target tile
+	 * @param pListener listener for rotation
+	 */
+	public void faceTarget(final TMXTile pTarget, final IModifierListener<IEntity> pListener){
+		final float angleX = GameScene.getTileCenterX(pTarget)-(getX()+getWidth()/2);
+		final float angleY = GameScene.getTileCenterY(pTarget)-(getY()+getHeight()/2);
+		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
+
+
+		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
+		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
+		else angle=angle-getRotation();
+
+		if(angle == 0)
+		{
+			if(pListener != null)
+			{
+				pListener.onModifierFinished(null, this);
+			}
+		}
+		else
+		{
+			final RotationByModifier rotation = new RotationByModifier(Math.abs(angle)/ROTATION_SPEED, angle);
+
+			if(pListener != null)
+			{
+				rotation.addModifierListener(pListener);
+			}
+
+			lastModifier = rotation;
+			registerEntityModifier(rotation);
+		}
+	}
+
+	/**
 	 * @param pPathFinder path finder to use
 	 * @param pTarget target position
 	 * @return a path from last waypoint to the target position (or null if there is none)
@@ -86,6 +120,33 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	@Override
 	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
 		return wayPoints.getLast().findPath(pPathFinder, pTarget);
+	}
+
+	/**
+	 * fire shot to target tile
+	 * @param pShot shot object
+	 * @param pTarget target tile
+	 */
+	public void fireShot(final Shot pShot, final TMXTile pTarget){
+		faceTarget(pTarget, new IModifierListener<IEntity>() {
+			@Override
+			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+
+			}
+
+			@Override
+			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+				pShot.fire(pTarget);
+			}
+		});
+	}
+
+	/**
+	 * TODO not yet used
+	 */
+	public int getHealthPercentage()
+	{
+		return 1/0;
 	}
 
 	/**
@@ -107,32 +168,12 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		return wayPoints.getFirst().getTile();
 	}
 
-	@Override
-    protected void onManagedUpdate(final float pSecondsElapsed) {
-            // TODO Auto-generated method stub
-            super.onManagedUpdate(pSecondsElapsed);
-            if(((int)getX()+getWidth()/2<=GameScene.getTileCenterX(target) && (int)getX()+getWidth()/2>=GameScene.getTileCenterX(target))
-            		&&((int)getY()+getHeight()/2<=GameScene.getTileCenterY(target) && (int)getY()+getHeight()/2>=GameScene.getTileCenterY(target))){
-            	stopAnimation();
-            	// TODO was macht das?
-            	setCurrentTileIndex(0);
-            }
-
-    }
-
-	public WayPoint popWayPoint() {
-		wayPoints.getFirst().detachChildren();
-		wayPoints.getFirst().detachSelf();
-
-		if(wayPoints.size() > 1)
-		{
-			wayPoints.removeFirst();
-			return wayPoints.getFirst();
-		}
-		else
-		{
-			return null;
-		}
+	/**
+	 * TODO not yet used
+	 */
+	public Weapon getWeapon()
+	{
+		return null;
 	}
 
 	/**
@@ -160,30 +201,35 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 	}
 
+	/**
+	 * move to target tile
+	 * @param pTarget target tile
+	 */
 	public void move(final TMXTile pTarget) {
 		move(pTarget, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				// TODO Auto-generated method stub
 
 			}
 
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				Soldier.this.stopAnimation();
+				Soldier.this.stopAnimation(0);
 			}
 		});
 	}
 
+	/**
+	 * move to target tile
+	 * @param pTarget target tile
+	 * @param pListener listener for movement
+	 */
 	public void move(final TMXTile pTarget, final IModifierListener<IEntity> pListener) {
-		target = pTarget;
+		final float distx = Math.abs(GameScene.getTileCenterX(pTarget) - (getX()+getWidth()/2));
+		final float disty = Math.abs(GameScene.getTileCenterY(pTarget) - (getY()+getHeight()/2));
 
-		//Bewegung nach pTarget
-		final float distx = Math.abs(GameScene.getTileCenterX(target) - (getX()+getWidth()/2));
-		final float disty = Math.abs(GameScene.getTileCenterY(target) - (getY()+getHeight()/2));
-
-		final MoveModifier movement = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), getX(),
-				GameScene.getTileCenterX(target)-getWidth()/2, getY(), GameScene.getTileCenterY(target)-getHeight()/2);
+		final MoveModifier movement = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED), getX(),
+				GameScene.getTileCenterX(pTarget)-getWidth()/2, getY(), GameScene.getTileCenterY(pTarget)-getHeight()/2);
 
 		if(pListener != null)
 		{
@@ -194,7 +240,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier,
 					final IEntity pItem) {
-				// TODO Auto-generated method stub
 
 			}
 
@@ -204,67 +249,33 @@ public class Soldier extends AnimatedSprite implements GameObject {
 				lastModifier = movement;
 
 				Soldier.this.registerEntityModifier(movement);
-				animate(new long[]{200, 200}, 1, 2, true);
+				Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
 			}
 		});
 	}
 
-	public void faceTarget(final TMXTile pTarget, final IModifierListener<IEntity> pListener){
-		final float angleX = GameScene.getTileCenterX(pTarget)-(getX()+getWidth()/2);
-		final float angleY = GameScene.getTileCenterY(pTarget)-(getY()+getHeight()/2);
-		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
+	/**
+	 * remove first waypoint
+	 * @return removed waypoint
+	 */
+	public WayPoint popWayPoint() {
+		wayPoints.getFirst().detachChildren();
+		wayPoints.getFirst().detachSelf();
 
-
-		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
-		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
-		else angle=angle-getRotation();
-
-		if(angle == 0)
+		if(wayPoints.size() > 1)
 		{
-			if(pListener != null)
-			{
-				pListener.onModifierFinished(null, this);
-			}
+			wayPoints.removeFirst();
+			return wayPoints.getFirst();
 		}
 		else
 		{
-			final RotationByModifier rotation = new RotationByModifier(0.6f, angle);
-
-			if(pListener != null)
-			{
-				rotation.addModifierListener(pListener);
-			}
-
-			lastModifier = rotation;
-			registerEntityModifier(rotation);
+			return null;
 		}
 	}
 
-	public void fireShot(final Shot pShot, final TMXTile pTarget){
-		faceTarget(pTarget, new IModifierListener<IEntity>() {
-			@Override
-			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				pShot.fire(pTarget);
-			}
-		});
-	}
-
-	public int getHealthPercentage()
-	{
-		return -1;
-	}
-
-	public Weapon getWeapon()
-	{
-		return null;
-	}
-
+	/**
+	 * remove last waypoint
+	 */
 	public void removeWayPoint()
 	{
 		if(wayPoints.size() > 1)
@@ -277,26 +288,39 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 	}
 
+	/**
+	 * stop moving or turning
+	 */
 	public void stop()
 	{
-		stopAnimation();
+		stopAnimation(0);
 
 		if(lastModifier != null)
 		{
-			unregisterEntityModifier(lastModifier);
+			if(!lastModifier.isFinished())
+			{
+				unregisterEntityModifier(lastModifier);
+			}
 			lastModifier = null;
 		}
 	}
 
-	private static final int SPEED = 80;
+	/** speed for movement in pixel per second */
+	private static final int WALKING_SPEED = 80;
+	/** speed for rotation in degree per second */
+	private static final int ROTATION_SPEED = 240;
 
-	private TMXTile target;
-
+	/** assigned waypoints */
 	private final ArrayDeque<WayPoint> wayPoints;
 
+	/** last initiated movement or rotation */
 	private IEntityModifier lastModifier;
+	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
 
+	/**
+	 * @return TextureRegion for given team
+	 */
 	private static TiledTextureRegion getTexture(final int pTeam) {
 		switch (pTeam) {
 		case 0:
@@ -304,19 +328,5 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		default:
 			return null;
 		}
-	}
-
-	// TODO unused?
-	private float[] getSceneCoordinates(){
-		return convertLocalToSceneCoordinates(10, 10); //10x10 TMX Map
-	}
-
-	// TODO unused?
-	private float[] getXY(){
-
-		final float[] pos= new float[2];
-		pos[0]=getX()+getWidth()/2;
-		pos[1]=getY()+getHeight()/2;
-		return pos;
 	}
 }
