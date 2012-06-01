@@ -1,11 +1,12 @@
 package org.beavers.ingame;
 
+import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 
-public interface GameObject {
+public interface GameObject extends IEntity {
 
 	TMXTile getTile();
 

@@ -12,7 +12,6 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
 import org.anddev.andengine.entity.primitive.Line;
-import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.input.touch.TouchEvent;
@@ -23,13 +22,13 @@ import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorL
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.util.Debug;
+import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
-import org.beavers.ingame.Shot;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
@@ -40,7 +39,6 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
-import android.widget.Toast;
 
 public class GameScene extends Scene
 	implements ITiledMap<GameObject>,
@@ -68,6 +66,10 @@ public class GameScene extends Scene
 
 	public GameInfo currentGame;
 
+	/**
+	 * default constructor
+	 * @param pApp
+	 */
 	public GameScene(final AppActivity pApp)
 	{
 		super();
@@ -92,124 +94,47 @@ public class GameScene extends Scene
 			pathFinder = null;
 		}
 
-		wayPointMark = new Rectangle(0, 0, map.getTileWidth(), map.getTileHeight());
-		wayPointMark.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-		wayPointMark.setZIndex(0);
-
-		sortChildren();
-
 		setOnSceneTouchListener(this);
 	}
 
-	public void addWayPoint(final TMXTile pTile) {
-		if(pTile == null)
-		{
-			Log.wtf(TAG, "There is no way to nirvana!");
-		}
-		else if(selectedSoldier == null)
-		{
-			Toast.makeText(app, "No soldier selected!", Toast.LENGTH_SHORT).show();
-		}
-		else if((pTile.getTMXTileProperties(map) != null)
-				/*&& lastContextMenuTile.getTMXTileProperties(map).containsTMXProperty("blocked", "true")*/)
-		{
-			Toast.makeText(app, "Tile is blocked!", Toast.LENGTH_SHORT).show();
-		}
-		else
-		{
-			final Path path = selectedSoldier.findPath(pathFinder, pTile);
-
-			if(path == null)
-			{
-				Toast.makeText(app, "No path found!", Toast.LENGTH_SHORT).show();
-			}
-			else
-			{
-				//selectedSoldier.stop();
-				//selectedSoldier.move(pTile);
-				//selectedSoldier.move(map, path);
-
-				/*
-				// draw path
-				for(int i = 0; i < path.getLength(); ++i)
-				{
-					final Step step = path.getStep(i);
-					final TMXTile tile = getTile(step.getTileColumn(), step.getTileRow());
-
-					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
-					rect.setColor(1.0f, 1.0f, 0.0f, 0.5f);
-					rect.setZIndex(0);
-					attachChild(rect);
-				}
-				*/
-
-				final WayPoint waypoint = new WayPoint(path, pTile);
-
-				selectedSoldier.addWayPoint(waypoint);
-
-				gameObjects.put(pTile, waypoint);
-				attachChild(waypoint);
-
-				drawPath(waypoint.getPath(), waypoint);
-
-				sortChildren();
-
-				/*
-				wayPointMark.setPosition(pTile.getTileX(), pTile.getTileY());
-
-				if(!wayPointMark.hasParent())
-				{
-					attachChild(wayPointMark);
-				}
-				*/
-			}
-		}
+	/**
+	 * insert a new game object on the map
+	 * @param pObject the object to insert
+	 */
+	public void addObject(final GameObject pObject)
+	{
+		gameObjects.put(pObject.getTile(), pObject);
+		attachChild(pObject);
 	}
 
-	public void fireShot(final TMXTile pTile) {
+	public void drawPath(final Path path, final IEntity pParent) {
+		Path.Step step = path.getStep(0);
+		TMXTile lastTile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
 
-		if(selectedSoldier != null)
+		for(int i = 1; i < path.getLength(); ++i)
 		{
-			final Shot shot = new Shot(selectedSoldier);
-			final Path path = shot.findPath(pathFinder, pTile);
+			step = path.getStep(i);
+			final TMXTile tile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
 
-			if(path == null)
-			{
-				Toast.makeText(app, "Can not shoot there!", Toast.LENGTH_SHORT).show();
-			}
-			else
-			{
-				/*
-				// draw targetLine
-				shot.targetLine.setColor(1.0f, 0.0f, 0.0f, 0.5f);
-				shot.targetLine.setZIndex(0);
-				attachChild(shot.targetLine);
-				*/
+			final Line line = new Line(getTileCenterX(lastTile) - pParent.getX(), getTileCenterY(lastTile) - pParent.getY(),
+					getTileCenterX(tile) - pParent.getX(), getTileCenterY(tile) - pParent.getY());
 
-				/*
-				// draw bullet path
-				for(int i = 0; i < path.getLength(); ++i)
-				{
-					final Step step = path.getStep(i);
-					final TMXTile tile = getTile(step.getTileColumn(), step.getTileRow());
+			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
+			line.setLineWidth(2);
+			line.setZIndex(0);
 
-					final Rectangle rect = new Rectangle(tile.getTileX(), tile.getTileY(), tile.getTileWidth(), tile.getTileHeight());
-					rect.setColor(1.0f, 0.0f, 0.0f, 0.5f);
-					rect.setZIndex(0);
-					attachChild(rect);
-				}
+			pParent.attachChild(line);
 
-				sortChildren();
-				*/
-
-				attachChild(shot);
-				selectedSoldier.fireShot(shot, pTile);
-			}
+			lastTile = tile;
 		}
 	}
 
 	public TMXTiledMap getMap() {
 		return map;
+	}
+
+	public IPathFinder<GameObject> getPathFinder() {
+		return pathFinder;
 	}
 
 	public Soldier getSelectedSoldier() {
@@ -250,12 +175,12 @@ public class GameScene extends Scene
 	        final MenuInflater inflater = app.getMenuInflater();
 	        inflater.inflate(contextMenuHandler.getMenuID(), pMenu);
 
-	        pMenu.setHeaderTitle(contextMenuHandler.getClass().getSimpleName());
-
 			for(int i = 0; i < pMenu.size(); ++i)
 			{
 				pMenu.getItem(i).setOnMenuItemClickListener(contextMenuHandler);
 			}
+
+			contextMenuHandler.onMenuCreated(pMenu);
 		}
 	}
 
@@ -281,6 +206,18 @@ public class GameScene extends Scene
 				if(obj instanceof Soldier)
 				{
 					selectSoldier((Soldier) obj);
+				}
+				else if(obj instanceof WayPoint)
+				{
+					final WayPoint waypoint = (WayPoint) obj;
+
+					if(waypoint.getSoldier() != selectedSoldier)
+					{
+						selectSoldier(waypoint.getSoldier());
+					}
+
+					contextMenuHandler = waypoint;
+					app.showGameContextMenu();
 				}
 			}
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
@@ -326,6 +263,7 @@ public class GameScene extends Scene
 	}
 
 	private final static float CAMERA_SPEED = 1.50f;
+	@SuppressWarnings("unused")
 	private static final String TAG = "GameScene";
 
 	private final AppActivity app;
@@ -334,42 +272,13 @@ public class GameScene extends Scene
 	private final HoldDetector holdDetector;
 
 	private TMXTiledMap map;
+	private TMXLayer tmxLayer;
 	private final Hashtable<TMXTile, GameObject> gameObjects;
 	private final AStarPathFinder<GameObject> pathFinder;
 
 	private Soldier selectedSoldier;
-	private final Rectangle wayPointMark;
 
 	private ContextMenuHandler contextMenuHandler;
-	private TMXLayer tmxLayer;
-
-	private void addSoldier(final Soldier pSoldier)
-	{
-		gameObjects.put(pSoldier.getTile(), pSoldier);
-		attachChild(pSoldier);
-	}
-
-	private void drawPath(final Path path, final IEntity pParent) {
-		Path.Step step = path.getStep(0);
-		TMXTile lastTile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
-
-		for(int i = 1; i < path.getLength(); ++i)
-		{
-			step = path.getStep(i);
-			final TMXTile tile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
-
-			final Line line = new Line(getTileCenterX(lastTile) - pParent.getX(), getTileCenterY(lastTile) - pParent.getY(),
-					getTileCenterX(tile) - pParent.getX(), getTileCenterY(tile) - pParent.getY());
-
-			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-			line.setLineWidth(2);
-			line.setZIndex(0);
-
-			pParent.attachChild(line);
-
-			lastTile = tile;
-		}
-	}
 
 	private void loadMap(final String pMapName)
 	{
@@ -392,8 +301,8 @@ public class GameScene extends Scene
 
 
 	private void loadSoldiers(){
-		addSoldier(new Soldier(0, tmxLayer.getTMXTileAt(20, 20)));
-		addSoldier(new Soldier(0, tmxLayer.getTMXTileAt(140, 20)));
+		addObject(new Soldier(0, tmxLayer.getTMXTileAt(20, 20)));
+		addObject(new Soldier(0, tmxLayer.getTMXTileAt(140, 20)));
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
@@ -404,8 +313,9 @@ public class GameScene extends Scene
 				selectedSoldier.markDeselected();
 			}
 
-			pSoldier.markSelected();
 			selectedSoldier = pSoldier;
+			selectedSoldier.markSelected();
+			selectedSoldier.drawWaypoints(this);
 		}
 	}
 

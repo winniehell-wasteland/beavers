@@ -22,5 +22,9 @@
     <string name="state_won">Won</string>
     <string name="state_lost">Lost</string>
     <string name="context_menu_shoot">Shoot</string>
+    <string name="context_menu_empty_tile">Empty Tile</string>
+    <string name="context_menu_waypoint_remove">Remove Waypoint</string>
+    <string name="context_menu_focus">Aim at</string>
+    <string name="context_menu_waypoint">Waypoint</string>
 
 </resources>
