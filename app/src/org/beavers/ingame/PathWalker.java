@@ -60,6 +60,12 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 	private void nextWaypoint()
 	{
+		if(waypoint != null)
+		{
+			waypoint.detachChildren();
+			gameScene.removeObject(waypoint);
+		}
+
 		stepIndex = 1;
 		waypoint = soldier.popWayPoint();
 	}

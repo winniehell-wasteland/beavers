@@ -259,9 +259,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @return removed waypoint
 	 */
 	public WayPoint popWayPoint() {
-		wayPoints.getFirst().detachChildren();
-		wayPoints.getFirst().detachSelf();
-
 		if(wayPoints.size() > 1)
 		{
 			wayPoints.removeFirst();

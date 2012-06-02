@@ -285,6 +285,11 @@ public class GameScene extends Scene
 		// TODO Auto-generated method stub
 	}
 
+	public void removeObject(final GameObject pObject) {
+		gameObjects.remove(pObject.getTile());
+		detachChild(pObject);
+	}
+
 	public void startPlanningPhase() {
 		// TODO Auto-generated method stub
 	}
