@@ -34,6 +34,7 @@ import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
+import org.beavers.ingame.ViewPoint;
 import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
 
@@ -218,6 +219,11 @@ public class GameScene extends Scene
 			final float pHoldX, final float pHoldY) {
 	}
 
+	public WayPoint getLastSelectedWaypoint(){
+		return lastSelectedWaypoint;
+	}
+
+	private WayPoint lastSelectedWaypoint;
 	@Override
 	public void onHoldFinished(final HoldDetector pHoldDetector,
 			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
@@ -239,7 +245,7 @@ public class GameScene extends Scene
 				else if(obj instanceof WayPoint)
 				{
 					final WayPoint waypoint = (WayPoint) obj;
-
+					lastSelectedWaypoint = waypoint;
 					if(waypoint.getSoldier() != selectedSoldier)
 					{
 						selectSoldier(waypoint.getSoldier());
@@ -261,8 +267,18 @@ public class GameScene extends Scene
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
 					&& (selectedSoldier != null))
 			{
-				contextMenuHandler = new EmptyTile(this, tile);
-				app.showGameContextMenu();
+
+				if(selectedSoldier.getViewMode()){// wenn im ViewPoint Modus --> neuen viewPoint erzeugen
+					final ViewPoint viewpoint = new ViewPoint( tile, lastSelectedWaypoint);
+					lastSelectedWaypoint.setFocus(viewpoint);
+					addObject(viewpoint);
+					sortChildren();
+					selectedSoldier.setViewMode(false);
+				}
+				else{
+					contextMenuHandler = new EmptyTile(this, tile);
+					app.showGameContextMenu();
+				}
 			}
 		}
 	}
