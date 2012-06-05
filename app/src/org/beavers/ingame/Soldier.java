@@ -187,6 +187,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public int getHP(){
 		return hp;
 	}
+	
 	/**
 	 * add selectionMark
 	 */
@@ -217,7 +218,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTarget target tile
 	 */
 	public void move(final TMXTile pTarget) {
-		move(pTarget, new IModifierListener<IEntity>() {
+		move(pTarget,null, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
 
@@ -235,7 +236,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTarget target tile
 	 * @param pListener listener for movement
 	 */
-	public void move(final TMXTile pTarget, final IModifierListener<IEntity> pListener) {
+	public void move(final TMXTile pTarget, final TMXTile viewTarget, final IModifierListener<IEntity> pListener) {
 		final float distx = Math.abs(GameScene.getTileCenterX(pTarget) - (getX()+getWidth()/2));
 		final float disty = Math.abs(GameScene.getTileCenterY(pTarget) - (getY()+getHeight()/2));
 
@@ -246,25 +247,54 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		{
 			movement.addModifierListener(pListener);
 		}
+		if(viewTarget!=null){
+			faceTarget(viewTarget, new IModifierListener<IEntity>() {
+				@Override
+				public void onModifierStarted(final IModifier<IEntity> pModifier,
+						final IEntity pItem) {
 
-		faceTarget(pTarget, new IModifierListener<IEntity>() {
-			@Override
-			public void onModifierStarted(final IModifier<IEntity> pModifier,
-					final IEntity pItem) {
-
+				}
+	
+				@Override
+				public void onModifierFinished(final IModifier<IEntity> pModifier,
+						final IEntity pItem) {
+					lastModifier = movement;
+	
+					Soldier.this.registerEntityModifier(movement);
+					Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
+				}
+			});
+			
+		}
+		else{
+				faceTarget(pTarget, new IModifierListener<IEntity>() {
+					@Override
+					public void onModifierStarted(final IModifier<IEntity> pModifier,
+							final IEntity pItem) {
+		
+					}
+		
+					@Override
+					public void onModifierFinished(final IModifier<IEntity> pModifier,
+							final IEntity pItem) {
+						lastModifier = movement;
+		
+						Soldier.this.registerEntityModifier(movement);
+						Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
+					}
+				});
 			}
-
-			@Override
-			public void onModifierFinished(final IModifier<IEntity> pModifier,
-					final IEntity pItem) {
-				lastModifier = movement;
-
-				Soldier.this.registerEntityModifier(movement);
-				Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
-			}
-		});
 	}
-
+	
+	private boolean viewMode=false;
+	public void setViewMode(final boolean vm){
+		viewMode=vm;
+	}
+	
+	public boolean getViewMode(){
+		return viewMode;
+	}
+	
 	/**
 	 * remove first waypoint
 	 * @return removed waypoint

@@ -72,20 +72,40 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
 		pMenu.findItem(R.id.context_menu_waypoint_remove).setEnabled(isLast);
 	}
-
+	
+	
+	private ViewPoint viewpoint;
+	
+	public ViewPoint getFocus(){
+		return viewpoint;
+	}
+	
+	public void setFocus(final ViewPoint vp){
+		viewpoint=vp;
+	}
+	
 	@Override
 	public boolean onMenuItemClick(final MenuItem pItem) {
+		
+		
+		
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
 			if(isLast)
 			{
 				soldier.removeWayPoint();
 			}
-
+		case R.id.context_menu_focus:
+			soldier.setViewMode(true);
 			return true;
 		default:
 			return false;
 		}
+	}
+	
+	private boolean viewpointmode;
+	public void setViewPoint(final boolean vp){
+		viewpointmode=vp;
 	}
 
 	private final Path path;
