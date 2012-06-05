@@ -1,6 +1,6 @@
 package org.beavers.gameplay;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.entity.IEntity;
@@ -45,6 +45,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
+import android.widget.Toast;
 
 public class GameScene extends Scene
 	implements ITiledMap<GameObject>,
@@ -86,8 +87,8 @@ public class GameScene extends Scene
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
 		registerUpdateHandler(holdDetector);
 
-		gameObjects = new Hashtable<TMXTile, GameObject>();
-		
+		gameObjects = new HashMap<TMXTile, GameObject>();
+
 		loadMap("test");
 		loadSoldiers();
 
@@ -176,6 +177,17 @@ public class GameScene extends Scene
 		return ((tile == null) || (tile.getTMXTileProperties(map) != null));
 	}
 
+	/**
+	 * move a {@link GameObject} to a new tile
+	 * @param pObject moving object
+	 * @param pSourceTile old position
+	 * @param pTargetTile new position
+	 */
+	public void moveObject(final GameObject pObject, final TMXTile pSourceTile, final TMXTile pTargetTile) {
+		gameObjects.remove(pSourceTile);
+		gameObjects.put(pTargetTile, pObject);
+	}
+
 	@Override
 	public void onCreateContextMenu(final ContextMenu pMenu, final View pView,
 			final ContextMenuInfo pInfo) {
@@ -210,12 +222,12 @@ public class GameScene extends Scene
 	public void onHoldFinished(final HoldDetector pHoldDetector,
 			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
 
-		Log.d("onHoldFinished", "t="+pHoldTimeMilliseconds);
-
 		final TMXTile tile = tmxLayer.getTMXTileAt(pHoldX, pHoldY);
 
 		if(tile != null)
 		{
+			Log.d(TAG, "Hold on tile ("+tile.getTileColumn()+","+tile.getTileRow()+")");
+
 			if(gameObjects.containsKey(tile))
 			{
 				final GameObject obj = gameObjects.get(tile);
@@ -231,10 +243,19 @@ public class GameScene extends Scene
 					if(waypoint.getSoldier() != selectedSoldier)
 					{
 						selectSoldier(waypoint.getSoldier());
-					}
+						app.runOnUiThread(new Runnable() {
 
-					contextMenuHandler = waypoint;
-					app.showGameContextMenu();
+							@Override
+							public void run() {
+								Toast.makeText(app, "Selected soldier by waypoint", Toast.LENGTH_SHORT).show();
+							}
+						});
+					}
+					else
+					{
+						contextMenuHandler = waypoint;
+						app.showGameContextMenu();
+					}
 				}
 			}
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
@@ -288,7 +309,11 @@ public class GameScene extends Scene
 	}
 
 	public void removeObject(final GameObject pObject) {
-		gameObjects.remove(pObject.getTile());
+		if(gameObjects.get(pObject.getTile()).equals(pObject))
+		{
+			gameObjects.remove(pObject.getTile());
+		}
+
 		detachChild(pObject);
 	}
 
@@ -307,7 +332,7 @@ public class GameScene extends Scene
 
 	private TMXTiledMap map;
 	private TMXLayer tmxLayer;
-	private final Hashtable<TMXTile, GameObject> gameObjects;
+	private final HashMap<TMXTile, GameObject> gameObjects;
 	private final AStarPathFinder<GameObject> pathFinder;
 
 	private Soldier selectedSoldier;
@@ -341,7 +366,7 @@ public class GameScene extends Scene
 		final Rectangle hud_back = new Rectangle(0,0,app.getEngine().getCamera().getWidth(),30);
 		final Rectangle missing_health = new Rectangle(10,10,100,8);
 		final Rectangle health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
-		
+
 		health_bar.setColor(1,0,0);
 		hud_back.setColor(0.2f,0.2f,0.2f);
 		hud_back.setAlpha(0.5f);
@@ -349,7 +374,7 @@ public class GameScene extends Scene
 		hud.attachChild(missing_health);
 		hud.attachChild(health_bar);
 		app.getEngine().getCamera().setHUD(hud);
-		
+
 	}
 	private void loadSoldiers(){
 		addObject(new Soldier(0, tmxLayer.getTMXTile(0, 0)));

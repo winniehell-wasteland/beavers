@@ -32,22 +32,25 @@ public class PathWalker implements IModifierListener<IEntity> {
 		if(pModifier instanceof MoveModifier)
 		{
 			soldier.stopAnimation(0);
+			gameScene.moveObject(soldier, sourceTile, targetTile);
 
 			nextTile();
 
-			if(tile != null)
+			if(targetTile != null)
 			{
-				soldier.move(tile, this);
+				soldier.move(targetTile, this);
 			}
 		}
 	}
 
 	public void start()
 	{
+		targetTile = soldier.getTile();
+
 		nextWaypoint();
 		nextTile();
 
-		soldier.move(tile, this);
+		soldier.move(targetTile, this);
 	}
 
 	private final GameScene gameScene;
@@ -56,7 +59,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private WayPoint waypoint;
 
 	private int stepIndex;
-	private TMXTile tile;
+	private TMXTile sourceTile, targetTile;
 
 	private void nextWaypoint()
 	{
@@ -71,6 +74,8 @@ public class PathWalker implements IModifierListener<IEntity> {
 	}
 
 	public void nextTile() {
+		sourceTile = targetTile;
+
 		if(stepIndex >= waypoint.getPath().getLength())
 		{
 			nextWaypoint();
@@ -82,11 +87,11 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 			++stepIndex;
 
-			tile = gameScene.getTMXLayer().getTMXTile(nextStep.getTileColumn(), nextStep.getTileRow());
+			targetTile = gameScene.getTMXLayer().getTMXTile(nextStep.getTileColumn(), nextStep.getTileRow());
 		}
 		else
 		{
-			tile = null;
+			targetTile = null;
 		}
 	}
 }
