@@ -2,6 +2,7 @@ package org.beavers.gameplay;
 
 import java.util.Hashtable;
 
+import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
@@ -12,6 +13,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
 import org.anddev.andengine.entity.primitive.Line;
+import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
 import org.anddev.andengine.input.touch.TouchEvent;
@@ -85,7 +87,7 @@ public class GameScene extends Scene
 		registerUpdateHandler(holdDetector);
 
 		gameObjects = new Hashtable<TMXTile, GameObject>();
-
+		
 		loadMap("test");
 		loadSoldiers();
 
@@ -331,7 +333,24 @@ public class GameScene extends Scene
 		this.attachChild(tmxLayer);
 	}
 
-
+	private HUD hud;
+	private void loadHUD(){
+		hud=new HUD();
+		hud.setPosition(0, 0);
+        getSelectedSoldier().changeHP(-10);
+		final Rectangle hud_back = new Rectangle(0,0,app.getEngine().getCamera().getWidth(),30);
+		final Rectangle missing_health = new Rectangle(10,10,100,8);
+		final Rectangle health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
+		
+		health_bar.setColor(1,0,0);
+		hud_back.setColor(0.2f,0.2f,0.2f);
+		hud_back.setAlpha(0.5f);
+		hud.attachChild(hud_back);
+		hud.attachChild(missing_health);
+		hud.attachChild(health_bar);
+		app.getEngine().getCamera().setHUD(hud);
+		
+	}
 	private void loadSoldiers(){
 		addObject(new Soldier(0, tmxLayer.getTMXTile(0, 0)));
 		addObject(new Soldier(0, tmxLayer.getTMXTile(2, 0)));
@@ -348,7 +367,7 @@ public class GameScene extends Scene
 			selectedSoldier = pSoldier;
 			selectedSoldier.markSelected();
 			selectedSoldier.drawWaypoints(this);
-
+			loadHUD();
 			sortChildren();
 		}
 	}

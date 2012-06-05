@@ -175,7 +175,18 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		return null;
 	}
-
+	
+	private int hp=100;
+	public int changeHP(final int health){
+		hp+=health;
+		if(hp>100)hp=100;
+		if(hp<0)hp=0;
+		return hp;
+	}
+	
+	public int getHP(){
+		return hp;
+	}
 	/**
 	 * add selectionMark
 	 */
