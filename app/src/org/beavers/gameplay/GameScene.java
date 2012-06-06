@@ -3,7 +3,6 @@ package org.beavers.gameplay;
 import java.util.HashMap;
 
 import org.anddev.andengine.engine.camera.hud.HUD;
-import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -12,7 +11,6 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
-import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -26,7 +24,6 @@ import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
-import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.R;
@@ -113,28 +110,8 @@ public class GameScene extends Scene
 	{
 		gameObjects.put(pObject.getTile(), pObject);
 		attachChild(pObject);
-	}
 
-	public void drawPath(final Path path, final IEntity pParent) {
-		Path.Step step = path.getStep(0);
-		TMXTile lastTile = collisionLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
-
-		for(int i = 1; i < path.getLength(); ++i)
-		{
-			step = path.getStep(i);
-			final TMXTile tile = collisionLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
-
-			final Line line = new Line(getTileCenterX(lastTile) - pParent.getX(), getTileCenterY(lastTile) - pParent.getY(),
-					getTileCenterX(tile) - pParent.getX(), getTileCenterY(tile) - pParent.getY());
-
-			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-			line.setLineWidth(2);
-			line.setZIndex(0);
-
-			pParent.attachChild(line);
-
-			lastTile = tile;
-		}
+		sortChildren();
 	}
 
 	public TMXTiledMap getMap() {
@@ -410,7 +387,6 @@ public class GameScene extends Scene
 
 			selectedSoldier = pSoldier;
 			selectedSoldier.markSelected();
-			selectedSoldier.drawWaypoints(this);
 			loadHUD();
 			sortChildren();
 		}
