@@ -90,7 +90,7 @@ public class GameScene extends Scene
 
 		gameObjects = new HashMap<TMXTile, GameObject>();
 
-		loadMap("test");
+		loadMap("map");
 		loadSoldiers();
 
 		if(map != null)
@@ -174,8 +174,9 @@ public class GameScene extends Scene
 	@Override
 	public boolean isTileBlocked(final GameObject pObject, final int pTileColumn, final int pTileRow) {
 		final TMXTile tile = tmxLayer.getTMXTile(pTileColumn, pTileRow);
+		//return tile!=null;
 
-		return ((tile == null) || (tile.getTMXTileProperties(map) != null));
+		return ((tile == null) || (tile.getGlobalTileID()!=0)); // (tile.getTMXTileProperties(map) != null));
 	}
 
 	/**
@@ -268,7 +269,7 @@ public class GameScene extends Scene
 					&& (selectedSoldier != null))
 			{
 
-				if(selectedSoldier.getViewMode()){// wenn im ViewPoint Modus --> neuen viewPoint erzeugen
+				if(selectedSoldier.getViewMode()) {// wenn im ViewPoint Modus --> neuen viewPoint erzeugen
 					final ViewPoint viewpoint = new ViewPoint( tile, lastSelectedWaypoint);
 					lastSelectedWaypoint.setFocus(viewpoint);
 					addObject(viewpoint);
@@ -348,6 +349,7 @@ public class GameScene extends Scene
 
 	private TMXTiledMap map;
 	private TMXLayer tmxLayer;
+	private TMXLayer floorLayer;
 	private final HashMap<TMXTile, GameObject> gameObjects;
 	private final AStarPathFinder<GameObject> pathFinder;
 
@@ -371,7 +373,9 @@ public class GameScene extends Scene
 		}
 
 		tmxLayer = map.getTMXLayers().get(0);
+		floorLayer =map.getTMXLayers().get(1);
 		this.attachChild(tmxLayer);
+		this.attachChild(floorLayer);
 	}
 
 	private HUD hud;

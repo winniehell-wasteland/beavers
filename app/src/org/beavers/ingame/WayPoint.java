@@ -93,6 +93,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		case R.id.context_menu_waypoint_remove:
 			if(isLast)
 			{
+				soldier.setViewMode(false);
 				soldier.removeWayPoint();
 			}
 		case R.id.context_menu_focus:
