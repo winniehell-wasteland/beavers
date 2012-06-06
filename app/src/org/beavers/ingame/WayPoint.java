@@ -1,7 +1,9 @@
 package org.beavers.ingame;
 
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
+import org.anddev.andengine.util.path.Direction;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
@@ -13,10 +15,22 @@ import org.beavers.ui.ContextMenuHandler;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 
+/**
+ * waypoint sprite
+ * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
+ */
 public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
+	/** true iff this is the last waypoint of the corresponding soldier */
 	public boolean isLast = true;
 
+	/**
+	 * default constructor
+	 * @param pSoldier soldier this waypoint belongs to
+	 * @param pPath path from previous waypoint
+	 * @param pTile position of waypoint
+	 */
 	public WayPoint(final Soldier pSoldier, final Path pPath, final TMXTile pTile)
 	{
 		super(pTile.getTileX(), pTile.getTileY(), pTile.getTileWidth(), pTile.getTileHeight(), Textures.WAYPOINT.deepCopy());
@@ -26,6 +40,11 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		tile = pTile;
 
 		waitForAim = false;
+
+		if(pPath != null)
+		{
+			drawPath();
+		}
 
 		setZIndex(0);
 	}
@@ -132,4 +151,22 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 	private Aim aim;
 	private boolean waitForAim;
+
+	private void drawPath() {
+		Line line = new Line(0, 0, tile.getTileWidth()/2, tile.getTileHeight()/2,0);
+
+		for(int i = path.getLength() - 1; i > 0; --i)
+		{
+			final Direction dir = path.getDirectionToPreviousStep(i);
+
+			line = new Line(line.getX2(), line.getY2(),
+					line.getX2() + dir.getDeltaX()*tile.getTileWidth(), line.getY2() + dir.getDeltaY()*tile.getTileHeight(),
+					2 + Math.abs(dir.getDeltaX()) + Math.abs(dir.getDeltaY()));
+
+			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
+			line.setZIndex(0);
+
+			attachChild(line);
+		}
+	}
 }

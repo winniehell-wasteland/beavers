@@ -59,16 +59,9 @@ public class EmptyTile implements ContextMenuHandler {
 		case R.id.context_menu_move:
 			if(soldierPath != null)
 			{
-				// gameScene.getSelectedSoldier().stop();
-				// gameScene.getSelectedSoldier().move(tile);
-
 				final WayPoint waypoint = new WayPoint(gameScene.getSelectedSoldier(), soldierPath, tile);
 				gameScene.getSelectedSoldier().addWayPoint(waypoint);
-
-				gameScene.drawPath(waypoint.getPath(), waypoint);
 				gameScene.addObject(waypoint);
-
-				gameScene.sortChildren();
 			}
 
 			return true;

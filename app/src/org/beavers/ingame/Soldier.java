@@ -60,23 +60,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	}
 
 	/**
-	 * draws the waypoints and paths in between to the scene
-	 * @param pGameScene scene to draw on
-	 */
-	public void drawWaypoints(final GameScene pGameScene) {
-	    for(final WayPoint waypoint : wayPoints)
-		{
-	    	if(waypoint == wayPoints.getFirst())
-	    	{
-	    		continue;
-	    	}
-
-			pGameScene.drawPath(waypoint.getPath(), waypoint);
-			pGameScene.attachChild(waypoint);
-		}
-	}
-
-	/**
 	 * turn soldier to face target tile
 	 * @param pTarget target tile
 	 * @param pListener listener for rotation
@@ -189,14 +172,27 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	}
 
 	/**
-	 * add selectionMark
+	 * add selection mark and draw waypoints
 	 */
 	public void markSelected(){
 		attachChild(selectionMark);
+
+		assert getParent() instanceof GameScene;
+		final GameScene gameScene = (GameScene) getParent();
+
+	    for(final WayPoint waypoint : wayPoints)
+		{
+	    	if(waypoint == wayPoints.getFirst())
+	    	{
+	    		continue;
+	    	}
+
+			gameScene.attachChild(waypoint);
+		}
 	}
 
 	/**
-	 * remove selectionMark and waypoints from GameScene
+	 * remove selection mark and waypoints from GameScene
 	 */
 	public void markDeselected(){
 		detachChild(selectionMark);
@@ -208,7 +204,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	    		continue;
 	    	}
 
-			waypoint.detachChildren();
 			waypoint.detachSelf();
 		}
 	}
