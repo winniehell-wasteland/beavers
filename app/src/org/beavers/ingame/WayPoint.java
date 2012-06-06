@@ -46,7 +46,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 			drawPath();
 		}
 
-		setZIndex(0);
+		setZIndex(GameScene.ZINDEX_WAYPOINTS);
 	}
 
 	@Override
@@ -160,7 +160,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 					2 + Math.abs(dir.getDeltaX()) + Math.abs(dir.getDeltaY()));
 
 			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-			line.setZIndex(0);
+			line.setZIndex(GameScene.ZINDEX_BACKGROUND);
 
 			attachChild(line);
 		}
