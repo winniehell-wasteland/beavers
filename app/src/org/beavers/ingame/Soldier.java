@@ -321,6 +321,9 @@ public class Soldier extends AnimatedSprite implements GameObject {
 			final WayPoint waypoint = wayPoints.removeLast();
 			waypoint.detachChildren();
 			waypoint.detachSelf();
+			if(waypoint.getFocus()!=null){
+				waypoint.getFocus().detachSelf();
+			}
 
 			wayPoints.getLast().isLast = true;
 		}
