@@ -92,7 +92,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 			++stepIndex;
 
-			targetTile = gameScene.getTMXLayer().getTMXTile(nextStep.getTileColumn(), nextStep.getTileRow());
+			targetTile = gameScene.getCollisionLayer().getTMXTile(nextStep.getTileColumn(), nextStep.getTileRow());
 		}
 		else
 		{

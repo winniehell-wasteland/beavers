@@ -117,12 +117,12 @@ public class GameScene extends Scene
 
 	public void drawPath(final Path path, final IEntity pParent) {
 		Path.Step step = path.getStep(0);
-		TMXTile lastTile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
+		TMXTile lastTile = collisionLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
 
 		for(int i = 1; i < path.getLength(); ++i)
 		{
 			step = path.getStep(i);
-			final TMXTile tile = tmxLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
+			final TMXTile tile = collisionLayer.getTMXTile(step.getTileColumn(), step.getTileRow());
 
 			final Line line = new Line(getTileCenterX(lastTile) - pParent.getX(), getTileCenterY(lastTile) - pParent.getY(),
 					getTileCenterX(tile) - pParent.getX(), getTileCenterY(tile) - pParent.getY());
@@ -153,8 +153,8 @@ public class GameScene extends Scene
 	public float getStepCost(final GameObject pObject, final int pFromTileColumn,
 			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
 
-		return pObject.getStepCost(this, tmxLayer.getTMXTile(pFromTileColumn, pFromTileRow),
-				tmxLayer.getTMXTile(pToTileColumn, pToTileRow));
+		return pObject.getStepCost(this, collisionLayer.getTMXTile(pFromTileColumn, pFromTileRow),
+				collisionLayer.getTMXTile(pToTileColumn, pToTileRow));
 	}
 
 	@Override
@@ -167,13 +167,13 @@ public class GameScene extends Scene
 		return map.getTileRows();
 	}
 
-	public TMXLayer getTMXLayer() {
-		return tmxLayer;
+	public TMXLayer getCollisionLayer() {
+		return collisionLayer;
 	}
 
 	@Override
 	public boolean isTileBlocked(final GameObject pObject, final int pTileColumn, final int pTileRow) {
-		final TMXTile tile = tmxLayer.getTMXTile(pTileColumn, pTileRow);
+		final TMXTile tile = collisionLayer.getTMXTile(pTileColumn, pTileRow);
 		//return tile!=null;
 
 		return ((tile == null) || (tile.getGlobalTileID()!=0)); // (tile.getTMXTileProperties(map) != null));
@@ -229,7 +229,7 @@ public class GameScene extends Scene
 	public void onHoldFinished(final HoldDetector pHoldDetector,
 			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
 
-		final TMXTile tile = tmxLayer.getTMXTileAt(pHoldX, pHoldY);
+		final TMXTile tile = collisionLayer.getTMXTileAt(pHoldX, pHoldY);
 
 		if(tile != null)
 		{
@@ -348,7 +348,7 @@ public class GameScene extends Scene
 	private final HoldDetector holdDetector;
 
 	private TMXTiledMap map;
-	private TMXLayer tmxLayer;
+	private TMXLayer collisionLayer;
 	private TMXLayer floorLayer;
 	private final HashMap<TMXTile, GameObject> gameObjects;
 	private final AStarPathFinder<GameObject> pathFinder;
@@ -372,9 +372,9 @@ public class GameScene extends Scene
 			return;
 		}
 
-		tmxLayer = map.getTMXLayers().get(0);
+		collisionLayer = map.getTMXLayers().get(0);
 		floorLayer =map.getTMXLayers().get(1);
-		this.attachChild(tmxLayer);
+		this.attachChild(collisionLayer);
 		this.attachChild(floorLayer);
 	}
 
@@ -397,8 +397,8 @@ public class GameScene extends Scene
 
 	}
 	private void loadSoldiers(){
-		addObject(new Soldier(0, tmxLayer.getTMXTile(0, 0)));
-		addObject(new Soldier(0, tmxLayer.getTMXTile(2, 0)));
+		addObject(new Soldier(0, collisionLayer.getTMXTile(0, 0)));
+		addObject(new Soldier(0, collisionLayer.getTMXTile(2, 0)));
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
