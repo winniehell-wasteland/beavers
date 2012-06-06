@@ -27,7 +27,6 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.R;
-import org.beavers.ingame.Aim;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.PathWalker;
@@ -214,8 +213,11 @@ public class GameScene extends Scene
 
 				if(selectedWayPoint.isWaitingForAim())
 				{
-					selectedWayPoint.setAim(new Aim(tile));
-					sortChildren();
+					if(!selectedWayPoint.getTile().equals(tile))
+					{
+						selectedWayPoint.setAim(tile);
+						sortChildren();
+					}
 
 					return;
 				}
