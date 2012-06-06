@@ -5,6 +5,7 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 
 public enum Textures {
 	;
+	public static TextureRegion AIM = null;
 	public static TextureRegion MUZZLE_FLASH = null;
 	public static TextureRegion SHOT_BULLET = null;
 	public static TextureRegion SOLDIER_SELECTION_CIRCLE = null;

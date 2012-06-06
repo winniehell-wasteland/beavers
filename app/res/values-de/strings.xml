@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="context_menu_add_aim">Anvisieren</string>
     <string name="context_menu_empty_tile">Leeres Feld</string>
-    <string name="context_menu_focus">Anvisieren</string>
     <string name="context_menu_move">Bewegen</string>
+    <string name="context_menu_remove_aim">Nicht anvisieren</string>
     <string name="context_menu_shoot">Schießen</string>
     <string name="context_menu_waypoint_remove">Entfernen</string>
     <string name="context_menu_waypoint">Wegpunkt</string>
+    <string name="menu_execute">Ausführen</string>
     <string name="menu_help">Hilfe</string>
     <string name="menu_join_game">Spiel beitreten</string>
     <string name="menu_join">Beitreten</string>
@@ -23,5 +25,4 @@
     <string name="state">Status</string>
     <string name="state_unknown">Unbekannt</string>
     <string name="state_won">Gewonnen</string>
-    <string name="menu_execute">Ausführen</string>
 </resources>

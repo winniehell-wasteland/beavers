@@ -30,11 +30,11 @@ import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.AppActivity;
 import org.beavers.R;
+import org.beavers.ingame.Aim;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
-import org.beavers.ingame.ViewPoint;
 import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
 
@@ -220,11 +220,6 @@ public class GameScene extends Scene
 			final float pHoldX, final float pHoldY) {
 	}
 
-	public WayPoint getLastSelectedWaypoint(){
-		return lastSelectedWaypoint;
-	}
-
-	private WayPoint lastSelectedWaypoint;
 	@Override
 	public void onHoldFinished(final HoldDetector pHoldDetector,
 			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
@@ -234,6 +229,20 @@ public class GameScene extends Scene
 		if(tile != null)
 		{
 			Log.d(TAG, "Hold on tile ("+tile.getTileColumn()+","+tile.getTileRow()+")");
+
+			// create new Aim if necessary
+			if(contextMenuHandler instanceof WayPoint)
+			{
+				final WayPoint selectedWayPoint = (WayPoint) contextMenuHandler;
+
+				if(selectedWayPoint.isWaitingForAim())
+				{
+					selectedWayPoint.setAim(new Aim(tile));
+					sortChildren();
+
+					return;
+				}
+			}
 
 			if(gameObjects.containsKey(tile))
 			{
@@ -246,7 +255,7 @@ public class GameScene extends Scene
 				else if(obj instanceof WayPoint)
 				{
 					final WayPoint waypoint = (WayPoint) obj;
-					lastSelectedWaypoint = waypoint;
+
 					if(waypoint.getSoldier() != selectedSoldier)
 					{
 						selectSoldier(waypoint.getSoldier());
@@ -268,18 +277,8 @@ public class GameScene extends Scene
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
 					&& (selectedSoldier != null))
 			{
-
-				if(selectedSoldier.getViewMode()) {// wenn im ViewPoint Modus --> neuen viewPoint erzeugen
-					final ViewPoint viewpoint = new ViewPoint( tile, lastSelectedWaypoint);
-					lastSelectedWaypoint.setFocus(viewpoint);
-					addObject(viewpoint);
-					sortChildren();
-					selectedSoldier.setViewMode(false);
-				}
-				else{
-					contextMenuHandler = new EmptyTile(this, tile);
-					app.showGameContextMenu();
-				}
+				contextMenuHandler = new EmptyTile(this, tile);
+				app.showGameContextMenu();
 			}
 		}
 	}
