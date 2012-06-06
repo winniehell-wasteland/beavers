@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">App</string>
+    <string name="context_menu_add_aim">Aim at</string>
     <string name="context_menu_empty_tile">Empty Tile</string>
-    <string name="context_menu_focus">Aim at</string>
     <string name="context_menu_move">Move</string>
+    <string name="context_menu_remove_aim">Remove aim</string>
     <string name="context_menu_shoot">Shoot</string>
     <string name="context_menu_waypoint_remove">Remove</string>
     <string name="context_menu_waypoint">Waypoint</string>
+    <string name="menu_execute">Execute</string>
     <string name="menu_help">Help</string>
     <string name="menu_join_game">Join game</string>
     <string name="menu_join">Join</string>
@@ -24,5 +26,4 @@
     <string name="state">State</string>
     <string name="state_unknown">Unknown</string>
     <string name="state_won">Won</string>
-    <string name="menu_execute">Execute</string>
 </resources>

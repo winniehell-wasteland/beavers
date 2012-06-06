@@ -38,7 +38,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 			if(targetTile != null)
 			{
-				soldier.move(targetTile, focus, this);
+				soldier.move(targetTile, aim, this);
 			}
 		}
 	}
@@ -50,7 +50,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 		nextWaypoint();
 		nextTile();
 
-		soldier.move(targetTile, focus, this);
+		soldier.move(targetTile, aim, this);
 	}
 
 	private final GameScene gameScene;
@@ -60,7 +60,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 	private int stepIndex;
 	private TMXTile sourceTile, targetTile;
-	private TMXTile focus;
+	private TMXTile aim;
 
 	private void nextWaypoint()
 	{
@@ -68,7 +68,6 @@ public class PathWalker implements IModifierListener<IEntity> {
 		{
 			waypoint.detachChildren();
 			gameScene.removeObject(waypoint);
-			if(waypoint.getFocus()!=null)gameScene.removeObject(waypoint.getFocus());
 		}
 
 		stepIndex = 1;
@@ -86,9 +85,15 @@ public class PathWalker implements IModifierListener<IEntity> {
 		if(waypoint != null)
 		{
 			final Step nextStep = waypoint.getPath().getStep(stepIndex);
-			if(waypoint.getFocus()!=null){
-			focus=waypoint.getFocus().getTile();}
-			else focus=null;
+
+			if(waypoint.getAim() != null)
+			{
+				aim = waypoint.getAim().getTile();
+			}
+			else
+			{
+				aim = null;
+			}
 
 			++stepIndex;
 

@@ -7,6 +7,7 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.R;
 import org.beavers.Textures;
+import org.beavers.gameplay.GameScene;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.view.ContextMenu;
@@ -24,6 +25,8 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		soldier = pSoldier;
 		tile = pTile;
 
+		waitForAim = false;
+
 		setZIndex(0);
 	}
 
@@ -31,6 +34,10 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
 		return pPathFinder.findPath(this, 0, getTile().getTileColumn(), getTile().getTileRow(),
         		pTarget.getTileColumn(), pTarget.getTileRow());
+	}
+
+	public Aim getAim() {
+		return aim;
 	}
 
 	@Override
@@ -67,49 +74,62 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		return tile;
 	}
 
+	public boolean isWaitingForAim() {
+		return waitForAim;
+	}
+
 	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
 		pMenu.findItem(R.id.context_menu_waypoint_remove).setEnabled(isLast);
+		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
+		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
 	}
-	
-	
-	private ViewPoint viewpoint;
-	
-	public ViewPoint getFocus(){
-		return viewpoint;
-	}
-	
-	public void setFocus(final ViewPoint vp){
-		viewpoint=vp;
-	}
-	
+
 	@Override
 	public boolean onMenuItemClick(final MenuItem pItem) {
-		
-		
-		
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
 			if(isLast)
 			{
-				soldier.setViewMode(false);
 				soldier.removeWayPoint();
+
+				detachChildren();
+
+				assert (getParent() instanceof GameScene);
+				((GameScene)getParent()).removeObject(this);
 			}
-		case R.id.context_menu_focus:
-			soldier.setViewMode(true);
+
+			return true;
+		case R.id.context_menu_add_aim:
+			waitForAim = true;
+
+			return true;
+		case R.id.context_menu_remove_aim:
+			detachChild(aim);
+			aim = null;
+
 			return true;
 		default:
 			return false;
 		}
 	}
-	
-	private boolean viewpointmode;
-	public void setViewPoint(final boolean vp){
-		viewpointmode=vp;
+
+	public void setAim(final Aim pAim){
+		if(pAim != null)
+		{
+			aim = pAim;
+			aim.setPosition(aim.getX() - getX(), aim.getY() - getY());
+			attachChild(aim);
+
+			waitForAim = false;
+		}
 	}
 
 	private final Path path;
 	private final Soldier soldier;
 	private final TMXTile tile;
+
+	private Aim aim;
+	private boolean waitForAim;
 }
