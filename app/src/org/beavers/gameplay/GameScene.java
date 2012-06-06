@@ -52,6 +52,18 @@ public class GameScene extends Scene
 		OnCreateContextMenuListener
 {
 	/**
+	 * @name z-index constants
+	 * @{
+	 */
+	public static final int ZINDEX_BACKGROUND = 0;
+	public static final int ZINDEX_WAYPOINTS = ZINDEX_BACKGROUND + 10;
+	public static final int ZINDEX_AIMPOINTS = ZINDEX_WAYPOINTS + 10;
+	public static final int ZINDEX_SOLDIERS = ZINDEX_AIMPOINTS + 10;
+	/**
+	 * @}
+	 */
+
+	/**
 	 * @name helper functions
 	 * @{
 	 */

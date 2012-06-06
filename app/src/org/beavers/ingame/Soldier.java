@@ -46,7 +46,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
-		setZIndex(10);
+		setZIndex(GameScene.ZINDEX_SOLDIERS);
 	}
 
 	/**
