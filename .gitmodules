@@ -4,3 +4,6 @@
 [submodule "html"]
 	path = html
 	url = git@github.com:winniehell/beavers.git
+[submodule "ibrdtn-api"]
+	path = ibrdtn-api
+	url = git@github.com:winniehell/ibrdtn-api.git
