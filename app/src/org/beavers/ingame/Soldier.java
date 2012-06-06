@@ -4,7 +4,7 @@ import java.util.ArrayDeque;
 
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
-import org.anddev.andengine.entity.modifier.IEntityModifier;
+import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
@@ -65,14 +65,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pListener listener for rotation
 	 */
 	public void faceTarget(final TMXTile pTarget, final IModifierListener<IEntity> pListener){
-		final float angleX = GameScene.getTileCenterX(pTarget)-(getX()+getWidth()/2);
-		final float angleY = GameScene.getTileCenterY(pTarget)-(getY()+getHeight()/2);
-		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
-
-
-		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
-		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
-		else angle=angle-getRotation();
+		final float angle = calcViewAngle((getX()+getWidth()/2), (getY()+getHeight()/2), pTarget);
 
 		if(angle == 0)
 		{
@@ -90,7 +83,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 				rotation.addModifierListener(pListener);
 			}
 
-			lastModifier = rotation;
 			registerEntityModifier(rotation);
 		}
 	}
@@ -253,10 +245,15 @@ public class Soldier extends AnimatedSprite implements GameObject {
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier,
 					final IEntity pItem) {
-				lastModifier = movement;
-
 				Soldier.this.registerEntityModifier(movement);
 				Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
+
+				if(pAim != null)
+				{
+					final float angle = calcViewAngle(GameScene.getTileCenterX(pTarget), GameScene.getTileCenterY(pTarget), pAim);
+					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
+					Soldier.this.registerEntityModifier(rotation);
+				}
 			}
 		});
 	}
@@ -295,15 +292,20 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public void stop()
 	{
 		stopAnimation(0);
+		unregisterEntityModifiers(new IEntityModifierMatcher() {
 
-		if(lastModifier != null)
-		{
-			if(!lastModifier.isFinished())
-			{
-				unregisterEntityModifier(lastModifier);
+			@Override
+			public boolean matches(final IModifier<IEntity> pObject) {
+				if((pObject instanceof MoveModifier)
+						|| (pObject instanceof RotationByModifier))
+				{
+					return true;
+				}
+
+				return false;
 			}
-			lastModifier = null;
-		}
+
+		});
 	}
 
 	/** speed for movement in pixel per second */
@@ -314,10 +316,21 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	/** assigned waypoints */
 	private final ArrayDeque<WayPoint> wayPoints;
 
-	/** last initiated movement or rotation */
-	private IEntityModifier lastModifier;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
+
+	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final TMXTile pTarget) {
+		final float angleX = GameScene.getTileCenterX(pTarget)-pCurrentX;
+		final float angleY = GameScene.getTileCenterY(pTarget)-pCurrentY;
+		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
+
+
+		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
+		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());
+		else angle=angle-getRotation();
+
+		return angle;
+	}
 
 	/**
 	 * @return TextureRegion for given team
