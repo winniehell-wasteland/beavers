@@ -134,15 +134,11 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		}
 	}
 
-	public void setAim(final Aim pAim){
-		if(pAim != null)
-		{
-			aim = pAim;
-			aim.setPosition(aim.getX() - getX(), aim.getY() - getY());
-			attachChild(aim);
+	public void setAim(final TMXTile pTile){
+		aim = new Aim(this, pTile);
+		attachChild(aim);
 
-			waitForAim = false;
-		}
+		waitForAim = false;
 	}
 
 	private final Path path;
