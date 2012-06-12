@@ -37,12 +37,14 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
-		wayPoints = new ArrayDeque<WayPoint>();
-		wayPoints.push(new WayPoint(this, null, pInitialPosition));
-
 		//Selection Circle
 		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
 		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
+
+		team = pTeam;
+
+		wayPoints = new ArrayDeque<WayPoint>();
+		wayPoints.push(new WayPoint(this, null, pInitialPosition));
 
 		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
@@ -133,6 +135,13 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	@Override
 	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
 		return wayPoints.getLast().getStepCost(pMap, pFrom, pTo);
+	}
+
+	/**
+	 * @return team the soldier belongs to
+	 */
+	public int getTeam() {
+		return team;
 	}
 
 	/**
@@ -308,16 +317,26 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		});
 	}
 
+	/**
+	 * @name speed constants
+	 * @{
+	 */
 	/** speed for movement in pixel per second */
 	private static final int WALKING_SPEED = 80;
 	/** speed for rotation in degree per second */
 	private static final int ROTATION_SPEED = 240;
-
-	/** assigned waypoints */
-	private final ArrayDeque<WayPoint> wayPoints;
+	/**
+	 * @}
+	 */
 
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
+
+	/** team the soldier belongs to */
+	private final int team;
+
+	/** assigned waypoints */
+	private final ArrayDeque<WayPoint> wayPoints;
 
 	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final TMXTile pTarget) {
 		final float angleX = GameScene.getTileCenterX(pTarget)-pCurrentX;

@@ -1,6 +1,8 @@
 package org.beavers.gameplay;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.anddev.andengine.engine.camera.hud.HUD;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
@@ -92,11 +94,19 @@ public class GameScene extends Scene
 
 		app = pApp;
 
+		// initialize detectors
 		scrollDetector = new SurfaceScrollDetector(10.0f, this);
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
 		registerUpdateHandler(holdDetector);
 
+		// initialize game object containers
 		gameObjects = new HashMap<TMXTile, GameObject>();
+		soldiers = new ArrayList<HashSet<Soldier>>(getTeamCount());
+
+		for(int i = 0; i < getTeamCount(); ++i)
+		{
+			soldiers.add(new HashSet<Soldier>());
+		}
 
 		loadMap("map");
 		loadSoldiers();
@@ -123,6 +133,12 @@ public class GameScene extends Scene
 		attachChild(pObject);
 
 		sortChildren();
+
+		if(pObject instanceof Soldier)
+		{
+			final Soldier soldier = (Soldier) pObject;
+			soldiers.get(soldier.getTeam()).add(soldier);
+		}
 	}
 
 	public TMXTiledMap getMap() {
@@ -137,12 +153,31 @@ public class GameScene extends Scene
 		return selectedSoldier;
 	}
 
+	public HashSet<Soldier> getSoldiers(final int pTeam) {
+		if(pTeam < getTeamCount())
+		{
+			return soldiers.get(pTeam);
+		}
+		else
+		{
+			throw new IndexOutOfBoundsException();
+		}
+	}
+
 	@Override
 	public float getStepCost(final GameObject pObject, final int pFromTileColumn,
 			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
 
 		return pObject.getStepCost(this, collisionLayer.getTMXTile(pFromTileColumn, pFromTileRow),
 				collisionLayer.getTMXTile(pToTileColumn, pToTileRow));
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public int getTeamCount() {
+		return 2;
 	}
 
 	@Override
@@ -334,18 +369,41 @@ public class GameScene extends Scene
 
 	private final AppActivity app;
 
+	/**
+	 * @name detectors
+	 * @{
+	 */
 	private final SurfaceScrollDetector scrollDetector;
 	private final HoldDetector holdDetector;
+	/**
+	 * @}
+	 */
 
+	/**
+	 * @name TMX
+	 * @{
+	 */
 	private TMXTiledMap map;
 	private TMXLayer collisionLayer;
 	private TMXLayer floorLayer;
+	/**
+	 * @}
+	 */
+
+	/**
+	 * @name game object containers
+	 * @{
+	 */
 	private final HashMap<TMXTile, GameObject> gameObjects;
+	private final ArrayList<HashSet<Soldier>> soldiers;
+	/**
+	 * @}
+	 */
+
 	private final AStarPathFinder<GameObject> pathFinder;
 
-	private Soldier selectedSoldier;
-
 	private ContextMenuHandler contextMenuHandler;
+	private Soldier selectedSoldier;
 
 	private void loadMap(final String pMapName)
 	{
