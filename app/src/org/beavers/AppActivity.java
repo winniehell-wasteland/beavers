@@ -1,5 +1,7 @@
 package org.beavers;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import org.beavers.communication.Client;
@@ -14,6 +16,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.RemoteException;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,7 +25,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
@@ -112,6 +115,9 @@ public class AppActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
+		Log.e(TAG, "destroying app...");
+
+
 		// unregister at the daemon
 		dtnClient.unregister();
 
@@ -124,26 +130,41 @@ public class AppActivity extends Activity {
 	}
 
 	@Override
-	protected void onStart() {
-		try {
-			if((dtnClient.getDTNService() == null)
-					|| (dtnClient.getDTNService().getState() != DaemonState.ONLINE))
-			{
-				throw new ServiceNotAvailableException();
-			}
-		} catch (final Exception e) {
-			final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage("Error initializing DTN service! Check if daemon is running!")
-			.setCancelable(false)
-			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(final DialogInterface dialog, final int id) {
-					AppActivity.this.finish();
+	protected void onResume() {
+		super.onResume();
+
+		(new Timer()).schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				try {
+					if((dtnClient.getDTNService() != null)
+							&& dtnClient.getDTNService().isRunning())
+					{
+						return;
+					}
+				} catch (final RemoteException e) {
+					// something bad happened to the binder
 				}
-			});
-			final AlertDialog alert = builder.create();
-			alert.show();
-		}
+
+				AppActivity.this.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						final AlertDialog.Builder builder = new AlertDialog.Builder(AppActivity.this);
+						builder.setMessage("Error initializing DTN service! Check if daemon is running!")
+						.setCancelable(false)
+						.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(final DialogInterface dialog, final int id) {
+								AppActivity.this.finish();
+							}
+						});
+						final AlertDialog alert = builder.create();
+						alert.show();
+					}
+				});
+			}
+		}, 100);
 	};
 
 	@Override
