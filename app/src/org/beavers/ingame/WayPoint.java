@@ -9,7 +9,7 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.R;
 import org.beavers.Textures;
-import org.beavers.gameplay.GameScene;
+import org.beavers.gameplay.GameActivity;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.view.ContextMenu;
@@ -46,7 +46,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 			drawPath();
 		}
 
-		setZIndex(GameScene.ZINDEX_WAYPOINTS);
+		setZIndex(GameActivity.ZINDEX_WAYPOINTS);
 	}
 
 	@Override
@@ -115,8 +115,8 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 				detachChildren();
 
-				assert (getParent() instanceof GameScene);
-				((GameScene)getParent()).removeObject(this);
+				assert (getParent() instanceof GameActivity);
+				((GameActivity)getParent()).removeObject(this);
 			}
 
 			return true;
@@ -160,7 +160,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 					2 + Math.abs(dir.getDeltaX()) + Math.abs(dir.getDeltaY()));
 
 			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-			line.setZIndex(GameScene.ZINDEX_BACKGROUND);
+			line.setZIndex(GameActivity.ZINDEX_BACKGROUND);
 
 			attachChild(line);
 		}

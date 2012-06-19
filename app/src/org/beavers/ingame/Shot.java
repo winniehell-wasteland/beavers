@@ -25,7 +25,7 @@ import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
-import org.beavers.gameplay.GameScene;
+import org.beavers.gameplay.GameActivity;
 
 public class Shot implements GameObject{
 
@@ -33,15 +33,15 @@ public class Shot implements GameObject{
 	private static final int SPEED = 350;
 
 	private final Soldier soldier;
-	private final GameScene scene;
+	private final GameActivity activity;
 
 
 
 	public Line targetLine;
 
-	public Shot(final Soldier pSoldier, final GameScene pScene){
+	public Shot(final Soldier pSoldier, final GameActivity pActivity){
 		//super(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1], Textures.SHOT_BULLET);
-        scene =pScene;
+        activity = pActivity;
 		soldier = pSoldier;
 
 		//shot = new Sprite(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1], Textures.SHOT_BULLET.deepCopy());
@@ -60,8 +60,8 @@ public class Shot implements GameObject{
 		final int distance = Math.max(Math.abs(getTile().getTileColumn() - pTarget.getTileColumn()),
 				Math.abs(getTile().getTileRow() - pTarget.getTileRow()));
 
-		targetLine = new Line(GameScene.getTileCenterX(getTile()), GameScene.getTileCenterY(getTile()),
-				GameScene.getTileCenterX(pTarget), GameScene.getTileCenterY(pTarget));
+		targetLine = new Line(GameActivity.getTileCenterX(getTile()), GameActivity.getTileCenterY(getTile()),
+				GameActivity.getTileCenterX(pTarget), GameActivity.getTileCenterY(pTarget));
 
 		return pPathFinder.findPath(this, distance, getTile().getTileColumn(), getTile().getTileRow(),
         		pTarget.getTileColumn(), pTarget.getTileRow());
@@ -96,6 +96,7 @@ public class Shot implements GameObject{
 			return Integer.MAX_VALUE;
 		}
 	}
+
    TMXTile target;
    float delay=(float) (0.1+Math.random()*0.4);
    TimerHandler shootTimer;
@@ -118,19 +119,18 @@ public class Shot implements GameObject{
 				shot.setPosition(s[0]-shot.getWidth()/2,s[1]-shot.getHeight()/2);
 				shot.setRotationCenter(shot.getWidth()/2, shot.getHeight()/2);
 				shot.setRotation(soldier.getRotation()-270);
-				scene.attachChild(shot);
+				activity.getMainScene().attachChild(shot);
 				shot.setAlpha(0.5f);
 				//muzzleflash
 				final Sprite flash= new Sprite(0, 0, Textures.MUZZLE_FLASH.deepCopy());
 				flash.setPosition(soldier.getWidth()/2,soldier.getHeight()/2-31);
 				soldier.attachChild(flash);
 				
-				final float distx=Math.abs(shot.getX() - GameScene.getTileCenterX(pTarget));
-					final float disty=Math.abs(shot.getY() - GameScene.getTileCenterY(pTarget));
+				final float distx=Math.abs(shot.getX() - GameActivity.getTileCenterX(pTarget));
+					final float disty=Math.abs(shot.getY() - GameActivity.getTileCenterY(pTarget));
 
 
-			
-					final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (GameScene.getTileCenterX(target)-10+Math.random()*20), shot.getY(), (float) (GameScene.getTileCenterY(target)-10+Math.random()*20));
+					final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (GameActivity.getTileCenterX(target)-10+Math.random()*20), shot.getY(), (float) (GameActivity.getTileCenterY(target)-10+Math.random()*20));
 					moveMod.addModifierListener(new IModifierListener<IEntity>() {
 						Sprite current=currentShot;
 						@Override
@@ -159,12 +159,12 @@ public class Shot implements GameObject{
 					
 			}
 		});
-		scene.getApp().getEngine().registerUpdateHandler(shootTimer);
+		activity.getEngine().registerUpdateHandler(shootTimer);
 	
 	}
  public void stopShooting(){
 	 
-	 scene.getApp().getEngine().unregisterUpdateHandler(shootTimer);
+	 activity.getEngine().unregisterUpdateHandler(shootTimer);
 	 shootTimer=null;
  }
 

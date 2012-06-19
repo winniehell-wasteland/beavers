@@ -3,11 +3,13 @@ package org.beavers.gameplay;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 
+import org.anddev.andengine.engine.Engine;
+import org.anddev.andengine.engine.camera.SmoothCamera;
 import org.anddev.andengine.engine.camera.hud.HUD;
-import org.anddev.andengine.engine.handler.timer.ITimerCallback;
-import org.anddev.andengine.engine.handler.timer.TimerHandler;
+import org.anddev.andengine.engine.options.EngineOptions;
+import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
+import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -16,10 +18,10 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
-import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
+import org.anddev.andengine.entity.util.FPSLogger;
 import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.input.touch.detector.HoldDetector;
 import org.anddev.andengine.input.touch.detector.HoldDetector.IHoldDetectorListener;
@@ -27,12 +29,16 @@ import org.anddev.andengine.input.touch.detector.ScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.texture.TextureOptions;
+import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
+import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.anddev.andengine.opengl.view.RenderSurfaceView;
+import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
-import org.beavers.AppActivity;
 import org.beavers.R;
+import org.beavers.Textures;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.PathWalker;
@@ -43,19 +49,19 @@ import org.beavers.ui.ContextMenuHandler;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
-import android.view.View.OnCreateContextMenuListener;
 import android.widget.Toast;
 
-public class GameScene<PathFinder> extends Scene
+public class GameActivity extends BaseGameActivity
 	implements ITiledMap<GameObject>,
 		IOnSceneTouchListener,
 		IHoldDetectorListener,
-		IScrollDetectorListener,
-		OnCreateContextMenuListener
+		IScrollDetectorListener
 {
 	/**
 	 * @name z-index constants
@@ -92,16 +98,14 @@ public class GameScene<PathFinder> extends Scene
 	 * default constructor
 	 * @param pApp
 	 */
-	public GameScene(final AppActivity pApp)
+	public GameActivity()
 	{
 		super();
-
-		app = pApp;
 
 		// initialize detectors
 		scrollDetector = new SurfaceScrollDetector(10.0f, this);
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
-		registerUpdateHandler(holdDetector);
+		mainScene.registerUpdateHandler(holdDetector);
 
 		// initialize game object containers
 		gameObjects = new HashMap<TMXTile, GameObject>();
@@ -124,23 +128,9 @@ public class GameScene<PathFinder> extends Scene
 			pathFinder = null;
 		}
 
-		setOnSceneTouchListener(this);
-		
-		final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
-			
-			@Override
-			public void onTimePassed(final TimerHandler pTimerHandler) {
-				// TODO Auto-generated method stub
-				checkTargets();
-			}
-		});
-		gameTimer.setAutoReset(true);
-		registerUpdateHandler(gameTimer);
+		mainScene.setOnSceneTouchListener(this);
 	}
-	
-	public AppActivity getApp(){
-		return app;
-	}
+
 	/**
 	 * insert a new game object on the map
 	 * @param pObject the object to insert
@@ -148,71 +138,16 @@ public class GameScene<PathFinder> extends Scene
 	public void addObject(final GameObject pObject)
 	{
 		gameObjects.put(pObject.getTile(), pObject);
-		attachChild(pObject);
+		mainScene.attachChild(pObject);
 
-		sortChildren();
+		mainScene.sortChildren();
 
 		if(pObject instanceof Soldier)
 		{
 			final Soldier soldier = (Soldier) pObject;
 			soldiers.get(soldier.getTeam()).add(soldier);
-			
 		}
 	}
-	
-	private Line parallelA,parallelB,lineA,lineB;
-	public void checkTargets(){
-		final Iterator itr=soldiers.get(0).iterator();
-		while(itr.hasNext()){
-			final Soldier s=(Soldier)itr.next();
-			final Iterator itr2=soldiers.get(0).iterator();
-			while(itr2.hasNext()){
-				final Soldier t=(Soldier)itr2.next();
-				if(s!=t){
-					/* parallelA = new Line(
-							t.getCenter()[0]-(s.getLineA().getX1()-s.getLineA().getX2()),
-							t.getCenter()[1]-(s.getLineA().getY1()-s.getLineA().getY2()),
-							t.getCenter()[0]+(s.getLineA().getX1()-s.getLineA().getX2()),
-							t.getCenter()[1]+(s.getLineA().getY1()-s.getLineA().getY2())
-							);*/
-					parallelB = new Line(
-							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
-							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]),
-							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
-							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
-							);
-					
-					parallelA = new Line(
-							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
-							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
-							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
-							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
-							);
-					
-					lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
-							s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
-							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
-							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
-					
-					lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
-							s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
-							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
-							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
-				
-					
-					if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){
-				
-							s.fireShot(floorLayer.getTMXTileAt(t.getX()+t.getWidth()/2, t.getY()+t.getHeight()/2));
-						
-					}
-					
-				}
-			}
-		}
-	}
-	
-	
-	
 
 	public TMXTiledMap getMap() {
 		return map;
@@ -292,7 +227,7 @@ public class GameScene<PathFinder> extends Scene
 
 		if(contextMenuHandler != null)
 		{
-	        final MenuInflater inflater = app.getMenuInflater();
+	        final MenuInflater inflater = getMenuInflater();
 	        inflater.inflate(contextMenuHandler.getMenuID(), pMenu);
 
 			for(int i = 0; i < pMenu.size(); ++i)
@@ -304,8 +239,9 @@ public class GameScene<PathFinder> extends Scene
 		}
 	}
 
+	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
-	    final MenuInflater inflater = app.getMenuInflater();
+	    final MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.game_menu, menu);
 
 		return true;
@@ -336,7 +272,7 @@ public class GameScene<PathFinder> extends Scene
 					if(!selectedWayPoint.getTile().equals(tile))
 					{
 						selectedWayPoint.setAim(tile);
-						sortChildren();
+						mainScene.sortChildren();
 					}
 
 					return;
@@ -358,30 +294,31 @@ public class GameScene<PathFinder> extends Scene
 					if(waypoint.getSoldier() != selectedSoldier)
 					{
 						selectSoldier(waypoint.getSoldier());
-						app.runOnUiThread(new Runnable() {
+						runOnUiThread(new Runnable() {
 
 							@Override
 							public void run() {
-								Toast.makeText(app, "Selected soldier by waypoint", Toast.LENGTH_SHORT).show();
+								Toast.makeText(GameActivity.this, "Selected soldier by waypoint", Toast.LENGTH_SHORT).show();
 							}
 						});
 					}
 					else
 					{
 						contextMenuHandler = waypoint;
-						app.showGameContextMenu();
+						mRenderSurfaceView.showContextMenu();
 					}
 				}
 			}
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
 					&& (selectedSoldier != null))
 			{
-				contextMenuHandler = new EmptyTile(this, tile);
-				app.showGameContextMenu();
+				contextMenuHandler = new EmptyTile(mainScene, tile);
+				mRenderSurfaceView.showContextMenu();
 			}
 		}
 	}
 
+	@Override
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
@@ -410,7 +347,7 @@ public class GameScene<PathFinder> extends Scene
 	@Override
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
-		app.getEngine().getCamera().offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
+		camera.offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
 	}
 
 	@Override
@@ -429,7 +366,7 @@ public class GameScene<PathFinder> extends Scene
 			gameObjects.remove(pObject.getTile());
 		}
 
-		detachChild(pObject);
+		mainScene.detachChild(pObject);
 	}
 
 	public void startPlanningPhase() {
@@ -439,8 +376,6 @@ public class GameScene<PathFinder> extends Scene
 	private final static float CAMERA_SPEED = 1.50f;
 	@SuppressWarnings("unused")
 	private static final String TAG = "GameScene";
-
-	private final AppActivity app;
 
 	/**
 	 * @name detectors
@@ -477,17 +412,18 @@ public class GameScene<PathFinder> extends Scene
 
 	private ContextMenuHandler contextMenuHandler;
 	private Soldier selectedSoldier;
+	private Scene mainScene;
 
 	private void loadMap(final String pMapName)
 	{
 		try {
-			final TMXLoader tmxLoader = new TMXLoader(app, app.getEngine().getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
+			final TMXLoader tmxLoader = new TMXLoader(this, getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
 				@Override
 				public void onTMXTileWithPropertiesCreated(final TMXTiledMap pTMXTiledMap, final TMXLayer pTMXLayer, final TMXTile pTMXTile, final TMXProperties<TMXTileProperty> pTMXTileProperties) {
 
 				}
 			});
-			map = tmxLoader.loadFromAsset(app, "tmx/"+pMapName+".tmx");
+			map = tmxLoader.loadFromAsset(this, "tmx/"+pMapName+".tmx");
 		} catch (final TMXLoadException tmxle) {
 			Debug.e(tmxle);
 			return;
@@ -495,16 +431,15 @@ public class GameScene<PathFinder> extends Scene
 
 		collisionLayer = map.getTMXLayers().get(0);
 		floorLayer =map.getTMXLayers().get(1);
-		this.attachChild(collisionLayer);
-		this.attachChild(floorLayer);
+		mainScene.attachChild(collisionLayer);
+		mainScene.attachChild(floorLayer);
 	}
 
-	private HUD hud;
 	private void loadHUD(){
 		hud=new HUD();
 		hud.setPosition(0, 0);
         getSelectedSoldier().changeHP(-10);
-		final Rectangle hud_back = new Rectangle(0,0,app.getEngine().getCamera().getWidth(),30);
+		final Rectangle hud_back = new Rectangle(0,0, camera.getWidth(),30);
 		final Rectangle missing_health = new Rectangle(10,10,100,8);
 		final Rectangle health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
 
@@ -514,12 +449,12 @@ public class GameScene<PathFinder> extends Scene
 		hud.attachChild(hud_back);
 		hud.attachChild(missing_health);
 		hud.attachChild(health_bar);
-		app.getEngine().getCamera().setHUD(hud);
+		camera.setHUD(hud);
 
 	}
 	private void loadSoldiers(){
 		addObject(new Soldier(0, collisionLayer.getTMXTile(0, 0)));
-		addObject(new Soldier(0, collisionLayer.getTMXTile(3, 2)));
+		addObject(new Soldier(0, collisionLayer.getTMXTile(2, 0)));
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
@@ -533,7 +468,81 @@ public class GameScene<PathFinder> extends Scene
 			selectedSoldier = pSoldier;
 			selectedSoldier.markSelected();
 			loadHUD();
-			sortChildren();
+			mainScene.sortChildren();
 		}
 	}
+
+	@Override
+	public Engine onLoadEngine() {
+        final Display display = getWindowManager().getDefaultDisplay();
+
+        ScreenOrientation orientation;
+
+        final int rotation = display.getRotation();
+        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+        	orientation = ScreenOrientation.LANDSCAPE;
+        } else {
+        	orientation = ScreenOrientation.PORTRAIT;
+        }
+
+		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
+
+		return new Engine(new EngineOptions(true, orientation,
+				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
+	}
+
+	@Override
+	public void onLoadResources() {
+		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		BitmapTextureAtlas textureAtlas;
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(16,16,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.MUZZLE_FLASH = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "muzzleflash.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(4,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.WAYPOINT = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "waypoint.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+	}
+
+	@Override
+	public Scene onLoadScene() {
+		mEngine.registerUpdateHandler(new FPSLogger());
+		mainScene = new Scene();
+
+        mRenderSurfaceView.setOnCreateContextMenuListener(this);
+
+		return mainScene;
+	}
+
+	@Override
+	public void onLoadComplete() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	protected void onSetContentView() {
+	    mRenderSurfaceView = new RenderSurfaceView(this);
+	    mRenderSurfaceView.setRenderer(mEngine);
+	}
+
+	private HUD hud;
+	private SmoothCamera camera;
 }

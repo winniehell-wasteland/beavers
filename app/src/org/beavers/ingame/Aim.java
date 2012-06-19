@@ -4,7 +4,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.beavers.Textures;
-import org.beavers.gameplay.GameScene;
+import org.beavers.gameplay.GameActivity;
 
 public class Aim extends Sprite {
 
@@ -15,7 +15,7 @@ public class Aim extends Sprite {
 
 		drawLineOfSight(getWidth()/2, getHeight()/2, -getX() + pWayPoint.getWidth()/2, -getY() + pWayPoint.getHeight()/2);
 
-		setZIndex(GameScene.ZINDEX_AIMPOINTS);
+		setZIndex(GameActivity.ZINDEX_AIMPOINTS);
 	}
 
 	public TMXTile getTile() {
@@ -41,7 +41,7 @@ public class Aim extends Sprite {
 		for(double pos = padding; pos < Math.max(dist-padding, 0); pos += STEP_SIZE)
 		{
 			line.setColor(1.0f, 0.0f, 0.0f, 0.5f);
-			line.setZIndex(GameScene.ZINDEX_BACKGROUND);
+			line.setZIndex(GameActivity.ZINDEX_BACKGROUND);
 			attachChild(line);
 
 			line = new Line(line.getX1() + STEP_SIZE*distX, line.getY1() + STEP_SIZE*distY,

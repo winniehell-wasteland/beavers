@@ -6,7 +6,7 @@ import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Path.Step;
-import org.beavers.gameplay.GameScene;
+import org.beavers.gameplay.GameActivity;
 
 /**
  * let a soldier walk its waypoints
@@ -14,7 +14,7 @@ import org.beavers.gameplay.GameScene;
  */
 public class PathWalker implements IModifierListener<IEntity> {
 
-	public PathWalker(final GameScene pGameScene, final Soldier pSoldier) {
+	public PathWalker(final GameActivity pGameScene, final Soldier pSoldier) {
 		gameScene = pGameScene;
 		soldier = pSoldier;
 
@@ -53,7 +53,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 		soldier.move(targetTile, aim, this);
 	}
 
-	private final GameScene gameScene;
+	private final GameActivity gameScene;
 	private final Soldier soldier;
 
 	private WayPoint waypoint;

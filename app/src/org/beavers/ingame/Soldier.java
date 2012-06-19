@@ -8,6 +8,7 @@ import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatch
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
 import org.anddev.andengine.entity.primitive.Line;
+import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
@@ -17,7 +18,7 @@ import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
-import org.beavers.gameplay.GameScene;
+import org.beavers.gameplay.GameActivity;
 
 /**
  * soldier sprite
@@ -35,8 +36,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	private final Line lineA,lineB;
 	
 	public Soldier(final int pTeam, final TMXTile pInitialPosition) {
-		super(GameScene.getTileCenterX(pInitialPosition),
-				GameScene.getTileCenterY(pInitialPosition),
+		super(GameActivity.getTileCenterX(pInitialPosition),
+				GameActivity.getTileCenterY(pInitialPosition),
 				getTexture(pTeam));
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
@@ -52,7 +53,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
-		setZIndex(GameScene.ZINDEX_SOLDIERS);
+
+		setZIndex(GameActivity.ZINDEX_SOLDIERS);
 		
 	
 		lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
@@ -131,10 +133,10 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pShot shot object
 	 * @param pTarget target tile
 	 */
-	public void fireShot(final TMXTile pTarget){
+	public void fireShot(final TMXTile pTarget, final GameActivity pActivity){
 		
-		final Shot tmpshot = new Shot(this,(GameScene)getParent());
-		if(tmpshot.findPath(((GameScene)getParent()).getPathFinder(), pTarget)==null)return;
+		final Shot tmpshot = new Shot(this, pActivity);
+		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
 		if(shot!=null){
 			shot.stopShooting();
 		}
@@ -214,8 +216,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public void markSelected(){
 		attachChild(selectionMark);
 
-		assert getParent() instanceof GameScene;
-		final GameScene gameScene = (GameScene) getParent();
+		assert getParent() instanceof Scene;
+		final Scene gameScene = (Scene) getParent();
 
 	    for(final WayPoint waypoint : wayPoints)
 		{
@@ -269,11 +271,11 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pListener listener for movement
 	 */
 	public void move(final TMXTile pTarget, final TMXTile pAim, final IModifierListener<IEntity> pListener) {
-		final float distx = Math.abs(GameScene.getTileCenterX(pTarget) - (getX()+getWidth()/2));
-		final float disty = Math.abs(GameScene.getTileCenterY(pTarget) - (getY()+getHeight()/2));
+		final float distx = Math.abs(GameActivity.getTileCenterX(pTarget) - (getX()+getWidth()/2));
+		final float disty = Math.abs(GameActivity.getTileCenterY(pTarget) - (getY()+getHeight()/2));
 
 		final MoveModifier movement = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED), getX(),
-				GameScene.getTileCenterX(pTarget)-getWidth()/2, getY(), GameScene.getTileCenterY(pTarget)-getHeight()/2);
+				GameActivity.getTileCenterX(pTarget)-getWidth()/2, getY(), GameActivity.getTileCenterY(pTarget)-getHeight()/2);
 
 		if(pListener != null)
 		{
@@ -295,7 +297,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 				if(pAim != null)
 				{
-					final float angle = calcViewAngle(GameScene.getTileCenterX(pTarget), GameScene.getTileCenterY(pTarget), pAim);
+					final float angle = calcViewAngle(GameActivity.getTileCenterX(pTarget), GameActivity.getTileCenterY(pTarget), pAim);
 					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
 					Soldier.this.registerEntityModifier(rotation);
 				}
@@ -375,8 +377,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	private final ArrayDeque<WayPoint> wayPoints;
 
 	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final TMXTile pTarget) {
-		final float angleX = GameScene.getTileCenterX(pTarget)-pCurrentX;
-		final float angleY = GameScene.getTileCenterY(pTarget)-pCurrentY;
+		final float angleX = GameActivity.getTileCenterX(pTarget)-pCurrentX;
+		final float angleY = GameActivity.getTileCenterY(pTarget)-pCurrentY;
 		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
 
 

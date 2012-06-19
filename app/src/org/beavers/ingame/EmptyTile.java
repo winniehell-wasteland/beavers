@@ -1,9 +1,9 @@
 package org.beavers.ingame;
 
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
+import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.R;
-import org.beavers.gameplay.GameScene;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.view.ContextMenu;
@@ -13,9 +13,9 @@ public class EmptyTile implements ContextMenuHandler {
 
 	public final TMXTile tile;
 
-	public EmptyTile(final GameScene pGameScene, final TMXTile pTile)
+	public EmptyTile(final Scene pScene, final TMXTile pTile)
 	{
-		gameScene = pGameScene;
+		scene = pScene;
 		tile = pTile;
 	}
 
@@ -28,7 +28,9 @@ public class EmptyTile implements ContextMenuHandler {
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_empty_tile);
 
-		if(gameScene.getSelectedSoldier() == null)
+		// TODO
+		/*
+		if(scene.getSelectedSoldier() == null)
 		{
 			for(int i = 0; i < pMenu.size(); ++i)
 			{
@@ -37,8 +39,8 @@ public class EmptyTile implements ContextMenuHandler {
 		}
 		else
 		{
-			shot = new Shot(gameScene.getSelectedSoldier(),gameScene);
-			final Path path = shot.findPath(gameScene.getPathFinder(), tile);
+			shot = new Shot(scene.getSelectedSoldier());
+			final Path path = shot.findPath(scene.getPathFinder(), tile);
 
 			// can not shoot here
 			if(path == null)
@@ -47,9 +49,10 @@ public class EmptyTile implements ContextMenuHandler {
 				pMenu.findItem(R.id.context_menu_shoot).setEnabled(false);
 			}
 
-			soldierPath = gameScene.getSelectedSoldier().findPath(gameScene.getPathFinder(), tile);
+			soldierPath = scene.getSelectedSoldier().findPath(scene.getPathFinder(), tile);
 			pMenu.findItem(R.id.context_menu_move).setEnabled(soldierPath != null);
 		}
+		*/
 	}
 
 	@Override
@@ -59,26 +62,35 @@ public class EmptyTile implements ContextMenuHandler {
 		case R.id.context_menu_move:
 			if(soldierPath != null)
 			{
-				final WayPoint waypoint = new WayPoint(gameScene.getSelectedSoldier(), soldierPath, tile);
-				gameScene.getSelectedSoldier().addWayPoint(waypoint);
-				gameScene.addObject(waypoint);
+				return false;
+
+				/*
+				final WayPoint waypoint = new WayPoint(scene.getSelectedSoldier(), soldierPath, tile);
+				scene.getSelectedSoldier().addWayPoint(waypoint);
+				scene.addObject(waypoint);
+				*/
 			}
 
 			return true;
 		case R.id.context_menu_shoot:
+			// TODO
+			return false;
+
+			/*
 			if(shot != null)
 			{
-				gameScene.attachChild(shot);
-				gameScene.getSelectedSoldier().fireShot(tile);
+				scene.attachChild(shot);
+				scene.getSelectedSoldier().fireShot(shot, tile);
 			}
 
 			return true;
+			*/
 		default:
 		return false;
 		}
 	}
 
-	private final GameScene gameScene;
+	private final Scene scene;
 
 	private Shot shot;
 	private Path soldierPath;
