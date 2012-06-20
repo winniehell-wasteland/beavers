@@ -122,7 +122,10 @@ public class GameScene extends Scene
 
 		setOnSceneTouchListener(this);
 	}
-
+	
+	public AppActivity getApp(){
+		return app;
+	}
 	/**
 	 * insert a new game object on the map
 	 * @param pObject the object to insert

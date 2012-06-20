@@ -37,7 +37,7 @@ public class EmptyTile implements ContextMenuHandler {
 		}
 		else
 		{
-			shot = new Shot(gameScene.getSelectedSoldier());
+			shot = new Shot(gameScene.getSelectedSoldier(),gameScene);
 			final Path path = shot.findPath(gameScene.getPathFinder(), tile);
 
 			// can not shoot here
