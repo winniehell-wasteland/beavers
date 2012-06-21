@@ -1,29 +1,55 @@
 package org.beavers.communication;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.json.JSONObject;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
+import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
+import de.tubs.ibr.dtn.api.EID;
 
-public class CustomDTNDataHandler implements DataHandler {
-	
-	public CustomDTNDataHandler(final DTNClient pDTNClient, final Server pServer, final Client pClient) {
+public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandler {
+
+	private static final String TAG = "CustomDTNDataHandler";
+
+	/**
+	 * @name intents
+	 * @{
+	 */
+	public static final String SEND_DATA_INTENT = CustomDTNDataHandler.class.getName()+".SEND_PARCEL";
+	/**
+	 * @}
+	 */
+
+	/**
+	 * default constructor
+	 * @param pContext
+	 * @param pDTNClient
+	 */
+	public CustomDTNDataHandler(final Context pContext, final DTNClient pDTNClient) {
+		context = pContext;
 		dtnClient = pDTNClient;
-		server = pServer;
-		client = pClient;
-		
+
+		final IntentFilter filter = new IntentFilter(SEND_DATA_INTENT);
+		context.registerReceiver(this, filter);
+
 		executor = Executors.newSingleThreadExecutor();
 	}
-	
-	public void stop() {		
+
+	public void stop() {
 		try {
 			// stop executor
 			executor.shutdown();
@@ -32,79 +58,89 @@ public class CustomDTNDataHandler implements DataHandler {
 			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
 				executor.shutdownNow();
 			}
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
 	@Override
-	public void startBundle(Bundle pBundle) {
+	public void startBundle(final Bundle pBundle) {
 		bundle = pBundle;
 	}
 
 	@Override
 	public void endBundle() {
-		
+
 		final BundleID received = new BundleID(bundle);
 
 		// run the queue and delivered process asynchronously
 		executor.execute(new Runnable() {
-	        public void run() {
+	        @Override
+			public void run() {
 				try {
 					dtnClient.getSession().delivered(received);
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					System.out.println("Can not mark bundle as delivered.");
 				}
 	        }
 		});
 
 		bundle = null;
-		
+
 	}
 
 	@Override
-	public void startBlock(Block block) {
-		// TODO Auto-generated method stub
+	public void startBlock(final Block block) {
+
 	}
 
 	@Override
 	public void endBlock() {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	public void characters(String data) {
+	public void characters(final String data) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	public void payload(byte[] data) {
-		
+	public void payload(final byte[] data) {
+
 		final byte[] tmpData = data.clone();
 		final Bundle tmpBundle = bundle;
-		
+
 		// process data asynchronously
 		executor.execute(new Runnable() {
-	        public void run() {
+	        @Override
+			public void run() {
 				try {
-					final DataInputStream input = new DataInputStream(new ByteArrayInputStream(tmpData));
-					
+					JSONObject json = null;
+
+					try {
+						json = new JSONObject(new String(data, "UTF-8"));
+					} catch (final UnsupportedEncodingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
 					if(tmpBundle.destination.equals(Server.GROUP_EID.toString()))
 					{
-						server.handlePayload(input);
+						Server.handlePayload(context, json);
 					}
 					else if(tmpBundle.destination.equals(Client.GROUP_EID.toString()))
 					{
-						client.handlePayload(input);
+						Client.handlePayload(context, json);
 					}
 					else
 					{
-						System.out.println("Unknown destination: "+tmpBundle.destination);
+						Log.e(TAG, "Unknown destination: "+tmpBundle.destination);
+						return;
 					}
-				} catch (Exception e) {
+
+				} catch (final Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
@@ -114,27 +150,61 @@ public class CustomDTNDataHandler implements DataHandler {
 
 	@Override
 	public ParcelFileDescriptor fd() {
-		// TODO Auto-generated method stub
-		assert false;
-		
 		return null;
 	}
 
 	@Override
-	public void progress(long current, long length) {
-		System.out.println("Payload: " + current + " of " + length + " bytes.");
-		
+	public void onReceive(final Context context, final Intent intent) {
+		if(intent.getClass().equals(this.getClass())
+				&& intent.getAction().equals(SEND_DATA_INTENT))
+		{
+			final EID destination = intent.getParcelableExtra("EID");
+			final int lifetime = intent.getIntExtra("lifetime", DEFAULT_LIFETIME);
+
+			try {
+				dtnClient.getSession().send(destination, lifetime, intent.getStringExtra("data"));
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not send DTN packet!", e);
+			}
+		}
 	}
 
 	@Override
-	public void finished(int startId) {
-		// TODO Auto-generated method stub
-		
+	public void progress(final long current, final long length) {
+		System.out.println("Payload: " + current + " of " + length + " bytes.");
+
 	}
-	
+
+	@Override
+	public void finished(final int startId) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public static void sendToClient(final Context pContext, final JSONObject json) {
+		final Intent intent = new Intent(SEND_DATA_INTENT);
+
+		intent.setClass(pContext, CustomDTNDataHandler.class);
+		intent.putExtra("EID", (Parcelable) Client.GROUP_EID);
+		intent.putExtra("data", json.toString() );
+
+		pContext.startActivity(intent);
+	}
+
+	public static void sendToServer(final Context pContext, final JSONObject json) {
+		final Intent intent = new Intent(SEND_DATA_INTENT);
+
+		intent.setClass(pContext, CustomDTNDataHandler.class);
+		intent.putExtra("EID", (Parcelable) Server.GROUP_EID);
+		intent.putExtra("data", json.toString() );
+
+		pContext.startActivity(intent);
+	}
+
+	private static final int DEFAULT_LIFETIME = 100;
+
 	private Bundle bundle;
+	private final Context context;
 	private final DTNClient dtnClient;
-	private ExecutorService executor;
-	private final Client client;
-	private final Server server;
+	private final ExecutorService executor;
 }

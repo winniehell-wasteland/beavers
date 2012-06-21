@@ -21,15 +21,15 @@ public class CustomDTNClient extends DTNClient {
 
 		context = pContext;
 		executor = Executors.newSingleThreadExecutor();
-		
+
         // register to RECEIVE intent
-		IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
+		final IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
 		filter.addCategory(pContext.getApplicationInfo().packageName);
         pContext.registerReceiver(intentReceiver, filter);
 	}
 
 	@Override
-	protected void sessionConnected(Session session) {
+	protected void sessionConnected(final Session session) {
         executor.execute(queryTask);
 	}
 
@@ -49,12 +49,12 @@ public class CustomDTNClient extends DTNClient {
 		// TODO Auto-generated method stub
 
 	}
-	
+
 	@Override
 	public void unregister() {
 		// unregister intent receiver
 		context.unregisterReceiver(intentReceiver);
-		
+
 		try {
 			// stop executor
 			executor.shutdown();
@@ -63,11 +63,11 @@ public class CustomDTNClient extends DTNClient {
 			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
 				executor.shutdownNow();
 			}
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		super.unregister();
 	}
 
@@ -76,7 +76,7 @@ public class CustomDTNClient extends DTNClient {
 
 	private final BroadcastReceiver intentReceiver = new BroadcastReceiver() {
 		@Override
-		public void onReceive(Context context, Intent intent) {
+		public void onReceive(final Context context, final Intent intent) {
 			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 			{
 				// RECEIVE intent received, check for new bundles
@@ -87,20 +87,20 @@ public class CustomDTNClient extends DTNClient {
 
 	private final Runnable queryTask = new Runnable() {
 		@Override
-		public void run() {			
+		public void run() {
 			try {
 				while(CustomDTNClient.this.query());
-			} catch (SessionDestroyedException e) {
+			} catch (final SessionDestroyedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 	};
 
-	public void initialize(Registration pRegistration) throws ServiceNotAvailableException {
+	public void initialize(final Registration pRegistration) throws ServiceNotAvailableException {
 		super.initialize(context, pRegistration);
 	}
 }
