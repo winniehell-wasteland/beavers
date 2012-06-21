@@ -2,20 +2,20 @@ package org.beavers;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import org.beavers.communication.Client;
 import org.beavers.communication.CustomDTNClient;
 import org.beavers.communication.CustomDTNDataHandler;
 import org.beavers.communication.Server;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.PlayerID;
 import org.beavers.ui.GameListView;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -31,21 +31,12 @@ import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 public class AppActivity extends Activity {
-
-	public AppActivity()
-	{
-		playerID = new PlayerID(UUID.randomUUID().toString());
-
-		client = new Client(this);
-		server = new Server(this);
-	}
-
 	@Override
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
 
 		dtnClient = new CustomDTNClient(this);
-		dtnDataHandler = new CustomDTNDataHandler(dtnClient, server, client);
+		dtnDataHandler = new CustomDTNDataHandler(this, dtnClient);
 
         dtnClient.setDataHandler(dtnDataHandler);
 
@@ -60,14 +51,16 @@ public class AppActivity extends Activity {
 			// handled in onStart()
 		}
 
-	    announcedGamesView = new GameListView(this, client.announcedGames) {
+	    announcedGamesView = new GameListView(this, Client.announcedGames) {
 			@Override
 			public boolean onMenuItemClick(final MenuItem pItem) {
 				switch(pItem.getItemId())
 				{
 				case R.id.menu_join:
 					assert announcedGamesView.getCheckedItemIds().length == 1;
-					client.joinGame((GameInfo) announcedGamesView.getItemAtPosition(announcedGamesView.getCheckedItemPosition()));
+					final Intent intent = new Intent(Client.JOIN_GAME_INTENT);
+					intent.putExtra("game", (GameInfo) announcedGamesView.getItemAtPosition(announcedGamesView.getCheckedItemPosition()));
+					startActivity(intent);
 
 					return true;
 				default:
@@ -82,7 +75,7 @@ public class AppActivity extends Activity {
 
 	    };
 
-	    runningGamesView = new GameListView(this, client.runningGames) {
+	    runningGamesView = new GameListView(this, Client.runningGames) {
 			@Override
 			public boolean onMenuItemClick(final MenuItem item) {
 				// TODO Auto-generated method stub
@@ -103,6 +96,9 @@ public class AppActivity extends Activity {
 	    setContentView(frameLayout, layoutParams);
 
 	    frameLayout.addView(runningGamesView);
+
+	    startActivity(new Intent(AppActivity.this, Server.class));
+	    startActivity(new Intent(AppActivity.this, Client.class));
 	}
 
 	@Override
@@ -238,20 +234,12 @@ public class AppActivity extends Activity {
 		return false;
 	}
 
-	public PlayerID getPlayerID() {
-		return playerID;
-	}
-
-	public Client getClient() {
-		return client;
-	}
-
 	public Session getDTNSession() throws SessionDestroyedException, InterruptedException {
-		return dtnClient.getSession();
-	}
+		final Parcel p = Parcel.obtain();
 
-	public Server getServer() {
-		return server;
+		final ParcelFileDescriptor fd;
+		p.setDataPosition(pos)
+		return dtnClient.getSession();
 	}
 
 	/**
@@ -271,11 +259,6 @@ public class AppActivity extends Activity {
 
 	@SuppressWarnings("unused")
 	private static final String TAG = "AppActivity";
-
-	private final PlayerID playerID;
-
-	private final Client client;
-	private final Server server;
 
 	private CustomDTNClient dtnClient;
 	private CustomDTNDataHandler dtnDataHandler;
