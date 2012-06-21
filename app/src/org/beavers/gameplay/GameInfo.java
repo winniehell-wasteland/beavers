@@ -1,10 +1,13 @@
 package org.beavers.gameplay;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * class to uniquely identify a game
- * @author winniehell
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public final class GameInfo {
+public final class GameInfo implements Parcelable {
 
 	/**
 	 * default constructor
@@ -16,6 +19,11 @@ public final class GameInfo {
 		server = pServer;
 		state = GameState.UNKNOWN;
 	}
+
+    @Override
+	public int describeContents() {
+        return 0;
+    }
 
 	@Override
 	public boolean equals(final Object other) {
@@ -73,9 +81,47 @@ public final class GameInfo {
 		state = pState;
 	}
 
+	public Object toJSON() {
+		return server.toString()+"/"+game.toString();
+	}
+
 	@Override
 	public String toString() {
 		return server.toString()+"/"+game.toString();
+	}
+
+    @Override
+	public void writeToParcel(final Parcel out, final int flags) {
+        out.writeSerializable(game);
+        out.writeSerializable(server);
+        out.writeSerializable(state);
+    }
+
+    public static final Parcelable.Creator<GameInfo> CREATOR
+            = new Parcelable.Creator<GameInfo>() {
+        @Override
+		public GameInfo createFromParcel(final Parcel in) {
+            return new GameInfo(in);
+        }
+
+        @Override
+		public GameInfo[] newArray(final int size) {
+            return new GameInfo[size];
+        }
+    };
+
+	public static GameInfo fromJSON(final Object pJSON) {
+		if((pJSON instanceof String))
+		{
+			final String[] parts = ((String) pJSON).split("/");
+
+			if(parts.length == 2)
+			{
+				return new GameInfo(new PlayerID(parts[0]), new GameID(parts[1]));
+			}
+		}
+
+		return null;
 	}
 
 	/** unique game ID on server */
@@ -84,4 +130,10 @@ public final class GameInfo {
 	private PlayerID server;
 	/** state of the game */
 	private GameState state;
+
+    private GameInfo(final Parcel in) {
+		game = (GameID) in.readSerializable();
+    	server = (PlayerID) in.readSerializable();
+		state = (GameState) in.readSerializable();
+    }
 }

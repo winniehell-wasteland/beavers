@@ -6,28 +6,27 @@ import android.content.Context;
 
 /**
  * represents the state a game is in
- *
- * @author winniehell
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public enum GameState {
 	/** default state */
-	UNKNOWN(0),
+	UNKNOWN,
 	/** server has broadcasted GameInfo */
-	ANNOUNCED(1),
+	ANNOUNCED,
 	/** client sent join request to server */
-	JOINED(2),
+	JOINED,
 	/** server is waiting for ACK of players */
-	STARTED(3),
+	STARTED,
 	/** game is in planning phase */
-	PLANNING_PHASE(4),
+	PLANNING_PHASE,
 	/** game is in execution phase */
-	EXECUTION_PHASE(5),
+	EXECUTION_PHASE,
 	/** lost connection to server (timeout) */
-	ABORTED(6),
+	ABORTED,
 	/** won the game */
-	WON(7),
+	WON,
 	/** lost the game */
-	LOST(8);
+	LOST;
 
 	public String getName(final Context pContext) {
 		switch (this) {
@@ -54,18 +53,7 @@ public enum GameState {
 		}
 	}
 
-	public int getMagicValue() {
-		return magicValue;
+	public Object toJSON() {
+		return name();
 	}
-
-	/**
-	 * default constructor
-	 * @param pMagicValue magic value for communication
-	 */
-	private GameState(final int pMagicValue) {
-		magicValue = pMagicValue;
-	}
-
-	/** magic value for communication */
-	private final int magicValue;
 }
