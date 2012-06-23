@@ -14,8 +14,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -25,10 +23,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
-import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 public class AppActivity extends Activity {
 	@Override
@@ -195,12 +191,22 @@ public class AppActivity extends Activity {
 				{
 					frameLayout.removeAllViews();
 
+<<<<<<< HEAD
 					final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
 					frameLayout.addView(mRenderSurfaceView, surfaceViewLayoutParams);
 				}
 
 				final GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
 				server.initiateGame(newGame);
+=======
+			// show game
+			final Intent intent = new Intent(AppActivity.this, GameActivity.class);
+			startActivity(intent);
+
+			// announce
+			final GameInfo newGame = new GameInfo(Settings.playerID, new GameID(UUID.randomUUID().toString()));
+			Server.initiateGame(this, newGame);
+>>>>>>> 0092484... restructured communication
 
 				return true;
 			case R.id.menu_join_game:
@@ -232,14 +238,6 @@ public class AppActivity extends Activity {
 		*/
 
 		return false;
-	}
-
-	public Session getDTNSession() throws SessionDestroyedException, InterruptedException {
-		final Parcel p = Parcel.obtain();
-
-		final ParcelFileDescriptor fd;
-		p.setDataPosition(pos)
-		return dtnClient.getSession();
 	}
 
 	/**

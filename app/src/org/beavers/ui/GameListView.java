@@ -2,6 +2,7 @@ package org.beavers.ui;
 
 import org.beavers.AppActivity;
 import org.beavers.R;
+import org.beavers.Settings;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 
@@ -18,7 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public abstract class GameListView extends ListView implements OnMenuItemClickListener, OnItemClickListener {
+public abstract class GameListView extends ListView
+	implements OnMenuItemClickListener, OnItemClickListener {
 
 	public GameListView(final AppActivity pApp, final GameList pList) {
 		super(pApp);
@@ -44,7 +46,8 @@ public abstract class GameListView extends ListView implements OnMenuItemClickLi
 	}
 
 	@Override
-	public void onItemClick(final AdapterView<?> pParent, final View pView, final int pPosition, final long pID) {
+	public void onItemClick(final AdapterView<?> pParent, final View pView,
+			final int pPosition, final long pID) {
 		//setSelection(pPosition);
 		setItemChecked(pPosition, true);
 		showContextMenu();
@@ -91,14 +94,18 @@ public abstract class GameListView extends ListView implements OnMenuItemClickLi
 		}
 
 		@Override
-		public View getView(final int position, View convertView, final ViewGroup parent) {
+		public View getView(final int position, View convertView,
+				final ViewGroup parent) {
 			ViewHolder holder;
 			if (convertView == null) {
 				convertView = inflater.inflate(R.layout.custom_row_view, null);
 				holder = new ViewHolder();
-				holder.txtName = (TextView) convertView.findViewById(R.id.name);
-				holder.txtServer = (TextView) convertView.findViewById(R.id.server);
-				holder.txtState = (TextView) convertView.findViewById(R.id.state);
+				holder.txtName =
+						(TextView) convertView.findViewById(R.id.name);
+				holder.txtServer =
+						(TextView) convertView.findViewById(R.id.server);
+				holder.txtState =
+						(TextView) convertView.findViewById(R.id.state);
 
 				convertView.setTag(holder);
 			} else {
@@ -108,8 +115,12 @@ public abstract class GameListView extends ListView implements OnMenuItemClickLi
 			final GameInfo item = list.get(position);
 
 			holder.txtName.setText(item.getID().toString());
-			holder.txtServer.setText(item.getServer().toString());
-			holder.txtState.setText(app.getString(R.string.state) + ": " + item.getState().getName(app));
+			holder.txtServer.setText(
+				item.isServer(Settings.playerID)?"":
+					item.getServer().toString());
+			holder.txtState.setText(
+				app.getString(R.string.state) + ": "
+				+ item.getState().getName(app));
 
 			return convertView;
 		}

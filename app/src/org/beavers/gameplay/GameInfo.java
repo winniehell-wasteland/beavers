@@ -65,6 +65,16 @@ public final class GameInfo implements Parcelable {
 		return state;
 	}
 
+	/** @return true if game is in given state */
+	public boolean isInState(final GameState pState) {
+		return getState().equals(pState);
+	}
+
+	/** @return true if given player is server of the game */
+	public boolean isServer(final PlayerID pPlayer) {
+		return getServer().equals(pPlayer);
+	}
+
 	/**
 	 * changes the server
 	 * @param pServer new server

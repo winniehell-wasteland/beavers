@@ -37,6 +37,7 @@ public class GameList {
 
 	/**
 	 * find a game in the list
+	 *
 	 * @param pGame game to find
 	 * @return game in list (or null)
 	 */

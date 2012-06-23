@@ -1,246 +1,358 @@
 package org.beavers.communication;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-
-import org.beavers.AppActivity;
+import org.beavers.R;
+import org.beavers.Settings;
 import org.beavers.gameplay.DecisionContainer;
-import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.PlayerID;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 
-public class Client {
+/**
+ * client for game communication
+ *
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
+ */
+public enum Client {
+	; // prevent instantiation
 
-	public static final String TAG = "Client";
-	public static final GroupEndpoint GROUP_EID = new GroupEndpoint("dtn://beavergame.dtn/client");
 	/**
-	 * @name lifetimes
+	 * @name debug
 	 * @{
 	 */
-	private static final int DEFAULT_LIFETIME = 100;
+	private static final String TAG = Client.class.getName();
 	/**
 	 * @}
 	 */
 
-	public final GameList announcedGames;
-	public final  GameList runningGames;
+	/**
+	 * @name DTN
+	 * @{
+	 */
+	public static final GroupEndpoint GROUP_EID =
+		new GroupEndpoint("dtn://beavergame.dtn/client");
+	/**
+	 * @}
+	 */
 
 	/**
-	 * default constructor
-	 * @param pApp
+	 * @name intents
+	 * @{
 	 */
-	public Client(final AppActivity pApp)
-	{
-		app = pApp;
-
-		announcedGames = new GameList();
-		runningGames = new GameList();
-
-		announcedGames.add(new GameInfo(new PlayerID("foo"), new GameID("bar"))).setState(GameState.ANNOUNCED);
-		announcedGames.add(new GameInfo(new PlayerID("test"), new GameID("game"))).setState(GameState.ANNOUNCED);
-		announcedGames.add(new GameInfo(new PlayerID("123"), new GameID("456"))).setState(GameState.ANNOUNCED);
-
-		runningGames.add(new GameInfo(new PlayerID("server1"), new GameID("game1")));
-		runningGames.add(new GameInfo(new PlayerID("server2"), new GameID("game2")));
-		runningGames.add(new GameInfo(new PlayerID("server3"), new GameID("game3")));
-		runningGames.add(new GameInfo(new PlayerID("server4"), new GameID("game4")));
-	}
+	public static final String GAME_STATE_CHANGED_INTENT =
+		Client.class.getName() + ".GAME_STATE_CHANGED";
+	public static final String JOIN_GAME_INTENT =
+		Client.class.getName() + ".JOIN_GAME";
+	/**
+	 * @}
+	 */
 
 	/**
-	 * server has announced new game
-	 * @param pGame new game
+	 * @name game containers
+	 * @{
 	 */
-	public void receiveGameInfo(final GameInfo pGame)
-	{
-		if(announcedGames.contains(pGame))
-		{
-			Log.e(TAG, "Game "+pGame+" was already announced!");
+	public static GameList announcedGames = new GameList();
+	public static GameList runningGames = new GameList();
+	/**
+	 * @}
+	 */
+
+	/**
+	 * quit game
+	 *
+	 * @param pContext activity context
+	 * @param pGame game
+	 */
+	public static void abortGame(final Context pContext, GameInfo pGame) {
+		if (!runningGames.contains(pGame)) {
+			Log.e(TAG, pContext.getString(R.string.error_not_running,
+					pGame.toString()));
 			return;
 		}
 
-		pGame.setState(GameState.ANNOUNCED);
-		announcedGames.add(pGame);
-	}
+		pGame = runningGames.find(pGame);
 
-	/**
-	 * joins a game
-	 * @param pGame announced game
-	 */
-	public void joinGame(GameInfo pGame)
-	{
-		pGame = announcedGames.find(pGame);
-
-		if((pGame == null) || !pGame.getState().equals(GameState.ANNOUNCED))
-		{
-			Log.e(TAG, "Game "+pGame+" was not announced!");
-			return;
-		}
-
-		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		final PrintStream stream = new PrintStream(buffer);
+		final JSONObject json = new JSONObject();
 
 		try {
-			stream.println("JOIN");
-			stream.println(pGame.getServer().toString());
-			stream.println(pGame.getID().toString());
-			stream.println(app.getPlayerID().toString());
-
-			app.getDTNSession().send(Server.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
-
-			buffer.close();
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not send join request!", e);
-			return;
+			json.put("state", GameState.ABORTED.toJSON());
+			json.put("game", pGame.toJSON());
+			json.put("player", Settings.playerID.toJSON());
+		} catch (final JSONException e) {
+			Log.e(TAG, pContext.getString(R.string.error_json), e);
 		}
 
-		pGame.setState(GameState.JOINED);
-		app.updateGame(pGame);
+		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(), json);
+
+		runningGames.remove(pGame);
+		broadcastGameInfo(pContext, pGame);
 	}
 
 	/**
-	 * server requests ACK
-	 * @param pGame joined game
+	 * receive a DTN message
+	 *
+	 * @param pContext activity context
+	 * @param pJSON payload in JSON format
 	 */
-	public void receiveGameReady(GameInfo pGame)
-	{
-		pGame = announcedGames.find(pGame);
-
-		if(pGame == null)
+	public static void handlePayload(final Context pContext,
+			final JSONObject pJSON) {
+		if(pJSON.has("state"))
 		{
-			Log.e(TAG, "Game "+pGame+" was not announced!");
+			final GameInfo game = GameInfo.fromJSON(pJSON.opt("game"));
+
+			switch (GameState.valueOf(pJSON.optString("state"))) {
+			case ABORTED:
+			{
+				if(runningGames.contains(game))
+				{
+					onReceiveNewServer(pContext, runningGames.find(game),
+						PlayerID.fromJSON(pJSON.opt("new_server")));
+				}
+
+				break;
+			}
+			case ANNOUNCED:
+			{
+				if(announcedGames.contains(game)) {
+					Log.e(TAG,
+						pContext.getString(R.string.error_already_announced,
+							game.toString()));
+				}
+				else
+				{
+					onReceiveGameInfo(pContext, game);
+				}
+
+				break;
+			}
+			case EXECUTION_PHASE:
+			{
+				if(runningGames.contains(game))
+				{
+					onReceiveOutcome(pContext, runningGames.find(game),
+						OutcomeContainer.fromJSON(pJSON.opt("outcome")));
+				}
+
+				break;
+			}
+			case PLANNING_PHASE:
+			{
+				if(runningGames.contains(game))
+				{
+					onReceiveStartPlanningPhase(pContext,
+							runningGames.find(game));
+				}
+
+				break;
+			}
+			case STARTED:
+			{
+				if(announcedGames.contains(game))
+				{
+					onReceiveGameReady(pContext, announcedGames.find(game));
+				}
+
+				break;
+			}
+			}
+		}
+	}
+
+	/**
+	 * join a game
+	 *
+	 * @param pContext activity context
+	 * @param pGame announced game
+	 */
+	public static void joinGame(final Context pContext, GameInfo pGame) {
+		if (!announcedGames.contains(pGame)) {
+			Log.e(TAG, pContext.getString(R.string.error_not_announced,
+					pGame.toString()));
 			return;
 		}
 
-		if(acknowledgeGameReady(pGame))
-		{
-			announcedGames.remove(pGame);
+		pGame = announcedGames.find(pGame);
 
-			pGame.setState(GameState.STARTED);
-			runningGames.add(pGame);
+		if (!pGame.isInState(GameState.ANNOUNCED)) {
+			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
+					pGame.toString(), pGame.getState().toString()));
+			return;
 		}
+
+		final JSONObject json = new JSONObject();
+
+		try {
+			json.put("state", GameState.JOINED.toJSON());
+			json.put("game", pGame.toJSON());
+			json.put("player", Settings.playerID.toJSON());
+		} catch (final JSONException e) {
+			Log.e(TAG, pContext.getString(R.string.error_json), e);
+		}
+
+		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(), json);
+
+		pGame.setState(GameState.JOINED);
+		broadcastGameInfo(pContext, pGame);
+	}
+
+	/**
+	 * send decisions to server
+	 *
+	 * @param pContext activity context
+	 * @param pGame running game
+	 * @param decisions
+	 */
+	public static void sendDecisions(final Context pContext,
+			final GameInfo pGame, final DecisionContainer decisions) {
+		// TODO
 	}
 
 	/**
 	 * responds to server
+	 *
+	 * @param pContext activity context
 	 * @param pGame joined game
 	 */
-	public boolean acknowledgeGameReady(final GameInfo pGame)
-	{
-		if(!pGame.getState().equals(GameState.JOINED))
-		{
-			Log.e(TAG, "Game "+pGame+" has wrong state!");
+	private static boolean acknowledgeGameReady(final Context pContext,
+			final GameInfo pGame) {
+		if (!pGame.isInState(GameState.JOINED)) {
+			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
+					pGame.toString(), pGame.getState().toString()));
 			return false;
 		}
 
-		final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		final PrintStream stream = new PrintStream(buffer);
+		final JSONObject json = new JSONObject();
 
 		try {
-			stream.println("ACK");
-			stream.println(pGame.getServer().toString());
-			stream.println(pGame.getID().toString());
-			stream.println(app.getPlayerID().toString());
-
-			app.getDTNSession().send(Server.GROUP_EID, DEFAULT_LIFETIME, buffer.toString());
-
-			buffer.close();
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not send ack!", e);
-			return false;
+			json.put("state", GameState.STARTED.toJSON());
+			json.put("game", pGame.toJSON());
+			json.put("player", Settings.playerID.toJSON());
+		} catch (final JSONException e) {
+			Log.e(TAG, pContext.getString(R.string.error_json), e);
 		}
+
+		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(), json);
+
+		pGame.setState(GameState.STARTED);
+		broadcastGameInfo(pContext, pGame);
 
 		return true;
 	}
 
 	/**
-	 * start planning phase
-	 * @param pGame running game
+	 * inform activities about a changed game
+	 *
+	 * @param pContext activity context
+	 * @param pGame changed game
 	 */
-	public void startPlanningPhase(GameInfo pGame)
-	{
-		pGame = runningGames.find(pGame);
+	private static void broadcastGameInfo(final Context pContext,
+			final GameInfo pGame) {
+		final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
 
-		if(pGame == null)
+		update_intent.putExtra("game", pGame);
+
+		pContext.sendBroadcast(update_intent);
+	}
+
+	/**
+	 * server has announced new game
+	 *
+	 * @param pContext activity context
+	 * @param pGame new game
+	 */
+	private static void onReceiveGameInfo(final Context pContext,
+                                       final GameInfo pGame) {
+		pGame.setState(GameState.ANNOUNCED);
+		announcedGames.add(pGame);
+
+		broadcastGameInfo(pContext, pGame);
+
+		if(pGame.isServer(Settings.playerID))
 		{
-			Log.e(TAG, "Game "+pGame+" is not running!");
-			return;
+			// auto join own game
+			joinGame(pContext, pGame);
 		}
+	}
 
-		if(!pGame.getState().equals(GameState.STARTED)
-				&& !pGame.getState().equals(GameState.EXECUTION_PHASE))
-		{
-			Log.e(TAG, "Game "+pGame+" has wrong state!");
-			return;
+	/**
+	 * server requests ACK
+	 *
+	 * @param pContext activity context
+	 * @param pGame joined game
+	 */
+	private static void onReceiveGameReady(final Context pContext,
+			final GameInfo pGame) {
+		if (acknowledgeGameReady(pContext, pGame)) {
+			announcedGames.remove(pGame);
+			runningGames.add(pGame);
 		}
-
-		pGame.setState(GameState.PLANNING_PHASE);
-		app.updateGame(pGame);
-	}
-
-	/**
-	 * send decisions to server
-	 * @param pGame running game
-	 * @param decisions
-	 */
-	public void sendDecisions(final GameInfo pGame, final DecisionContainer decisions)
-	{
-
-	}
-
-	/**
-	 * receive outcome from server
-	 */
-	public void receiveOutcome(final GameInfo pGame, final OutcomeContainer outcome)
-	{
-
-	}
-
-	/**
-	 * quit game
-	 * @param player
-	 */
-	public void abortGame(final GameInfo pGame)
-	{
-
 	}
 
 	/**
 	 * server has quit, inform clients about new server
-	 * @param player
+	 *
+	 * @param pContext activity context
+	 * @param pGame game
+	 * @param pNewServer new server
 	 */
-	public void receiveNewServer(final GameInfo pGame, final PlayerID pPlayer)
-	{
-		pGame.setServer(pPlayer);
-
-		if(app.getPlayerID().equals(pPlayer))
-		{
-			app.getServer().startPlanningPhase(pGame);
+	private static void onReceiveNewServer(final Context pContext,
+			final GameInfo pGame, final PlayerID pNewServer) {
+		if (!pGame.isInState(GameState.PLANNING_PHASE)
+				&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
+			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
+					pGame.toString(), pGame.getState().toString()));
+			return;
 		}
+
+		pGame.setServer(pNewServer);
+
+		// we become server
+		if (Settings.playerID.equals(pNewServer)) {
+			Server.acquireGame(pContext, pGame);
+		}
+
+		broadcastGameInfo(pContext, pGame);
 	}
 
-	private final AppActivity app;
+	/**
+	 * receive outcome from server
+	 *
+	 * @param pContext activity context
+	 * @param pGame game
+	 * @param pOutcome
+	 */
+	private static void onReceiveOutcome(final Context pContext,
+			final GameInfo pGame, final OutcomeContainer pOutcome) {
+		// TODO
+	}
 
-	public void handlePayload(final DataInputStream input) throws IOException {
-		final String command = input.readLine();
+	/**
+	 * start planning phase
+	 *
+	 * @param pContext activity context
+	 * @param pGame running game
+	 */
+	private static void onReceiveStartPlanningPhase(final Context pContext,
+			final GameInfo pGame) {
+		if (!pGame.isInState(GameState.STARTED)
+				&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
 
-		if(command.equals("ANNOUNCE"))
-		{
-			final PlayerID server = new PlayerID(input.readLine());
-			final GameID game = new GameID(input.readLine());
+			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
+					pGame.toString(), pGame.getState().toString()));
 
-			receiveGameInfo(new GameInfo(server, game));
+			return;
 		}
-		else
-		{
-			Log.w(TAG, "Unknown command: "+command);
-		}
+
+		// start planning phase
+		pGame.setState(GameState.PLANNING_PHASE);
+		broadcastGameInfo(pContext, pGame);
 	}
 }

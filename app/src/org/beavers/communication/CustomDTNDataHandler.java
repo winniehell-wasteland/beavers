@@ -1,10 +1,11 @@
 package org.beavers.communication;
 
-import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.beavers.Settings;
+import org.beavers.gameplay.PlayerID;
 import org.json.JSONObject;
 
 import android.content.BroadcastReceiver;
@@ -109,40 +110,31 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	@Override
 	public void payload(final byte[] data) {
 
-		final byte[] tmpData = data.clone();
-		final Bundle tmpBundle = bundle;
+		final String destination = bundle.destination;
 
 		// process data asynchronously
 		executor.execute(new Runnable() {
 	        @Override
 			public void run() {
 				try {
-					JSONObject json = null;
+					final JSONObject json = new JSONObject(new String(data, "UTF-8"));
 
-					try {
-						json = new JSONObject(new String(data, "UTF-8"));
-					} catch (final UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					if(tmpBundle.destination.equals(Server.GROUP_EID.toString()))
+					if(destination.equals(Server.GROUP_EID.toString()))
 					{
 						Server.handlePayload(context, json);
 					}
-					else if(tmpBundle.destination.equals(Client.GROUP_EID.toString()))
+					else if(destination.equals(Client.GROUP_EID.toString()))
 					{
 						Client.handlePayload(context, json);
 					}
 					else
 					{
-						Log.e(TAG, "Unknown destination: "+tmpBundle.destination);
+						Log.e(TAG, "Unknown destination: "+destination);
 						return;
 					}
 
 				} catch (final Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.e(TAG, "Problem parsing DTN message!", e);
 				}
 	        }
 		});
@@ -181,24 +173,48 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 
 	}
 
-	public static void sendToClient(final Context pContext, final JSONObject json) {
+
+	/**
+	 * send DTN message to clients
+	 *
+	 * @param pContext activity context
+	 * @param pJSON payload in JSON format
+	 */
+	public static void sendToClients(final Context pContext, final JSONObject pJSON) {
 		final Intent intent = new Intent(SEND_DATA_INTENT);
 
 		intent.setClass(pContext, CustomDTNDataHandler.class);
 		intent.putExtra("EID", (Parcelable) Client.GROUP_EID);
-		intent.putExtra("data", json.toString() );
+		intent.putExtra("data", pJSON.toString() );
 
 		pContext.startActivity(intent);
+
+		// don't forget our client (loopback is suppressed)
+		Client.handlePayload(pContext, pJSON);
 	}
 
-	public static void sendToServer(final Context pContext, final JSONObject json) {
-		final Intent intent = new Intent(SEND_DATA_INTENT);
+	/**
+	 * send DTN message to server
+	 *
+	 * @param pContext activity context
+	 * @param pServer server
+	 * @param pJSON payload in JSON format
+	 */
+	public static void sendToServer(final Context pContext, final PlayerID pServer, final JSONObject json) {
+		if(pServer.equals(Settings.playerID))
+		{
+			Server.handlePayload(pContext, json);
+		}
+		else
+		{
+			final Intent intent = new Intent(SEND_DATA_INTENT);
 
-		intent.setClass(pContext, CustomDTNDataHandler.class);
-		intent.putExtra("EID", (Parcelable) Server.GROUP_EID);
-		intent.putExtra("data", json.toString() );
+			intent.setClass(pContext, CustomDTNDataHandler.class);
+			intent.putExtra("EID", (Parcelable) Server.GROUP_EID);
+			intent.putExtra("data", json.toString() );
 
-		pContext.startActivity(intent);
+			pContext.startActivity(intent);
+		}
 	}
 
 	private static final int DEFAULT_LIFETIME = 100;
