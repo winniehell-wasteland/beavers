@@ -7,4 +7,9 @@ public class OutcomeContainer {
 		return null;
 	}
 
+	public Object toJSON() {
+		// TODO Auto-generated method stub
+		return "unimplemented";
+	}
+
 }

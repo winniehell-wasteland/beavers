@@ -106,7 +106,7 @@ public enum Server {
 
 			if(players.get(pGame).size() == MAX_PLAYERS)
 			{
-				onGameReady(pContext, pGame);
+				startPlanningPhase(pContext, pGame);
 			}
 		}
 	}
@@ -141,13 +141,6 @@ public enum Server {
 			case JOINED:
 			{
 				addPlayer(pContext, game,
-						PlayerID.fromJSON(pJSON.opt("player")));
-
-				break;
-			}
-			case STARTED:
-			{
-				onReceiveACK(pContext, game,
 						PlayerID.fromJSON(pJSON.opt("player")));
 
 				break;
@@ -209,7 +202,17 @@ public enum Server {
 			final GameInfo pGame,
 			final OutcomeContainer outcome)
 	{
+		final JSONObject json = new JSONObject();
 
+		try {
+			json.put("state", GameState.EXECUTION_PHASE.toJSON());
+			json.put("game", pGame.toJSON());
+			json.put("outcome", outcome.toJSON());
+		} catch (final JSONException e) {
+			Log.e(TAG, pContext.getString(R.string.error_json), e);
+		}
+
+		CustomDTNDataHandler.sendToClients(pContext, json);
 	}
 
 	/**
@@ -228,46 +231,6 @@ public enum Server {
 			final PlayerID newServer = null;
 			announceNewServer(pContext, pGame, newServer);
 		}
-	}
-
-	/**
-	 * receive start game reply from player
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 * @param pPlayer player
-	 */
-	private static void onReceiveACK(final Context pContext, final GameInfo pGame,
-			final PlayerID pPlayer)
-	{
-		// TODO fix
-		return;
-
-		/*
-		if(!hostedGames.contains(pGame))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_not_hosted,
-					pGame.toString()));
-			return;
-		}
-
-		pGame = hostedGames.find(pGame);
-
-		if(!pGame.isInState(GameState.ANNOUNCED))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
-			return;
-		}
-
-		players.get(pGame).add(pPlayer);
-
-		// TODO allow more than 2 players
-		if(players.get(pGame).size() == 2)
-		{
-			startPlanningPhase(pContext, pGame);
-		}
-		*/
 	}
 
 	private static PlayerMap players;
@@ -295,38 +258,6 @@ public enum Server {
 	}
 
 	/**
-	 * server tries to start game
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 */
-	private static void onGameReady(final Context pContext, final GameInfo pGame)
-	{
-		if(!pGame.isInState(GameState.ANNOUNCED))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
-			return;
-		}
-
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.STARTED.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("players", players.get(pGame).toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToClients(pContext, json);
-
-		pGame.setState(GameState.STARTED);
-
-		startPlanningPhase(pContext, pGame);
-	}
-
-	/**
 	 * get decisions from player
 	 *
 	 * @param pContext activity context
@@ -334,7 +265,9 @@ public enum Server {
 	 * @param player
 	 * @param decisions
 	 */
-	private static void onReceiveDecisions(final Context pContext, GameInfo pGame, final PlayerID pPlayer, final DecisionContainer pDecisions)
+	private static void onReceiveDecisions(final Context pContext,
+			GameInfo pGame, final PlayerID pPlayer,
+			final DecisionContainer pDecisions)
 	{
 		if(!hostedGames.contains(pGame))
 		{
@@ -351,6 +284,9 @@ public enum Server {
 					pGame.toString(), pGame.getState().toString()));
 			return;
 		}
+
+		// TODO handle decisions
+		distributeOutcome(pContext, pGame, new OutcomeContainer());
 	}
 
 	/**
@@ -371,7 +307,7 @@ public enum Server {
 
 		pGame = hostedGames.find(pGame);
 
-		if(!pGame.isInState(GameState.STARTED))
+		if(!pGame.isInState(GameState.ANNOUNCED))
 		{
 			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
 					pGame.toString(), pGame.getState().toString()));
@@ -383,6 +319,7 @@ public enum Server {
 		try {
 			json.put("state", GameState.PLANNING_PHASE.toJSON());
 			json.put("game", pGame.toJSON());
+			json.put("players", players.get(pGame).toJSON());
 		} catch (final JSONException e) {
 			Log.e(TAG, pContext.getString(R.string.error_json), e);
 		}

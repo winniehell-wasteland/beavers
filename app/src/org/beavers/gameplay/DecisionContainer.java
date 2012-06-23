@@ -7,4 +7,8 @@ public class DecisionContainer {
 		return null;
 	}
 
+	public Object toJSON() {
+		return "unimplemented";
+	}
+
 }

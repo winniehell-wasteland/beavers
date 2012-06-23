@@ -2,20 +2,23 @@ package org.beavers;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 import org.beavers.communication.Client;
 import org.beavers.communication.CustomDTNClient;
 import org.beavers.communication.CustomDTNDataHandler;
 import org.beavers.communication.Server;
+import org.beavers.gameplay.GameActivity;
+import org.beavers.gameplay.GameID;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.ui.GameListView;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,8 +26,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 
 public class AppActivity extends Activity {
 	@Override
@@ -35,17 +36,7 @@ public class AppActivity extends Activity {
 		dtnDataHandler = new CustomDTNDataHandler(this, dtnClient);
 
         dtnClient.setDataHandler(dtnDataHandler);
-
-        try {
-        	final Registration registration = new Registration("game/server");
-
-        	registration.add(Server.GROUP_EID);
-        	registration.add(Client.GROUP_EID);
-
-			dtnClient.initialize(registration);
-		} catch (final ServiceNotAvailableException e) {
-			// handled in onStart()
-		}
+        dtnClient.initialize();
 
 	    announcedGamesView = new GameListView(this, Client.announcedGames) {
 			@Override
@@ -107,9 +98,6 @@ public class AppActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		Log.e(TAG, "destroying app...");
-
-
 		// unregister at the daemon
 		dtnClient.unregister();
 
@@ -182,23 +170,9 @@ public class AppActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
-		// TODO
-		/*
-			switch (item.getItemId()) {
-			case R.id.menu_start_game:
+		switch (item.getItemId()) {
+		case R.id.menu_start_game:
 
-				if(!isShowing(mRenderSurfaceView))
-				{
-					frameLayout.removeAllViews();
-
-<<<<<<< HEAD
-					final FrameLayout.LayoutParams surfaceViewLayoutParams = new FrameLayout.LayoutParams(super.createSurfaceViewLayoutParams());
-					frameLayout.addView(mRenderSurfaceView, surfaceViewLayoutParams);
-				}
-
-				final GameInfo newGame = new GameInfo(getPlayerID(), new GameID(UUID.randomUUID().toString()));
-				server.initiateGame(newGame);
-=======
 			// show game
 			final Intent intent = new Intent(AppActivity.this, GameActivity.class);
 			startActivity(intent);
@@ -206,9 +180,10 @@ public class AppActivity extends Activity {
 			// announce
 			final GameInfo newGame = new GameInfo(Settings.playerID, new GameID(UUID.randomUUID().toString()));
 			Server.initiateGame(this, newGame);
->>>>>>> 0092484... restructured communication
 
-				return true;
+			return true;
+			// TODO
+			/*
 			case R.id.menu_join_game:
 
 				if(!isShowing(announcedGamesView))
@@ -231,13 +206,10 @@ public class AppActivity extends Activity {
 				finish();
 
 				return true;
-			default:
-				return super.onOptionsItemSelected(item);
-			}
+			 */
+		default:
+			return super.onOptionsItemSelected(item);
 		}
-		*/
-
-		return false;
 	}
 
 	/**
@@ -255,7 +227,6 @@ public class AppActivity extends Activity {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private static final String TAG = "AppActivity";
 
 	private CustomDTNClient dtnClient;
@@ -269,3 +240,4 @@ public class AppActivity extends Activity {
 		return (pView.getParent() == frameLayout);
 	}
 }
+

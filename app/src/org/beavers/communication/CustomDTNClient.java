@@ -100,7 +100,16 @@ public class CustomDTNClient extends DTNClient {
 		}
 	};
 
-	public void initialize(final Registration pRegistration) throws ServiceNotAvailableException {
-		super.initialize(context, pRegistration);
+	public void initialize() {
+        try {
+        	final Registration registration = new Registration("game/beavers");
+
+        	registration.add(Server.GROUP_EID);
+        	registration.add(Client.GROUP_EID);
+
+			super.initialize(context, registration);
+		} catch (final ServiceNotAvailableException e) {
+			// ignore for now
+		}
 	}
 }

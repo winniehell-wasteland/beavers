@@ -15,8 +15,6 @@ public enum GameState {
 	ANNOUNCED,
 	/** client sent join request to server */
 	JOINED,
-	/** server is waiting for ACK of players */
-	STARTED,
 	/** game is in planning phase */
 	PLANNING_PHASE,
 	/** game is in execution phase */
@@ -36,8 +34,6 @@ public enum GameState {
 			return pContext.getString(R.string.state_announced);
 		case JOINED:
 			return pContext.getString(R.string.state_joined);
-		case STARTED:
-			return pContext.getString(R.string.state_started);
 		case PLANNING_PHASE:
 			return pContext.getString(R.string.state_planning);
 		case EXECUTION_PHASE:

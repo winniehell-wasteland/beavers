@@ -43,6 +43,7 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.R;
 import org.beavers.Textures;
+import org.beavers.communication.Client;
 import org.beavers.ingame.EmptyTile;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.PathWalker;
@@ -50,6 +51,10 @@ import org.beavers.ingame.Soldier;
 import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -72,9 +77,9 @@ public class GameActivity extends BaseGameActivity
 	 * @{
 	 */
 	public static final int ZINDEX_BACKGROUND = 0;
-	public static final int ZINDEX_WAYPOINTS = ZINDEX_BACKGROUND + 10;
-	public static final int ZINDEX_AIMPOINTS = ZINDEX_WAYPOINTS + 10;
-	public static final int ZINDEX_SOLDIERS = ZINDEX_AIMPOINTS + 10;
+	public static final int ZINDEX_WAYPOINTS  = ZINDEX_BACKGROUND + 10;
+	public static final int ZINDEX_AIMPOINTS  = ZINDEX_WAYPOINTS  + 10;
+	public static final int ZINDEX_SOLDIERS   = ZINDEX_AIMPOINTS  + 10;
 	/**
 	 * @}
 	 */
@@ -95,8 +100,6 @@ public class GameActivity extends BaseGameActivity
 	/**
 	 * @}
 	 */
-
-	public GameInfo currentGame;
 
 	/**
 	 * default constructor
@@ -394,6 +397,8 @@ public class GameActivity extends BaseGameActivity
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();
 
+			Client.sendDecisions(this, currentGame, new DecisionContainer());
+
 			return true;
 		default:
 			return false;
@@ -442,6 +447,20 @@ public class GameActivity extends BaseGameActivity
 		// TODO Auto-generated method stub
 	}
 
+	@Override
+	protected void onPause() {
+		super.onPause();
+
+		unregisterReceiver(updateReceiver);
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		registerReceiver(updateReceiver, new IntentFilter(Client.GAME_STATE_CHANGED_INTENT));
+	}
+
 	private final static float CAMERA_SPEED = 1.50f;
 	@SuppressWarnings("unused")
 	private static final String TAG = "GameScene";
@@ -477,13 +496,40 @@ public class GameActivity extends BaseGameActivity
 	 * @}
 	 */
 
-	private final AStarPathFinder<GameObject> pathFinder;
+	/**
+	 * @name scenery
+	 * @{
+	 */
+	private SmoothCamera camera;
+	private HUD hud;
+	private Scene mainScene;
+	/**
+	 * @}
+	 */
 
+	/**
+	 * @name active entities
+	 * @{
+	 */
 	private ContextMenuHandler contextMenuHandler;
 	private Soldier selectedSoldier;
-	private Scene mainScene;
-	
+	/**
+	 * @}
+	 */
+
 	private Line parallelA,parallelB,lineA,lineB;
+
+	private GameInfo currentGame;
+	private AStarPathFinder<GameObject> pathFinder;
+
+	private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(final Context pContext, final Intent pIntent) {
+			final GameInfo game = pIntent.getParcelableExtra("game");
+
+			// TODO update GameActivity
+		}
+	};
 
 	private void loadMap(final String pMapName)
 	{
@@ -613,7 +659,4 @@ public class GameActivity extends BaseGameActivity
 	    mRenderSurfaceView = new RenderSurfaceView(this);
 	    mRenderSurfaceView.setRenderer(mEngine);
 	}
-
-	private HUD hud;
-	private SmoothCamera camera;
 }
