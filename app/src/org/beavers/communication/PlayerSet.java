@@ -2,7 +2,7 @@ package org.beavers.communication;
 
 import java.util.HashSet;
 
-import org.beavers.gameplay.PlayerID;
+import org.beavers.gameplay.Player;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -12,7 +12,7 @@ import org.json.JSONException;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 @SuppressWarnings("serial")
-public class PlayerSet extends HashSet<PlayerID> {
+public class PlayerSet extends HashSet<Player> {
 	public PlayerSet()
 	{
 		super();
@@ -22,7 +22,7 @@ public class PlayerSet extends HashSet<PlayerID> {
 	{
 		final JSONArray array = new JSONArray();
 
-		for(final PlayerID player : this)
+		for(final Player player : this)
 		{
 			array.put(player.toJSON());
 		}
@@ -40,7 +40,7 @@ public class PlayerSet extends HashSet<PlayerID> {
 
 				for(int i = 0; i < array.length(); ++i)
 				{
-					set.add((PlayerID) array.get(i));
+					set.add((Player) array.get(i));
 				}
 			}
 		} catch (final JSONException e) {

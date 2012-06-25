@@ -3,12 +3,14 @@ package org.beavers.gameplay;
 import org.beavers.R;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * represents the state a game is in
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public enum GameState {
+public enum GameState implements Parcelable {
 	/** default state */
 	UNKNOWN,
 	/** server has broadcasted GameInfo */
@@ -25,6 +27,11 @@ public enum GameState {
 	WON,
 	/** lost the game */
 	LOST;
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
 
 	public String getName(final Context pContext) {
 		switch (this) {
@@ -52,4 +59,22 @@ public enum GameState {
 	public Object toJSON() {
 		return name();
 	}
+
+	@Override
+	public void writeToParcel(final Parcel pOut, final int pFlags) {
+		pOut.writeString(name());
+	}
+
+    public static final Parcelable.Creator<GameState> CREATOR
+            = new Parcelable.Creator<GameState>() {
+        @Override
+		public GameState createFromParcel(final Parcel in) {
+            return GameState.valueOf(in.readString());
+        }
+
+        @Override
+		public GameState[] newArray(final int size) {
+            return new GameState[size];
+        }
+    };
 }

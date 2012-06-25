@@ -7,7 +7,7 @@ import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
-import org.beavers.gameplay.PlayerID;
+import org.beavers.gameplay.Player;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -86,8 +86,10 @@ public enum Server {
 	 *
 	 */
 	public static synchronized void addPlayer(final Context pContext,
-			GameInfo pGame, final PlayerID pPlayer)
+			GameInfo pGame, final Player pPlayer)
 	{
+		Log.d(TAG, "Somebody joins "+pGame.toString());
+
 		if(!hostedGames.contains(pGame))
 		{
 			Log.e(TAG, pContext.getString(R.string.error_not_hosted,
@@ -100,11 +102,13 @@ public enum Server {
 		// TODO allow more than 2 players
 		final int MAX_PLAYERS = 2;
 
-		if(players.get(pGame).size() < MAX_PLAYERS)
-		{
-			players.get(pGame).add(pPlayer);
+		final PlayerSet gamePlayers = players.get(pGame);
 
-			if(players.get(pGame).size() == MAX_PLAYERS)
+		if(gamePlayers.size() < MAX_PLAYERS)
+		{
+			gamePlayers.add(pPlayer);
+
+			if(gamePlayers.size() == MAX_PLAYERS)
 			{
 				startPlanningPhase(pContext, pGame);
 			}
@@ -141,14 +145,14 @@ public enum Server {
 			case JOINED:
 			{
 				addPlayer(pContext, game,
-						PlayerID.fromJSON(pJSON.opt("player")));
+						Player.fromJSON(pJSON.opt("player")));
 
 				break;
 			}
 			case PLANNING_PHASE:
 			{
 				onReceiveDecisions(pContext, game,
-						PlayerID.fromJSON(pJSON.opt("player")),
+						Player.fromJSON(pJSON.opt("player")),
 						DecisionContainer.fromJSON(pJSON.opt("decisions")));
 
 				break;
@@ -156,7 +160,7 @@ public enum Server {
 			case ABORTED:
 			{
 				onPlayerAborts(pContext, game,
-						PlayerID.fromJSON(pJSON.opt("player")));
+						Player.fromJSON(pJSON.opt("player")));
 
 				break;
 			}
@@ -180,6 +184,11 @@ public enum Server {
 			return;
 		}
 
+		pGame.setState(GameState.ANNOUNCED);
+		hostedGames.add(pGame);
+
+		Log.d(TAG, "Add "+pGame.toString());
+
 		final JSONObject json = new JSONObject();
 
 		try {
@@ -190,9 +199,6 @@ public enum Server {
 		}
 
 		CustomDTNDataHandler.sendToClients(pContext, json);
-
-		pGame.setState(GameState.ANNOUNCED);
-		hostedGames.add(pGame);
 	}
 
 	/**
@@ -223,17 +229,17 @@ public enum Server {
 	 * @param pPlayer player
 	 */
 	public static void onPlayerAborts(final Context pContext,
-			final GameInfo pGame, final PlayerID pPlayer)
+			final GameInfo pGame, final Player pPlayer)
 	{
 		if(pGame.getServer().equals(pPlayer))
 		{
 			// TODO find new server
-			final PlayerID newServer = null;
+			final Player newServer = null;
 			announceNewServer(pContext, pGame, newServer);
 		}
 	}
 
-	private static PlayerMap players;
+	private static PlayerMap players = new PlayerMap();
 
 	/**
 	 * server has quit, inform clients about new server
@@ -242,7 +248,7 @@ public enum Server {
 	 * @param pGame old game info
 	 * @param pServer new server
 	 */
-	private static void announceNewServer(final Context pContext, final GameInfo pGame, final PlayerID pServer)
+	private static void announceNewServer(final Context pContext, final GameInfo pGame, final Player pServer)
 	{
 		final JSONObject json = new JSONObject();
 
@@ -266,7 +272,7 @@ public enum Server {
 	 * @param decisions
 	 */
 	private static void onReceiveDecisions(final Context pContext,
-			GameInfo pGame, final PlayerID pPlayer,
+			GameInfo pGame, final Player pPlayer,
 			final DecisionContainer pDecisions)
 	{
 		if(!hostedGames.contains(pGame))
@@ -314,6 +320,8 @@ public enum Server {
 			return;
 		}
 
+		pGame.setState(GameState.PLANNING_PHASE);
+
 		final JSONObject json = new JSONObject();
 
 		try {
@@ -325,7 +333,5 @@ public enum Server {
 		}
 
 		CustomDTNDataHandler.sendToClients(pContext, json);
-
-		pGame.setState(GameState.PLANNING_PHASE);
 	}
 }

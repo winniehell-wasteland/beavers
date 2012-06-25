@@ -5,7 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.beavers.Settings;
-import org.beavers.gameplay.PlayerID;
+import org.beavers.gameplay.Player;
 import org.json.JSONObject;
 
 import android.content.BroadcastReceiver;
@@ -51,6 +51,8 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	}
 
 	public void stop() {
+		context.unregisterReceiver(this);
+
 		try {
 			// stop executor
 			executor.shutdown();
@@ -147,8 +149,7 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 
 	@Override
 	public void onReceive(final Context context, final Intent intent) {
-		if(intent.getClass().equals(this.getClass())
-				&& intent.getAction().equals(SEND_DATA_INTENT))
+		if(intent.getAction().equals(SEND_DATA_INTENT))
 		{
 			final EID destination = intent.getParcelableExtra("EID");
 			final int lifetime = intent.getIntExtra("lifetime", DEFAULT_LIFETIME);
@@ -183,11 +184,10 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	public static void sendToClients(final Context pContext, final JSONObject pJSON) {
 		final Intent intent = new Intent(SEND_DATA_INTENT);
 
-		intent.setClass(pContext, CustomDTNDataHandler.class);
 		intent.putExtra("EID", (Parcelable) Client.GROUP_EID);
 		intent.putExtra("data", pJSON.toString() );
 
-		pContext.startActivity(intent);
+		pContext.sendBroadcast(intent);
 
 		// don't forget our client (loopback is suppressed)
 		Client.handlePayload(pContext, pJSON);
@@ -200,7 +200,7 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	 * @param pServer server
 	 * @param pJSON payload in JSON format
 	 */
-	public static void sendToServer(final Context pContext, final PlayerID pServer, final JSONObject json) {
+	public static void sendToServer(final Context pContext, final Player pServer, final JSONObject json) {
 		if(pServer.equals(Settings.playerID))
 		{
 			Server.handlePayload(pContext, json);
@@ -209,11 +209,10 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 		{
 			final Intent intent = new Intent(SEND_DATA_INTENT);
 
-			intent.setClass(pContext, CustomDTNDataHandler.class);
 			intent.putExtra("EID", (Parcelable) Server.GROUP_EID);
 			intent.putExtra("data", json.toString() );
 
-			pContext.startActivity(intent);
+			pContext.sendBroadcast(intent);
 		}
 	}
 

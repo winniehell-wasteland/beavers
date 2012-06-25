@@ -391,6 +391,86 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
+	public void onLoadComplete() {
+		// TODO load game
+		currentGame = new GameInfo(null, null, "map");
+
+		loadMap(currentGame.getMapName());
+		loadSoldiers();
+
+		if(map != null)
+		{
+			pathFinder = new AStarPathFinder<GameObject>(this, 1600, true);
+		}
+		else
+		{
+			pathFinder = null;
+		}
+
+		mainScene.registerUpdateHandler(holdDetector);
+		mainScene.setOnSceneTouchListener(this);
+	}
+
+	@Override
+	public Engine onLoadEngine() {
+        final Display display = getWindowManager().getDefaultDisplay();
+
+        ScreenOrientation orientation;
+
+        final int rotation = display.getRotation();
+        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+        	orientation = ScreenOrientation.LANDSCAPE;
+        } else {
+        	orientation = ScreenOrientation.PORTRAIT;
+        }
+
+		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
+
+		return new Engine(new EngineOptions(true, orientation,
+				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
+	}
+
+	@Override
+	public void onLoadResources() {
+		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		BitmapTextureAtlas textureAtlas;
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(16,16,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.MUZZLE_FLASH = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "muzzleflash.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(4,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.WAYPOINT = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "waypoint.png", 0, 0);
+		getTextureManager().loadTexture(textureAtlas);
+	}
+
+	@Override
+	public Scene onLoadScene() {
+		mEngine.registerUpdateHandler(new FPSLogger());
+		mainScene = new Scene();
+
+        mRenderSurfaceView.setOnCreateContextMenuListener(this);
+
+		return mainScene;
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
@@ -587,71 +667,6 @@ public class GameActivity extends BaseGameActivity
 			loadHUD();
 			mainScene.sortChildren();
 		}
-	}
-
-	@Override
-	public Engine onLoadEngine() {
-        final Display display = getWindowManager().getDefaultDisplay();
-
-        ScreenOrientation orientation;
-
-        final int rotation = display.getRotation();
-        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
-        	orientation = ScreenOrientation.LANDSCAPE;
-        } else {
-        	orientation = ScreenOrientation.PORTRAIT;
-        }
-
-		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
-
-		return new Engine(new EngineOptions(true, orientation,
-				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
-	}
-
-	@Override
-	public void onLoadResources() {
-		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
-		BitmapTextureAtlas textureAtlas;
-
-		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
-		getTextureManager().loadTexture(textureAtlas);
-
-		textureAtlas = new BitmapTextureAtlas(16,16,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.MUZZLE_FLASH = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "muzzleflash.png", 0, 0);
-		getTextureManager().loadTexture(textureAtlas);
-
-		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
-		getTextureManager().loadTexture(textureAtlas);
-
-		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
-		getTextureManager().loadTexture(textureAtlas);
-
-		textureAtlas = new BitmapTextureAtlas(4,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
-		getTextureManager().loadTexture(textureAtlas);
-
-		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.WAYPOINT = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "waypoint.png", 0, 0);
-		getTextureManager().loadTexture(textureAtlas);
-	}
-
-	@Override
-	public Scene onLoadScene() {
-		mEngine.registerUpdateHandler(new FPSLogger());
-		mainScene = new Scene();
-
-        mRenderSurfaceView.setOnCreateContextMenuListener(this);
-
-		return mainScene;
-	}
-
-	@Override
-	public void onLoadComplete() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override

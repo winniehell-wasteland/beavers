@@ -7,7 +7,7 @@ import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
-import org.beavers.gameplay.PlayerID;
+import org.beavers.gameplay.Player;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -106,6 +106,8 @@ public enum Client {
 			final JSONObject pJSON) {
 		if(pJSON.has("state"))
 		{
+			Log.e(TAG, "game: "+pJSON.optString("game"));
+
 			final GameInfo game = GameInfo.fromJSON(pJSON.opt("game"));
 			final PlayerSet players = PlayerSet.fromJSON(pJSON.opt("players"));
 
@@ -121,7 +123,7 @@ public enum Client {
 				if(runningGames.contains(game))
 				{
 					onReceiveNewServer(pContext, runningGames.find(game),
-						PlayerID.fromJSON(pJSON.opt("new_server")));
+						Player.fromJSON(pJSON.opt("new_server")));
 				}
 
 				break;
@@ -281,7 +283,7 @@ public enum Client {
 	 * @param pNewServer new server
 	 */
 	private static void onReceiveNewServer(final Context pContext,
-			final GameInfo pGame, final PlayerID pNewServer) {
+			final GameInfo pGame, final Player pNewServer) {
 		if (!pGame.isInState(GameState.PLANNING_PHASE)
 				&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
 			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
