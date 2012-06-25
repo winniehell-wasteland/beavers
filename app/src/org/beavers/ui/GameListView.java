@@ -1,15 +1,12 @@
 package org.beavers.ui;
 
-import org.beavers.AppActivity;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 
-import android.view.ContextMenu;
+import android.app.Activity;
 import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -18,14 +15,18 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-
+/**
+ * list view for GameList
+ *
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
+ */
 public abstract class GameListView extends ListView
-	implements OnMenuItemClickListener, OnItemClickListener {
+	implements OnItemClickListener {
 
-	public GameListView(final AppActivity pApp, final GameList pList) {
-		super(pApp);
+	public GameListView(final Activity pActivity, final GameList pList) {
+		super(pActivity);
 
-		app = pApp;
+		activity = pActivity;
 		list = pList;
 
 		setPadding(20, 10, 10, 10);
@@ -48,34 +49,17 @@ public abstract class GameListView extends ListView
 	@Override
 	public void onItemClick(final AdapterView<?> pParent, final View pView,
 			final int pPosition, final long pID) {
-		//setSelection(pPosition);
 		setItemChecked(pPosition, true);
 		showContextMenu();
 	}
 
-	@Override
-	protected void onCreateContextMenu(final ContextMenu menu) {
-        final MenuInflater inflater = app.getMenuInflater();
-        inflater.inflate(getContextMenuRes(), menu);
-
-        for(int i = 0; i < menu.size(); ++i)
-        {
-        	menu.getItem(i).setOnMenuItemClickListener(this);
-        }
-	}
-
-	/**
-	 * @return the context menu resource ID
-	 */
-	protected abstract int getContextMenuRes();
-
-	private final AppActivity app;
+	private final Activity activity;
 	private final GameList list;
 
 	class ListViewAdapter extends BaseAdapter {
 
 		public ListViewAdapter() {
-			 inflater = app.getLayoutInflater();
+			 inflater = activity.getLayoutInflater();
 		}
 
 		@Override
@@ -114,13 +98,13 @@ public abstract class GameListView extends ListView
 
 			final GameInfo item = list.get(position);
 
-			holder.txtName.setText(item.getID().toString());
+			holder.txtName.setText(item.getGame().getName());
 			holder.txtServer.setText(
-				item.isServer(Settings.playerID)?"":
-					item.getServer().toString());
+				item.isServer(Settings.playerID)?"(self)":
+					item.getServer().getName());
 			holder.txtState.setText(
-				app.getString(R.string.state) + ": "
-				+ item.getState().getName(app));
+				activity.getString(R.string.state) + ": "
+				+ item.getState().getName(activity));
 
 			return convertView;
 		}

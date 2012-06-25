@@ -4,7 +4,8 @@ import java.util.Hashtable;
 
 /**
  * list for storing game information
- * @author winniehell
+ *
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public class GameList {
 
