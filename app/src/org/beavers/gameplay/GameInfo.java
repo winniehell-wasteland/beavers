@@ -1,10 +1,14 @@
 package org.beavers.gameplay;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * class to uniquely identify a game
+ * class to uniquely identify a game and store its state
+ *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public final class GameInfo implements Parcelable {
@@ -14,8 +18,10 @@ public final class GameInfo implements Parcelable {
 	 * @param pServer server of the game
 	 * @param pGame unique game ID on server
 	 */
-	public GameInfo(final PlayerID pServer, final GameID pGame) {
-		game = pGame;
+	public GameInfo(final Player pServer, final Game pID,
+			final String pMap) {
+		game = pID;
+		map = pMap;
 		server = pServer;
 		state = GameState.UNKNOWN;
 	}
@@ -38,8 +44,8 @@ public final class GameInfo implements Parcelable {
 		}
 	}
 
-	/** @return unique game ID on server */
-	public GameID getID() {
+	/** @return unique game on server */
+	public Game getGame() {
 		return game;
 	}
 
@@ -52,11 +58,11 @@ public final class GameInfo implements Parcelable {
 	/** @return name of the map played */
 	public String getMapName()
 	{
-		return null;
+		return map;
 	}
 
 	/** @return server of the game */
-	public PlayerID getServer() {
+	public Player getServer() {
 		return server;
 	}
 
@@ -71,7 +77,7 @@ public final class GameInfo implements Parcelable {
 	}
 
 	/** @return true if given player is server of the game */
-	public boolean isServer(final PlayerID pPlayer) {
+	public boolean isServer(final Player pPlayer) {
 		return getServer().equals(pPlayer);
 	}
 
@@ -79,7 +85,7 @@ public final class GameInfo implements Parcelable {
 	 * changes the server
 	 * @param pServer new server
 	 */
-	public void setServer(final PlayerID pServer) {
+	public void setServer(final Player pServer) {
 		server = pServer;
 	}
 
@@ -92,7 +98,20 @@ public final class GameInfo implements Parcelable {
 	}
 
 	public Object toJSON() {
-		return server.toString()+"/"+game.toString();
+		final JSONObject json = new JSONObject();
+
+		try {
+			json.put("id", game.toJSON());
+			json.put("map", getMapName());
+			json.put("server", server.toJSON());
+			json.put("state", state.toJSON());
+
+		} catch (final JSONException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return json;
 	}
 
 	@Override
@@ -101,10 +120,11 @@ public final class GameInfo implements Parcelable {
 	}
 
     @Override
-	public void writeToParcel(final Parcel out, final int flags) {
-        out.writeSerializable(game);
-        out.writeSerializable(server);
-        out.writeSerializable(state);
+	public void writeToParcel(final Parcel pOut, final int pFlags) {
+    	pOut.writeParcelable(game, pFlags);
+    	pOut.writeString(map);
+    	pOut.writeParcelable(server, pFlags);
+    	pOut.writeParcelable(state, pFlags);
     }
 
     public static final Parcelable.Creator<GameInfo> CREATOR
@@ -121,29 +141,35 @@ public final class GameInfo implements Parcelable {
     };
 
 	public static GameInfo fromJSON(final Object pJSON) {
-		if((pJSON instanceof String))
+		if((pJSON instanceof JSONObject))
 		{
-			final String[] parts = ((String) pJSON).split("/");
+			final JSONObject obj = (JSONObject) pJSON;
 
-			if(parts.length == 2)
+			if(obj.has("server") && obj.has("id") && obj.has("map"))
 			{
-				return new GameInfo(new PlayerID(parts[0]), new GameID(parts[1]));
+				return new GameInfo(
+					Player.fromJSON(obj.opt("server")),
+					Game.fromJSON(obj.opt("id")),
+					obj.optString("map"));
 			}
 		}
 
 		return null;
 	}
 
-	/** unique game ID on server */
-	private final GameID game;
+	/** unique game on server */
+	private final Game game;
+	/** map name */
+	private final String map;
 	/** server of the game */
-	private PlayerID server;
+	private Player server;
 	/** state of the game */
 	private GameState state;
 
     private GameInfo(final Parcel in) {
-		game = (GameID) in.readSerializable();
-    	server = (PlayerID) in.readSerializable();
-		state = (GameState) in.readSerializable();
+		game = (Game) in.readParcelable(null);
+		map = in.readString();
+    	server = (Player) in.readParcelable(null);
+		state = (GameState) in.readParcelable(null);
     }
 }

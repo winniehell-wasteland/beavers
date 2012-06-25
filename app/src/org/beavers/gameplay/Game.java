@@ -9,12 +9,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * class to uniquely identify a player (i.e. a playing device)
+ * class to uniquely identify a game within a server
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public final class Player implements Parcelable {
-	public Player(final UUID pID, final String pName) {
+public final class Game implements Parcelable {
+	public Game(final UUID pID, final String pName) {
 		id = pID;
 		name = pName;
 	}
@@ -26,9 +26,9 @@ public final class Player implements Parcelable {
 
 	@Override
 	public boolean equals(final Object other) {
-		if(other instanceof Player)
+		if(other instanceof Game)
 		{
-			return id.equals(((Player)other).id);
+			return id.equals(((Game)other).id);
 		}
 		else
 		{
@@ -70,24 +70,24 @@ public final class Player implements Parcelable {
 		pOut.writeString(name);
 	}
 
-	public static final Parcelable.Creator<Player> CREATOR =
-		new Parcelable.Creator<Player>() {
+	public static final Parcelable.Creator<Game> CREATOR =
+		new Parcelable.Creator<Game>() {
 			@Override
-			public Player createFromParcel(final Parcel parcel) {
-				return new Player(parcel);
+			public Game createFromParcel(final Parcel parcel) {
+				return new Game(parcel);
 			}
 
 			@Override
-			public Player[] newArray(final int size) {
-				return new Player[size];
+			public Game[] newArray(final int size) {
+				return new Game[size];
 			}
 	};
 
-	public static Player fromJSON(final Object pJSON) {
+	public static Game fromJSON(final Object pJSON) {
 		if(pJSON instanceof JSONObject)
 		{
 			final JSONObject obj = (JSONObject) pJSON;
-			return new Player(
+			return new Game(
 				UUID.fromString(obj.optString("id")),
 				obj.optString("name"));
 		}
@@ -98,7 +98,7 @@ public final class Player implements Parcelable {
 	private final UUID id;
 	private final String name;
 
-	private Player(final Parcel pParcel)
+	private Game(final Parcel pParcel)
 	{
 		id = UUID.fromString(pParcel.readString());
 		name = pParcel.readString();
