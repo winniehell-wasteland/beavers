@@ -69,12 +69,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a>  </div>
+<a href="#pub-attribs">Public Attributes</a> &#124;
+<a href="#pac-methods">Package Functions</a> &#124;
+<a href="#pac-attribs">Package Attributes</a>  </div>
   <div class="headertitle">
 <div class="title">org.beavers.ingame.Shot Class Reference</div>  </div>
 </div>
 <div class="contents">
-<!-- doxytag: class="org::beavers::ingame::Shot" --><!-- doxytag: inherits="org::anddev::andengine::entity::sprite::Sprite,org::beavers::ingame::GameObject" --><div class="dynheader">
+<!-- doxytag: class="org::beavers::ingame::Shot" --><!-- doxytag: inherits="org::beavers::ingame::GameObject" --><div class="dynheader">
 Inheritance diagram for org.beavers.ingame.Shot:</div>
 <div class="dyncontent">
  <div class="center">
@@ -88,17 +90,126 @@ Inheritance diagram for org.beavers.ingame.Shot:</div>
 <table class="memberdecls">
 <tr><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ab0739512be552d23267f8813f90df642">Shot</a> (final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html">Soldier</a> pSoldier)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a2557b9c34fd36a4c8641597b9644e2dc">Shot</a> (final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html">Soldier</a> pSoldier, final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_scene.html">GameScene</a> pScene)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">synchronized Path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#adb9d92ca2adac8dc30d885b849b59fe6">findPath</a> (final IPathFinder&lt; <a class="el" href="interfaceorg_1_1beavers_1_1ingame_1_1_game_object.html">GameObject</a> &gt; pPathFinder, final TMXTile pTarget)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">TMXTile&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#adb4bf46621e5361bfef632b10b60b891">getTile</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a3a0d20534e8915cfb32cf2d64110cad7">getStepCost</a> (final ITiledMap&lt; <a class="el" href="interfaceorg_1_1beavers_1_1ingame_1_1_game_object.html">GameObject</a> &gt; pMap, final TMXTile pFrom, final TMXTile pTo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a98fc952cee315128266ba85d5567ef03">fire</a> (final TMXTile pTarget)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a834b6f0f1edcaee3980e9cf6daababf7">stopShooting</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a8cc06e4ad0a67cc7517f1b77483b9c3b">isVisible</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a6db868c6a990e978b03e24a0032d7b34">setVisible</a> (final boolean pVisible)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#acde84ddf90722cf275414246ae66dcab">isIgnoreUpdate</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ad1a79ec48fd268b7f8c0938da61f97b3">setIgnoreUpdate</a> (final boolean pIgnoreUpdate)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aaf286e796179f9b42cb4601b7d79b5a4">isChildrenVisible</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a1bb0c49ea33fab9400c32690f8b5afe0">setChildrenVisible</a> (final boolean pChildrenVisible)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ac09f91285a8b278d17b7bea96a22e7ba">isChildrenIgnoreUpdate</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ab919d1588683442d17084cff9fcf6c88">setChildrenIgnoreUpdate</a> (final boolean pChildrenIgnoreUpdate)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a961d3a712adc1a80bd999baa287931f0">getZIndex</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af69d3bdb8c1abd65ea231e87bac9c89a">setZIndex</a> (final int pZIndex)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aed4a1dcb27620d62849fd31f200a71c2">hasParent</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">IEntity&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#acf3c6169b60c6a032fd4f85205b38379">getParent</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a0634330c257893724fd780f509e60ef6">setParent</a> (final IEntity pEntity)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a8449497ac8101273b6c7724b7afaa1c3">getX</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a121553afa653b8c4bddf15b581816199">getY</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a5357399dff8645151050cbd611f6b25e">getInitialX</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a9d8d0bd805bc81a40c5c8a64fa8aa9aa">getInitialY</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a27603dceeff49e89e406b1a6ef20d124">setInitialPosition</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a3e50bd18b585bf1ca83f4678f097727b">setPosition</a> (final IEntity pOtherEntity)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a84759eb839af3907a392ead69c54afee">setPosition</a> (final float pX, final float pY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a5a68d527884aab4139a35319b8555b27">isRotated</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#acf39dc24f26060910de32a7d5d39d78c">getRotation</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a58c3596b3aa459f7fc9cb1508d49dcac">setRotation</a> (final float pRotation)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#add7b509c498030d7a9d797fd54014ce5">getRotationCenterX</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af34bf9742ba1aebf96f28c3fb55ed3b7">getRotationCenterY</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a71a8c1577e760d65ee3c4ede84294cc0">setRotationCenterX</a> (final float pRotationCenterX)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a66c03357bb2546f58f2e4ff76f4a3351">setRotationCenterY</a> (final float pRotationCenterY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a95946657e62a02c8cae5f143ee64ab78">setRotationCenter</a> (final float pRotationCenterX, final float pRotationCenterY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a998598a1e1ff584755e30aa12e10c042">isScaled</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a64b8f3b8dff42595c7158a47120ba9c9">getScaleX</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ad9db4c946377d7f9f3cfe46cae4bd27d">getScaleY</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a61d391a9736cf14586c05baec83138b3">setScaleX</a> (final float pScaleX)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ab0a6a52131d8fd9adf1682f3cc8468c9">setScaleY</a> (final float pScaleY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ad3167b81cc25b5dd3d5cbf3c8577f767">setScale</a> (final float pScale)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a6233d5739ee40eac724c88a36150b533">setScale</a> (final float pScaleX, final float pScaleY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ac676878dfbc138bce2b39b5b473babcd">getScaleCenterX</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aeecefb8983995140fcb122874d3e4c46">getScaleCenterY</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a7cd257624f01dafa670348b2c2ccbf09">setScaleCenterX</a> (final float pScaleCenterX)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a200f12e6b46402cf67d0454d8d24be41">setScaleCenterY</a> (final float pScaleCenterY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#adaca1836023e00dbd1e5aada7b0e2e6e">setScaleCenter</a> (final float pScaleCenterX, final float pScaleCenterY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ad25e4cd54677d0bf1ba56c3fe004e7a2">getRed</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a367466ddc67df4eadef4eee3edb3a20b">getGreen</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a50ab8c20f8407c9a6cdd3e1558392b46">getBlue</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a0163e2ec9dc2296c1d26a946d5a4a95c">getAlpha</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a5d8309bd17d67f0ca9218231bd3f8bb9">setAlpha</a> (final float pAlpha)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aa8fce1378825ea6669b6be70fc300f34">setColor</a> (final float pRed, final float pGreen, final float pBlue)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a9148ca460de28caf447f1abe1501e469">setColor</a> (final float pRed, final float pGreen, final float pBlue, final float pAlpha)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a0673f9053783d980f783bea22a313fbc">getSceneCenterCoordinates</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a4735ef40e330232e6ab161041ed00cc3">convertLocalToSceneCoordinates</a> (final float pX, final float pY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a9c8f4264be9885e7698b410a1e6144d1">convertLocalToSceneCoordinates</a> (final float pX, final float pY, final float[] pReuse)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a64cae43d1f4832e9aa604b319174e1e1">convertLocalToSceneCoordinates</a> (final float[] pCoordinates)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ae8d584dff79b281c307616675774f6f0">convertLocalToSceneCoordinates</a> (final float[] pCoordinates, final float[] pReuse)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a6576d5ace8ae19c3a567b4f3949573bf">convertSceneToLocalCoordinates</a> (final float pX, final float pY)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aec2e31eeca42d3a0927614c4c898ed00">convertSceneToLocalCoordinates</a> (final float pX, final float pY, final float[] pReuse)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a1116f99b3465fc2af722e73f2cfed817">convertSceneToLocalCoordinates</a> (final float[] pCoordinates)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ab1f64aff26568c4f369693c67982704e">convertSceneToLocalCoordinates</a> (final float[] pCoordinates, final float[] pReuse)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Transformation&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a065171bb1fc0818735b985ccbadbb906">getLocalToSceneTransformation</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Transformation&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a9bcde2c91c290fca8134705fe83ec5f9">getSceneToLocalTransformation</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a24c12cad78abf0778d046786a49c6f4b">getChildCount</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a6af25c416313f64ae0afa96ad29578d4">onAttached</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a99ca5d5d679b9569d10c79c07cf7c97b">onDetached</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a01c042918ea8b8133a931b384a6c904e">attachChild</a> (final IEntity pEntity)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a77365c48049a80d5f4e6d804dcc61123">attachChild</a> (final IEntity pEntity, final int pIndex)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">IEntity&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a270a5e00db024ccec4af9de6de9b7fe0">getChild</a> (final int pIndex)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">IEntity&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a3b4c5804703c186986846c9b5205ac78">getFirstChild</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">IEntity&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af19ff7b9e783f35a696978427bb1ee61">getLastChild</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a57cbb190f4b225710dac9b362eaff5f3">getChildIndex</a> (final IEntity pEntity)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ad7b0fc6c390a5768d209557a8210ab9f">setChildIndex</a> (final IEntity pEntity, final int pIndex)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">IEntity&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a4537c04987a0a9812cbcb317af636a47">findChild</a> (final IEntityMatcher pEntityMatcher)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">ArrayList&lt; IEntity &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af54f80a6c17ab6e051abe36b903c11cb">query</a> (final IEntityMatcher pEntityMatcher)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a3f18a6c3fe7ab925dfe9c2301dc3b010">swapChildren</a> (final int pIndexA, final int pIndexB)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a001c66369f105cfc28c6e6fc860f9671">swapChildren</a> (final IEntity pEntityA, final IEntity pEntityB)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a80f94f703a24b18b072e982ee6c2a13b">sortChildren</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a8274385ccad7e236679bde51d33b3608">sortChildren</a> (final Comparator&lt; IEntity &gt; pEntityComparator)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a2af3b5efbd29d455afabbe23a12defa0">detachSelf</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a50a1067c99aee59ca4ead1eb263ec6bc">detachChild</a> (final IEntity pEntity)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">IEntity&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aa7841ec358fbd837985426d117b3fafe">detachChild</a> (final IEntityMatcher pEntityMatcher)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aac30e391cc07237aced6329d2cf60998">detachChildren</a> (final IEntityMatcher pEntityMatcher)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a674b3361a16140c09856c90130dc5e3d">detachChildren</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a551fb70c14bca470c9d91e00f1ffd06d">callOnChildren</a> (final IEntityCallable pEntityCallable)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#acd6d18180254382b197949e87eb6e15e">callOnChildren</a> (final IEntityMatcher pEntityMatcher, final IEntityCallable pEntityCallable)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a11fbd292ca4e9af659630fd88b2b3bf2">registerUpdateHandler</a> (final IUpdateHandler pUpdateHandler)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a1329bd21b6ac8aea403edf738e8a9ccd">unregisterUpdateHandler</a> (final IUpdateHandler pUpdateHandler)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a86114c2bcc0561ef7d73c95c74f9b592">unregisterUpdateHandlers</a> (final IUpdateHandlerMatcher pUpdateHandlerMatcher)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a09c4da7283df053cdeecc3e2240795b7">clearUpdateHandlers</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af249a22b70f5a1a004f47c06246856be">registerEntityModifier</a> (final IEntityModifier pEntityModifier)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aad3a02e6a88109c7f52df7cea5ebcf4f">unregisterEntityModifier</a> (final IEntityModifier pEntityModifier)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a74c71a7e599044fef14072a22332cc0b">unregisterEntityModifiers</a> (final IEntityModifierMatcher pEntityModifierMatcher)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#ad3053318ecb8c237dbea374e518a441c">clearEntityModifiers</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a37bbae6afa7e2c25b643d6cebdceacd2">setUserData</a> (final Object pUserData)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Object&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a478ad950b6e47cddc70c1ebd8ecfbd46">getUserData</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a739586b49cb4f78a769fecd1620e0ca9">onDraw</a> (final GL10 pGL, final Camera pCamera)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a6a4d4f4a3ba02d5135575ac92822e62f">onUpdate</a> (final float pSecondsElapsed)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a647091993b74ef42023dc8155a7a155c">reset</a> ()</td></tr>
 <tr><td colspan="2"><h2><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a513ae2cfd6c82e376ef8e7cff72d14f6">targetLine</a></td></tr>
+<tr><td colspan="2"><h2><a name="pac-methods"></a>
+Package Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">public&lt; L extends List<br class="typebreak"/>
+&lt; IEntity &gt; &gt; L&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a1671afd19f24f8257906a67127f5ab60">query</a> (final IEntityMatcher pEntityMatcher, final L pResult)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">public&lt; S extends IEntity &gt;<br class="typebreak"/>
+ ArrayList&lt; S &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a1e19ad52bbdf7a60031271b65f9e2e6b">queryForSubclass</a> (final IEntityMatcher pEntityMatcher)  throws ClassCastException </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">public&lt; L extends List&lt; S &gt;, S <br class="typebreak"/>
+extends IEntity &gt; L&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a2142d1a2eacbf181184c3636e6138887">queryForSubclass</a> (final IEntityMatcher pEntityMatcher, final L pResult)  throws ClassCastException </td></tr>
+<tr><td colspan="2"><h2><a name="pac-attribs"></a>
+Package Attributes</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">TMXTile&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a2ebecdecd22035d464ea7e4446debc6e">target</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a0af942067fd5700d5c5172495f8485f6">delay</a> = (float) (0.1+Math.random()*0.4)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">TimerHandler&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af48ce88494bf17755d724323950cec5d">shootTimer</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Sprite&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aede484834d8ea4d2595761181b4b8b72">currentShot</a></td></tr>
 </table>
 <hr/><h2>Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="ab0739512be552d23267f8813f90df642"></a><!-- doxytag: member="org::beavers::ingame::Shot::Shot" ref="ab0739512be552d23267f8813f90df642" args="(final Soldier pSoldier)" -->
+<a class="anchor" id="a2557b9c34fd36a4c8641597b9644e2dc"></a><!-- doxytag: member="org::beavers::ingame::Shot::Shot" ref="a2557b9c34fd36a4c8641597b9644e2dc" args="(final Soldier pSoldier, final GameScene pScene)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -106,8 +217,18 @@ Public Attributes</h2></td></tr>
           <td class="memname">org.beavers.ingame.Shot.Shot </td>
           <td>(</td>
           <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html">Soldier</a>&#160;</td>
-          <td class="paramname"><em>pSoldier</em></td><td>)</td>
+          <td class="paramname"><em>pSoldier</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_scene.html">GameScene</a>&#160;</td>
+          <td class="paramname"><em>pScene</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div>
@@ -116,6 +237,434 @@ Public Attributes</h2></td></tr>
 </div>
 </div>
 <hr/><h2>Member Function Documentation</h2>
+<a class="anchor" id="a01c042918ea8b8133a931b384a6c904e"></a><!-- doxytag: member="org::beavers::ingame::Shot::attachChild" ref="a01c042918ea8b8133a931b384a6c904e" args="(final IEntity pEntity)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.attachChild </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntity</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a77365c48049a80d5f4e6d804dcc61123"></a><!-- doxytag: member="org::beavers::ingame::Shot::attachChild" ref="a77365c48049a80d5f4e6d804dcc61123" args="(final IEntity pEntity, final int pIndex)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.attachChild </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntity</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final int&#160;</td>
+          <td class="paramname"><em>pIndex</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a551fb70c14bca470c9d91e00f1ffd06d"></a><!-- doxytag: member="org::beavers::ingame::Shot::callOnChildren" ref="a551fb70c14bca470c9d91e00f1ffd06d" args="(final IEntityCallable pEntityCallable)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.callOnChildren </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityCallable&#160;</td>
+          <td class="paramname"><em>pEntityCallable</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="acd6d18180254382b197949e87eb6e15e"></a><!-- doxytag: member="org::beavers::ingame::Shot::callOnChildren" ref="acd6d18180254382b197949e87eb6e15e" args="(final IEntityMatcher pEntityMatcher, final IEntityCallable pEntityCallable)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.callOnChildren </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final IEntityCallable&#160;</td>
+          <td class="paramname"><em>pEntityCallable</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad3053318ecb8c237dbea374e518a441c"></a><!-- doxytag: member="org::beavers::ingame::Shot::clearEntityModifiers" ref="ad3053318ecb8c237dbea374e518a441c" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.clearEntityModifiers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a09c4da7283df053cdeecc3e2240795b7"></a><!-- doxytag: member="org::beavers::ingame::Shot::clearUpdateHandlers" ref="a09c4da7283df053cdeecc3e2240795b7" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.clearUpdateHandlers </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a4735ef40e330232e6ab161041ed00cc3"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertLocalToSceneCoordinates" ref="a4735ef40e330232e6ab161041ed00cc3" args="(final float pX, final float pY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertLocalToSceneCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pY</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9c8f4264be9885e7698b410a1e6144d1"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertLocalToSceneCoordinates" ref="a9c8f4264be9885e7698b410a1e6144d1" args="(final float pX, final float pY, final float[] pReuse)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertLocalToSceneCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pY</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pReuse</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a64cae43d1f4832e9aa604b319174e1e1"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertLocalToSceneCoordinates" ref="a64cae43d1f4832e9aa604b319174e1e1" args="(final float[] pCoordinates)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertLocalToSceneCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pCoordinates</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ae8d584dff79b281c307616675774f6f0"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertLocalToSceneCoordinates" ref="ae8d584dff79b281c307616675774f6f0" args="(final float[] pCoordinates, final float[] pReuse)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertLocalToSceneCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pCoordinates</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pReuse</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6576d5ace8ae19c3a567b4f3949573bf"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertSceneToLocalCoordinates" ref="a6576d5ace8ae19c3a567b4f3949573bf" args="(final float pX, final float pY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertSceneToLocalCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pY</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aec2e31eeca42d3a0927614c4c898ed00"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertSceneToLocalCoordinates" ref="aec2e31eeca42d3a0927614c4c898ed00" args="(final float pX, final float pY, final float[] pReuse)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertSceneToLocalCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pY</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pReuse</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1116f99b3465fc2af722e73f2cfed817"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertSceneToLocalCoordinates" ref="a1116f99b3465fc2af722e73f2cfed817" args="(final float[] pCoordinates)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertSceneToLocalCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pCoordinates</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ab1f64aff26568c4f369693c67982704e"></a><!-- doxytag: member="org::beavers::ingame::Shot::convertSceneToLocalCoordinates" ref="ab1f64aff26568c4f369693c67982704e" args="(final float[] pCoordinates, final float[] pReuse)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.convertSceneToLocalCoordinates </td>
+          <td>(</td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pCoordinates</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float[]&#160;</td>
+          <td class="paramname"><em>pReuse</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aa7841ec358fbd837985426d117b3fafe"></a><!-- doxytag: member="org::beavers::ingame::Shot::detachChild" ref="aa7841ec358fbd837985426d117b3fafe" args="(final IEntityMatcher pEntityMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">IEntity org.beavers.ingame.Shot.detachChild </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a50a1067c99aee59ca4ead1eb263ec6bc"></a><!-- doxytag: member="org::beavers::ingame::Shot::detachChild" ref="a50a1067c99aee59ca4ead1eb263ec6bc" args="(final IEntity pEntity)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.detachChild </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntity</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aac30e391cc07237aced6329d2cf60998"></a><!-- doxytag: member="org::beavers::ingame::Shot::detachChildren" ref="aac30e391cc07237aced6329d2cf60998" args="(final IEntityMatcher pEntityMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.detachChildren </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a674b3361a16140c09856c90130dc5e3d"></a><!-- doxytag: member="org::beavers::ingame::Shot::detachChildren" ref="a674b3361a16140c09856c90130dc5e3d" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.detachChildren </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a2af3b5efbd29d455afabbe23a12defa0"></a><!-- doxytag: member="org::beavers::ingame::Shot::detachSelf" ref="a2af3b5efbd29d455afabbe23a12defa0" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.detachSelf </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a4537c04987a0a9812cbcb317af636a47"></a><!-- doxytag: member="org::beavers::ingame::Shot::findChild" ref="a4537c04987a0a9812cbcb317af636a47" args="(final IEntityMatcher pEntityMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">IEntity org.beavers.ingame.Shot.findChild </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="adb9d92ca2adac8dc30d885b849b59fe6"></a><!-- doxytag: member="org::beavers::ingame::Shot::findPath" ref="adb9d92ca2adac8dc30d885b849b59fe6" args="(final IPathFinder&lt; GameObject &gt; pPathFinder, final TMXTile pTarget)" -->
 <div class="memitem">
 <div class="memproto">
@@ -154,6 +703,360 @@ Public Attributes</h2></td></tr>
           <td>(</td>
           <td class="paramtype">final TMXTile&#160;</td>
           <td class="paramname"><em>pTarget</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a0163e2ec9dc2296c1d26a946d5a4a95c"></a><!-- doxytag: member="org::beavers::ingame::Shot::getAlpha" ref="a0163e2ec9dc2296c1d26a946d5a4a95c" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getAlpha </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a50ab8c20f8407c9a6cdd3e1558392b46"></a><!-- doxytag: member="org::beavers::ingame::Shot::getBlue" ref="a50ab8c20f8407c9a6cdd3e1558392b46" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getBlue </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a270a5e00db024ccec4af9de6de9b7fe0"></a><!-- doxytag: member="org::beavers::ingame::Shot::getChild" ref="a270a5e00db024ccec4af9de6de9b7fe0" args="(final int pIndex)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">IEntity org.beavers.ingame.Shot.getChild </td>
+          <td>(</td>
+          <td class="paramtype">final int&#160;</td>
+          <td class="paramname"><em>pIndex</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a24c12cad78abf0778d046786a49c6f4b"></a><!-- doxytag: member="org::beavers::ingame::Shot::getChildCount" ref="a24c12cad78abf0778d046786a49c6f4b" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int org.beavers.ingame.Shot.getChildCount </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a57cbb190f4b225710dac9b362eaff5f3"></a><!-- doxytag: member="org::beavers::ingame::Shot::getChildIndex" ref="a57cbb190f4b225710dac9b362eaff5f3" args="(final IEntity pEntity)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int org.beavers.ingame.Shot.getChildIndex </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntity</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a3b4c5804703c186986846c9b5205ac78"></a><!-- doxytag: member="org::beavers::ingame::Shot::getFirstChild" ref="a3b4c5804703c186986846c9b5205ac78" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">IEntity org.beavers.ingame.Shot.getFirstChild </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a367466ddc67df4eadef4eee3edb3a20b"></a><!-- doxytag: member="org::beavers::ingame::Shot::getGreen" ref="a367466ddc67df4eadef4eee3edb3a20b" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getGreen </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a5357399dff8645151050cbd611f6b25e"></a><!-- doxytag: member="org::beavers::ingame::Shot::getInitialX" ref="a5357399dff8645151050cbd611f6b25e" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getInitialX </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9d8d0bd805bc81a40c5c8a64fa8aa9aa"></a><!-- doxytag: member="org::beavers::ingame::Shot::getInitialY" ref="a9d8d0bd805bc81a40c5c8a64fa8aa9aa" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getInitialY </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af19ff7b9e783f35a696978427bb1ee61"></a><!-- doxytag: member="org::beavers::ingame::Shot::getLastChild" ref="af19ff7b9e783f35a696978427bb1ee61" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">IEntity org.beavers.ingame.Shot.getLastChild </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a065171bb1fc0818735b985ccbadbb906"></a><!-- doxytag: member="org::beavers::ingame::Shot::getLocalToSceneTransformation" ref="a065171bb1fc0818735b985ccbadbb906" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Transformation org.beavers.ingame.Shot.getLocalToSceneTransformation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="acf3c6169b60c6a032fd4f85205b38379"></a><!-- doxytag: member="org::beavers::ingame::Shot::getParent" ref="acf3c6169b60c6a032fd4f85205b38379" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">IEntity org.beavers.ingame.Shot.getParent </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad25e4cd54677d0bf1ba56c3fe004e7a2"></a><!-- doxytag: member="org::beavers::ingame::Shot::getRed" ref="ad25e4cd54677d0bf1ba56c3fe004e7a2" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getRed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="acf39dc24f26060910de32a7d5d39d78c"></a><!-- doxytag: member="org::beavers::ingame::Shot::getRotation" ref="acf39dc24f26060910de32a7d5d39d78c" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getRotation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="add7b509c498030d7a9d797fd54014ce5"></a><!-- doxytag: member="org::beavers::ingame::Shot::getRotationCenterX" ref="add7b509c498030d7a9d797fd54014ce5" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getRotationCenterX </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af34bf9742ba1aebf96f28c3fb55ed3b7"></a><!-- doxytag: member="org::beavers::ingame::Shot::getRotationCenterY" ref="af34bf9742ba1aebf96f28c3fb55ed3b7" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getRotationCenterY </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac676878dfbc138bce2b39b5b473babcd"></a><!-- doxytag: member="org::beavers::ingame::Shot::getScaleCenterX" ref="ac676878dfbc138bce2b39b5b473babcd" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getScaleCenterX </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aeecefb8983995140fcb122874d3e4c46"></a><!-- doxytag: member="org::beavers::ingame::Shot::getScaleCenterY" ref="aeecefb8983995140fcb122874d3e4c46" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getScaleCenterY </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a64b8f3b8dff42595c7158a47120ba9c9"></a><!-- doxytag: member="org::beavers::ingame::Shot::getScaleX" ref="a64b8f3b8dff42595c7158a47120ba9c9" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getScaleX </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad9db4c946377d7f9f3cfe46cae4bd27d"></a><!-- doxytag: member="org::beavers::ingame::Shot::getScaleY" ref="ad9db4c946377d7f9f3cfe46cae4bd27d" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getScaleY </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a0673f9053783d980f783bea22a313fbc"></a><!-- doxytag: member="org::beavers::ingame::Shot::getSceneCenterCoordinates" ref="a0673f9053783d980f783bea22a313fbc" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float [] org.beavers.ingame.Shot.getSceneCenterCoordinates </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9bcde2c91c290fca8134705fe83ec5f9"></a><!-- doxytag: member="org::beavers::ingame::Shot::getSceneToLocalTransformation" ref="a9bcde2c91c290fca8134705fe83ec5f9" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Transformation org.beavers.ingame.Shot.getSceneToLocalTransformation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -215,7 +1118,1132 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a478ad950b6e47cddc70c1ebd8ecfbd46"></a><!-- doxytag: member="org::beavers::ingame::Shot::getUserData" ref="a478ad950b6e47cddc70c1ebd8ecfbd46" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Object org.beavers.ingame.Shot.getUserData </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8449497ac8101273b6c7724b7afaa1c3"></a><!-- doxytag: member="org::beavers::ingame::Shot::getX" ref="a8449497ac8101273b6c7724b7afaa1c3" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getX </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a121553afa653b8c4bddf15b581816199"></a><!-- doxytag: member="org::beavers::ingame::Shot::getY" ref="a121553afa653b8c4bddf15b581816199" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float org.beavers.ingame.Shot.getY </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a961d3a712adc1a80bd999baa287931f0"></a><!-- doxytag: member="org::beavers::ingame::Shot::getZIndex" ref="a961d3a712adc1a80bd999baa287931f0" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int org.beavers.ingame.Shot.getZIndex </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aed4a1dcb27620d62849fd31f200a71c2"></a><!-- doxytag: member="org::beavers::ingame::Shot::hasParent" ref="aed4a1dcb27620d62849fd31f200a71c2" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.hasParent </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac09f91285a8b278d17b7bea96a22e7ba"></a><!-- doxytag: member="org::beavers::ingame::Shot::isChildrenIgnoreUpdate" ref="ac09f91285a8b278d17b7bea96a22e7ba" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.isChildrenIgnoreUpdate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aaf286e796179f9b42cb4601b7d79b5a4"></a><!-- doxytag: member="org::beavers::ingame::Shot::isChildrenVisible" ref="aaf286e796179f9b42cb4601b7d79b5a4" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.isChildrenVisible </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="acde84ddf90722cf275414246ae66dcab"></a><!-- doxytag: member="org::beavers::ingame::Shot::isIgnoreUpdate" ref="acde84ddf90722cf275414246ae66dcab" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.isIgnoreUpdate </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a5a68d527884aab4139a35319b8555b27"></a><!-- doxytag: member="org::beavers::ingame::Shot::isRotated" ref="a5a68d527884aab4139a35319b8555b27" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.isRotated </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a998598a1e1ff584755e30aa12e10c042"></a><!-- doxytag: member="org::beavers::ingame::Shot::isScaled" ref="a998598a1e1ff584755e30aa12e10c042" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.isScaled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8cc06e4ad0a67cc7517f1b77483b9c3b"></a><!-- doxytag: member="org::beavers::ingame::Shot::isVisible" ref="a8cc06e4ad0a67cc7517f1b77483b9c3b" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.isVisible </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6af25c416313f64ae0afa96ad29578d4"></a><!-- doxytag: member="org::beavers::ingame::Shot::onAttached" ref="a6af25c416313f64ae0afa96ad29578d4" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.onAttached </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a99ca5d5d679b9569d10c79c07cf7c97b"></a><!-- doxytag: member="org::beavers::ingame::Shot::onDetached" ref="a99ca5d5d679b9569d10c79c07cf7c97b" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.onDetached </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a739586b49cb4f78a769fecd1620e0ca9"></a><!-- doxytag: member="org::beavers::ingame::Shot::onDraw" ref="a739586b49cb4f78a769fecd1620e0ca9" args="(final GL10 pGL, final Camera pCamera)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.onDraw </td>
+          <td>(</td>
+          <td class="paramtype">final GL10&#160;</td>
+          <td class="paramname"><em>pGL</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final Camera&#160;</td>
+          <td class="paramname"><em>pCamera</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6a4d4f4a3ba02d5135575ac92822e62f"></a><!-- doxytag: member="org::beavers::ingame::Shot::onUpdate" ref="a6a4d4f4a3ba02d5135575ac92822e62f" args="(final float pSecondsElapsed)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.onUpdate </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pSecondsElapsed</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af54f80a6c17ab6e051abe36b903c11cb"></a><!-- doxytag: member="org::beavers::ingame::Shot::query" ref="af54f80a6c17ab6e051abe36b903c11cb" args="(final IEntityMatcher pEntityMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">ArrayList&lt;IEntity&gt; org.beavers.ingame.Shot.query </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1671afd19f24f8257906a67127f5ab60"></a><!-- doxytag: member="org::beavers::ingame::Shot::query" ref="a1671afd19f24f8257906a67127f5ab60" args="(final IEntityMatcher pEntityMatcher, final L pResult)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public&lt;L extends List&lt;IEntity&gt; &gt; L org.beavers.ingame.Shot.query </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final L&#160;</td>
+          <td class="paramname"><em>pResult</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1e19ad52bbdf7a60031271b65f9e2e6b"></a><!-- doxytag: member="org::beavers::ingame::Shot::queryForSubclass" ref="a1e19ad52bbdf7a60031271b65f9e2e6b" args="(final IEntityMatcher pEntityMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public&lt;S extends IEntity&gt; ArrayList&lt;S&gt; org.beavers.ingame.Shot.queryForSubclass </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em></td><td>)</td>
+          <td>  throws ClassCastException <code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a2142d1a2eacbf181184c3636e6138887"></a><!-- doxytag: member="org::beavers::ingame::Shot::queryForSubclass" ref="a2142d1a2eacbf181184c3636e6138887" args="(final IEntityMatcher pEntityMatcher, final L pResult)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public&lt;L extends List&lt;S&gt;, S extends IEntity&gt; L org.beavers.ingame.Shot.queryForSubclass </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityMatcher&#160;</td>
+          <td class="paramname"><em>pEntityMatcher</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final L&#160;</td>
+          <td class="paramname"><em>pResult</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws ClassCastException <code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af249a22b70f5a1a004f47c06246856be"></a><!-- doxytag: member="org::beavers::ingame::Shot::registerEntityModifier" ref="af249a22b70f5a1a004f47c06246856be" args="(final IEntityModifier pEntityModifier)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.registerEntityModifier </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityModifier&#160;</td>
+          <td class="paramname"><em>pEntityModifier</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a11fbd292ca4e9af659630fd88b2b3bf2"></a><!-- doxytag: member="org::beavers::ingame::Shot::registerUpdateHandler" ref="a11fbd292ca4e9af659630fd88b2b3bf2" args="(final IUpdateHandler pUpdateHandler)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.registerUpdateHandler </td>
+          <td>(</td>
+          <td class="paramtype">final IUpdateHandler&#160;</td>
+          <td class="paramname"><em>pUpdateHandler</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a647091993b74ef42023dc8155a7a155c"></a><!-- doxytag: member="org::beavers::ingame::Shot::reset" ref="a647091993b74ef42023dc8155a7a155c" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.reset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a5d8309bd17d67f0ca9218231bd3f8bb9"></a><!-- doxytag: member="org::beavers::ingame::Shot::setAlpha" ref="a5d8309bd17d67f0ca9218231bd3f8bb9" args="(final float pAlpha)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setAlpha </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pAlpha</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad7b0fc6c390a5768d209557a8210ab9f"></a><!-- doxytag: member="org::beavers::ingame::Shot::setChildIndex" ref="ad7b0fc6c390a5768d209557a8210ab9f" args="(final IEntity pEntity, final int pIndex)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.setChildIndex </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntity</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final int&#160;</td>
+          <td class="paramname"><em>pIndex</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ab919d1588683442d17084cff9fcf6c88"></a><!-- doxytag: member="org::beavers::ingame::Shot::setChildrenIgnoreUpdate" ref="ab919d1588683442d17084cff9fcf6c88" args="(final boolean pChildrenIgnoreUpdate)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setChildrenIgnoreUpdate </td>
+          <td>(</td>
+          <td class="paramtype">final boolean&#160;</td>
+          <td class="paramname"><em>pChildrenIgnoreUpdate</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1bb0c49ea33fab9400c32690f8b5afe0"></a><!-- doxytag: member="org::beavers::ingame::Shot::setChildrenVisible" ref="a1bb0c49ea33fab9400c32690f8b5afe0" args="(final boolean pChildrenVisible)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setChildrenVisible </td>
+          <td>(</td>
+          <td class="paramtype">final boolean&#160;</td>
+          <td class="paramname"><em>pChildrenVisible</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aa8fce1378825ea6669b6be70fc300f34"></a><!-- doxytag: member="org::beavers::ingame::Shot::setColor" ref="aa8fce1378825ea6669b6be70fc300f34" args="(final float pRed, final float pGreen, final float pBlue)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setColor </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRed</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pGreen</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pBlue</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9148ca460de28caf447f1abe1501e469"></a><!-- doxytag: member="org::beavers::ingame::Shot::setColor" ref="a9148ca460de28caf447f1abe1501e469" args="(final float pRed, final float pGreen, final float pBlue, final float pAlpha)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setColor </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRed</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pGreen</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pBlue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pAlpha</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad1a79ec48fd268b7f8c0938da61f97b3"></a><!-- doxytag: member="org::beavers::ingame::Shot::setIgnoreUpdate" ref="ad1a79ec48fd268b7f8c0938da61f97b3" args="(final boolean pIgnoreUpdate)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setIgnoreUpdate </td>
+          <td>(</td>
+          <td class="paramtype">final boolean&#160;</td>
+          <td class="paramname"><em>pIgnoreUpdate</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a27603dceeff49e89e406b1a6ef20d124"></a><!-- doxytag: member="org::beavers::ingame::Shot::setInitialPosition" ref="a27603dceeff49e89e406b1a6ef20d124" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setInitialPosition </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a0634330c257893724fd780f509e60ef6"></a><!-- doxytag: member="org::beavers::ingame::Shot::setParent" ref="a0634330c257893724fd780f509e60ef6" args="(final IEntity pEntity)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setParent </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntity</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a3e50bd18b585bf1ca83f4678f097727b"></a><!-- doxytag: member="org::beavers::ingame::Shot::setPosition" ref="a3e50bd18b585bf1ca83f4678f097727b" args="(final IEntity pOtherEntity)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setPosition </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pOtherEntity</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a84759eb839af3907a392ead69c54afee"></a><!-- doxytag: member="org::beavers::ingame::Shot::setPosition" ref="a84759eb839af3907a392ead69c54afee" args="(final float pX, final float pY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setPosition </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pY</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a58c3596b3aa459f7fc9cb1508d49dcac"></a><!-- doxytag: member="org::beavers::ingame::Shot::setRotation" ref="a58c3596b3aa459f7fc9cb1508d49dcac" args="(final float pRotation)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setRotation </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRotation</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a95946657e62a02c8cae5f143ee64ab78"></a><!-- doxytag: member="org::beavers::ingame::Shot::setRotationCenter" ref="a95946657e62a02c8cae5f143ee64ab78" args="(final float pRotationCenterX, final float pRotationCenterY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setRotationCenter </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRotationCenterX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRotationCenterY</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a71a8c1577e760d65ee3c4ede84294cc0"></a><!-- doxytag: member="org::beavers::ingame::Shot::setRotationCenterX" ref="a71a8c1577e760d65ee3c4ede84294cc0" args="(final float pRotationCenterX)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setRotationCenterX </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRotationCenterX</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a66c03357bb2546f58f2e4ff76f4a3351"></a><!-- doxytag: member="org::beavers::ingame::Shot::setRotationCenterY" ref="a66c03357bb2546f58f2e4ff76f4a3351" args="(final float pRotationCenterY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setRotationCenterY </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pRotationCenterY</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ad3167b81cc25b5dd3d5cbf3c8577f767"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScale" ref="ad3167b81cc25b5dd3d5cbf3c8577f767" args="(final float pScale)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScale </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScale</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6233d5739ee40eac724c88a36150b533"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScale" ref="a6233d5739ee40eac724c88a36150b533" args="(final float pScaleX, final float pScaleY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScale </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleY</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="adaca1836023e00dbd1e5aada7b0e2e6e"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScaleCenter" ref="adaca1836023e00dbd1e5aada7b0e2e6e" args="(final float pScaleCenterX, final float pScaleCenterY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScaleCenter </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleCenterX</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleCenterY</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a7cd257624f01dafa670348b2c2ccbf09"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScaleCenterX" ref="a7cd257624f01dafa670348b2c2ccbf09" args="(final float pScaleCenterX)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScaleCenterX </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleCenterX</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a200f12e6b46402cf67d0454d8d24be41"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScaleCenterY" ref="a200f12e6b46402cf67d0454d8d24be41" args="(final float pScaleCenterY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScaleCenterY </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleCenterY</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a61d391a9736cf14586c05baec83138b3"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScaleX" ref="a61d391a9736cf14586c05baec83138b3" args="(final float pScaleX)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScaleX </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleX</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ab0a6a52131d8fd9adf1682f3cc8468c9"></a><!-- doxytag: member="org::beavers::ingame::Shot::setScaleY" ref="ab0a6a52131d8fd9adf1682f3cc8468c9" args="(final float pScaleY)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setScaleY </td>
+          <td>(</td>
+          <td class="paramtype">final float&#160;</td>
+          <td class="paramname"><em>pScaleY</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a37bbae6afa7e2c25b643d6cebdceacd2"></a><!-- doxytag: member="org::beavers::ingame::Shot::setUserData" ref="a37bbae6afa7e2c25b643d6cebdceacd2" args="(final Object pUserData)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setUserData </td>
+          <td>(</td>
+          <td class="paramtype">final Object&#160;</td>
+          <td class="paramname"><em>pUserData</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a6db868c6a990e978b03e24a0032d7b34"></a><!-- doxytag: member="org::beavers::ingame::Shot::setVisible" ref="a6db868c6a990e978b03e24a0032d7b34" args="(final boolean pVisible)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setVisible </td>
+          <td>(</td>
+          <td class="paramtype">final boolean&#160;</td>
+          <td class="paramname"><em>pVisible</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af69d3bdb8c1abd65ea231e87bac9c89a"></a><!-- doxytag: member="org::beavers::ingame::Shot::setZIndex" ref="af69d3bdb8c1abd65ea231e87bac9c89a" args="(final int pZIndex)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.setZIndex </td>
+          <td>(</td>
+          <td class="paramtype">final int&#160;</td>
+          <td class="paramname"><em>pZIndex</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a80f94f703a24b18b072e982ee6c2a13b"></a><!-- doxytag: member="org::beavers::ingame::Shot::sortChildren" ref="a80f94f703a24b18b072e982ee6c2a13b" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.sortChildren </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8274385ccad7e236679bde51d33b3608"></a><!-- doxytag: member="org::beavers::ingame::Shot::sortChildren" ref="a8274385ccad7e236679bde51d33b3608" args="(final Comparator&lt; IEntity &gt; pEntityComparator)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.sortChildren </td>
+          <td>(</td>
+          <td class="paramtype">final Comparator&lt; IEntity &gt;&#160;</td>
+          <td class="paramname"><em>pEntityComparator</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a834b6f0f1edcaee3980e9cf6daababf7"></a><!-- doxytag: member="org::beavers::ingame::Shot::stopShooting" ref="a834b6f0f1edcaee3980e9cf6daababf7" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.Shot.stopShooting </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a3f18a6c3fe7ab925dfe9c2301dc3b010"></a><!-- doxytag: member="org::beavers::ingame::Shot::swapChildren" ref="a3f18a6c3fe7ab925dfe9c2301dc3b010" args="(final int pIndexA, final int pIndexB)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.swapChildren </td>
+          <td>(</td>
+          <td class="paramtype">final int&#160;</td>
+          <td class="paramname"><em>pIndexA</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final int&#160;</td>
+          <td class="paramname"><em>pIndexB</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a001c66369f105cfc28c6e6fc860f9671"></a><!-- doxytag: member="org::beavers::ingame::Shot::swapChildren" ref="a001c66369f105cfc28c6e6fc860f9671" args="(final IEntity pEntityA, final IEntity pEntityB)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.swapChildren </td>
+          <td>(</td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntityA</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final IEntity&#160;</td>
+          <td class="paramname"><em>pEntityB</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aad3a02e6a88109c7f52df7cea5ebcf4f"></a><!-- doxytag: member="org::beavers::ingame::Shot::unregisterEntityModifier" ref="aad3a02e6a88109c7f52df7cea5ebcf4f" args="(final IEntityModifier pEntityModifier)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.unregisterEntityModifier </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityModifier&#160;</td>
+          <td class="paramname"><em>pEntityModifier</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a74c71a7e599044fef14072a22332cc0b"></a><!-- doxytag: member="org::beavers::ingame::Shot::unregisterEntityModifiers" ref="a74c71a7e599044fef14072a22332cc0b" args="(final IEntityModifierMatcher pEntityModifierMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.unregisterEntityModifiers </td>
+          <td>(</td>
+          <td class="paramtype">final IEntityModifierMatcher&#160;</td>
+          <td class="paramname"><em>pEntityModifierMatcher</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1329bd21b6ac8aea403edf738e8a9ccd"></a><!-- doxytag: member="org::beavers::ingame::Shot::unregisterUpdateHandler" ref="a1329bd21b6ac8aea403edf738e8a9ccd" args="(final IUpdateHandler pUpdateHandler)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.unregisterUpdateHandler </td>
+          <td>(</td>
+          <td class="paramtype">final IUpdateHandler&#160;</td>
+          <td class="paramname"><em>pUpdateHandler</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a86114c2bcc0561ef7d73c95c74f9b592"></a><!-- doxytag: member="org::beavers::ingame::Shot::unregisterUpdateHandlers" ref="a86114c2bcc0561ef7d73c95c74f9b592" args="(final IUpdateHandlerMatcher pUpdateHandlerMatcher)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean org.beavers.ingame.Shot.unregisterUpdateHandlers </td>
+          <td>(</td>
+          <td class="paramtype">final IUpdateHandlerMatcher&#160;</td>
+          <td class="paramname"><em>pUpdateHandlerMatcher</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <hr/><h2>Member Data Documentation</h2>
+<a class="anchor" id="aede484834d8ea4d2595761181b4b8b72"></a><!-- doxytag: member="org::beavers::ingame::Shot::currentShot" ref="aede484834d8ea4d2595761181b4b8b72" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Sprite <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#aede484834d8ea4d2595761181b4b8b72">org.beavers.ingame.Shot.currentShot</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a0af942067fd5700d5c5172495f8485f6"></a><!-- doxytag: member="org::beavers::ingame::Shot::delay" ref="a0af942067fd5700d5c5172495f8485f6" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a0af942067fd5700d5c5172495f8485f6">org.beavers.ingame.Shot.delay</a> = (float) (0.1+Math.random()*0.4)<code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af48ce88494bf17755d724323950cec5d"></a><!-- doxytag: member="org::beavers::ingame::Shot::shootTimer" ref="af48ce88494bf17755d724323950cec5d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TimerHandler <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#af48ce88494bf17755d724323950cec5d">org.beavers.ingame.Shot.shootTimer</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a2ebecdecd22035d464ea7e4446debc6e"></a><!-- doxytag: member="org::beavers::ingame::Shot::target" ref="a2ebecdecd22035d464ea7e4446debc6e" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">TMXTile <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html#a2ebecdecd22035d464ea7e4446debc6e">org.beavers.ingame.Shot.target</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a513ae2cfd6c82e376ef8e7cff72d14f6"></a><!-- doxytag: member="org::beavers::ingame::Shot::targetLine" ref="a513ae2cfd6c82e376ef8e7cff72d14f6" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -247,7 +2275,7 @@ Public Attributes</h2></td></tr>
 </iframe>
 </div>
 
-<hr class="footer"/><address class="footer"><small>Generated on Sat Jun 2 2012 00:28:42 for App by&#160;
+<hr class="footer"/><address class="footer"><small>Generated on Mon Jun 25 2012 02:42:29 for App by&#160;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.4 </small></address>
 </body>
