@@ -6,6 +6,7 @@
 
     <uses-sdk android:minSdkVersion="10" />
 	<uses-permission android:name="android.permission.WAKE_LOCK"/>
+	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -21,7 +22,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".gameplay.GameActivity" android:launchMode="singleInstance"></activity>
-        <activity android:name=".communication.Client" android:launchMode="singleInstance"></activity>
-        <activity android:name=".communication.Server" android:launchMode="singleInstance"></activity>
+        <activity android:name=".ui.GameListActivity" android:launchMode="singleTop"></activity>
     </application>
 </manifest>
