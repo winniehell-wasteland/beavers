@@ -82,9 +82,7 @@ public class GameListActivity extends Activity
 		case R.id.menu_join:
 		{
 			assert listView.getCheckedItemIds().length == 1;
-			final Intent intent = new Intent(Client.JOIN_GAME_INTENT);
-			intent.putExtra("game", (GameInfo) listView.getItemAtPosition(listView.getCheckedItemPosition()));
-			startActivity(intent);
+			Client.joinGame(this, (GameInfo) listView.getItemAtPosition(listView.getCheckedItemPosition()));
 
 			return true;
 		}

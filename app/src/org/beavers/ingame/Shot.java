@@ -62,6 +62,10 @@ public class Shot implements GameObject{
 
 		targetLine = new Line(GameActivity.getTileCenterX(getTile()), GameActivity.getTileCenterY(getTile()),
 				GameActivity.getTileCenterX(pTarget), GameActivity.getTileCenterY(pTarget));
+		
+		targetLine.setLineWidth(4);
+		targetLine.setColor(1, 0, 0);
+		//activity.getMainScene().attachChild(targetLine);
 
 		return pPathFinder.findPath(this, distance, getTile().getTileColumn(), getTile().getTileRow(),
         		pTarget.getTileColumn(), pTarget.getTileRow());

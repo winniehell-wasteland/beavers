@@ -3,6 +3,7 @@ package org.beavers.ingame;
 import java.util.ArrayDeque;
 
 import org.anddev.andengine.entity.IEntity;
+import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
@@ -34,11 +35,15 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	private Shot shot;
 	private final Line lineA,lineB;
+	private final TMXLayer floorLayer;
 	
-	public Soldier(final int pTeam, final TMXTile pInitialPosition) {
+	public Soldier(final int pTeam, final TMXLayer floor, final TMXTile pInitialPosition) {
 		super(GameActivity.getTileCenterX(pInitialPosition),
 				GameActivity.getTileCenterY(pInitialPosition),
 				getTexture(pTeam));
+		
+		floorLayer=floor;
+	
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
@@ -187,7 +192,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	@Override
 	public TMXTile getTile() {
-		return wayPoints.getFirst().getTile();
+		return floorLayer.getTMXTileAt(getCenter()[0]+getWidth()/2, getCenter()[1]+getHeight()/2);
 	}
 
 	/**
