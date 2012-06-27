@@ -69,7 +69,7 @@ public class EmptyTile implements ContextMenuHandler {
 			if(shot != null)
 			{
 				gameScene.attachChild(shot);
-				gameScene.getSelectedSoldier().fireShot(shot, tile);
+				gameScene.getSelectedSoldier().fireShot(tile);
 			}
 
 			return true;

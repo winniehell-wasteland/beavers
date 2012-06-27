@@ -7,6 +7,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
@@ -30,6 +31,9 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTeam team this soldier is in
 	 * @param pInitialPosition initial position
 	 */
+	private Shot shot;
+	private final Line lineA,lineB;
+	
 	public Soldier(final int pTeam, final TMXTile pInitialPosition) {
 		super(GameScene.getTileCenterX(pInitialPosition),
 				GameScene.getTileCenterY(pInitialPosition),
@@ -42,15 +46,38 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
 
 		team = pTeam;
-
+		
 		wayPoints = new ArrayDeque<WayPoint>();
 		wayPoints.push(new WayPoint(this, null, pInitialPosition));
 
 		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
 		setZIndex(GameScene.ZINDEX_SOLDIERS);
+		
+	
+		lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
+		lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
+		//this.attachChild(lineA);
+		//this.attachChild(lineB);
+	
+		
+		//cone.setVisible(false);
 	}
-
+	
+	public Shot getShot(){
+		return shot;
+	}
+	
+	public Line getLineA(){
+		return lineA;
+	}
+	public Line getLineB(){
+		return lineB;
+	}
+	public float[] getCenter(){
+		return this.convertLocalToSceneCoordinates(getWidth()/2, getHeight()/2);
+	}
+	
 	/**
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
@@ -104,7 +131,16 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pShot shot object
 	 * @param pTarget target tile
 	 */
-	public void fireShot(final Shot pShot, final TMXTile pTarget){
+	public void fireShot(final TMXTile pTarget){
+		
+		final Shot tmpshot = new Shot(this,(GameScene)getParent());
+		if(tmpshot.findPath(((GameScene)getParent()).getPathFinder(), pTarget)==null)return;
+		if(shot!=null){
+			shot.stopShooting();
+		}
+		shot = tmpshot;
+		stop();
+		
 		faceTarget(pTarget, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
@@ -113,7 +149,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				pShot.fire(pTarget);
+				shot.fire(pTarget);
 			}
 		});
 	}

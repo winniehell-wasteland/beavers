@@ -11,4 +11,5 @@ public enum Textures {
 	public static TextureRegion SOLDIER_SELECTION_CIRCLE = null;
 	public static TiledTextureRegion SOLDIER_TEAM0 = null;
 	public static TextureRegion WAYPOINT = null;
+	public static TextureRegion CONE =null;
 }

@@ -3,8 +3,11 @@ package org.beavers.gameplay;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import org.anddev.andengine.engine.camera.hud.HUD;
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -13,6 +16,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
+import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
@@ -46,7 +50,7 @@ import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 import android.widget.Toast;
 
-public class GameScene extends Scene
+public class GameScene<PathFinder> extends Scene
 	implements ITiledMap<GameObject>,
 		IOnSceneTouchListener,
 		IHoldDetectorListener,
@@ -121,6 +125,17 @@ public class GameScene extends Scene
 		}
 
 		setOnSceneTouchListener(this);
+		
+		final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
+			
+			@Override
+			public void onTimePassed(final TimerHandler pTimerHandler) {
+				// TODO Auto-generated method stub
+				checkTargets();
+			}
+		});
+		gameTimer.setAutoReset(true);
+		registerUpdateHandler(gameTimer);
 	}
 	
 	public AppActivity getApp(){
@@ -141,8 +156,63 @@ public class GameScene extends Scene
 		{
 			final Soldier soldier = (Soldier) pObject;
 			soldiers.get(soldier.getTeam()).add(soldier);
+			
 		}
 	}
+	
+	private Line parallelA,parallelB,lineA,lineB;
+	public void checkTargets(){
+		final Iterator itr=soldiers.get(0).iterator();
+		while(itr.hasNext()){
+			final Soldier s=(Soldier)itr.next();
+			final Iterator itr2=soldiers.get(0).iterator();
+			while(itr2.hasNext()){
+				final Soldier t=(Soldier)itr2.next();
+				if(s!=t){
+					/* parallelA = new Line(
+							t.getCenter()[0]-(s.getLineA().getX1()-s.getLineA().getX2()),
+							t.getCenter()[1]-(s.getLineA().getY1()-s.getLineA().getY2()),
+							t.getCenter()[0]+(s.getLineA().getX1()-s.getLineA().getX2()),
+							t.getCenter()[1]+(s.getLineA().getY1()-s.getLineA().getY2())
+							);*/
+					parallelB = new Line(
+							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
+							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]),
+							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
+							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
+							);
+					
+					parallelA = new Line(
+							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
+							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
+							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
+							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
+							);
+					
+					lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
+							s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
+							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
+							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
+					
+					lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
+							s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
+							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
+							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
+				
+					
+					if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){
+				
+							s.fireShot(floorLayer.getTMXTileAt(t.getX()+t.getWidth()/2, t.getY()+t.getHeight()/2));
+						
+					}
+					
+				}
+			}
+		}
+	}
+	
+	
+	
 
 	public TMXTiledMap getMap() {
 		return map;
@@ -449,7 +519,7 @@ public class GameScene extends Scene
 	}
 	private void loadSoldiers(){
 		addObject(new Soldier(0, collisionLayer.getTMXTile(0, 0)));
-		addObject(new Soldier(0, collisionLayer.getTMXTile(2, 0)));
+		addObject(new Soldier(0, collisionLayer.getTMXTile(3, 2)));
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
