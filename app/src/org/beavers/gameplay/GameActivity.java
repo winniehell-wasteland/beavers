@@ -404,7 +404,7 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
 
-		textureAtlas = new BitmapTextureAtlas(4,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		textureAtlas = new BitmapTextureAtlas(32,2,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
 
