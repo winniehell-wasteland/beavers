@@ -8,4 +8,5 @@ import org.beavers.gameplay.Player;
 public class Settings {
 	public static Player playerID =
 		new Player(UUID.randomUUID(), "player"+(new Random()).nextInt(1000));
+	public static String defaultMap = "map";
 }
