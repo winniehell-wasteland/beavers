@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="button_cancel">Abbrechen</string>
+    <string name="button_ok">OK</string>
     <string name="context_menu_add_aim">Anvisieren</string>
     <string name="context_menu_empty_tile">Leeres Feld</string>
     <string name="context_menu_move">Bewegen</string>
@@ -25,4 +27,5 @@
     <string name="state">Status</string>
     <string name="state_unknown">Unbekannt</string>
     <string name="state_won">Gewonnen</string>
+    <string name="title_start_game">Spiel starten</string>
 </resources>

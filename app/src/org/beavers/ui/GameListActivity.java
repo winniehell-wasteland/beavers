@@ -14,24 +14,33 @@ import org.beavers.gameplay.GameActivity;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.View;
+import android.widget.EditText;
 
 /**
  * activity for displaying a game list
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class GameListActivity extends Activity
+public class GameListActivity extends FragmentActivity
 	implements OnMenuItemClickListener {
 
 	/**
@@ -59,16 +68,6 @@ public class GameListActivity extends Activity
 	}
 
 	@Override
-	protected void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-		Client.announcedGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game"), "test"));
-		Client.runningGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game2"), "test"));
-
-		loadList();
-	}
-
-	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
 	    final MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main_menu, menu);
@@ -88,13 +87,6 @@ public class GameListActivity extends Activity
 		}
 		}
 		return false;
-	}
-
-	@Override
-	protected void onNewIntent(final Intent intent) {
-		super.onNewIntent(intent);
-		setIntent(intent);
-		loadList();
 	}
 
 	@Override
@@ -118,16 +110,7 @@ public class GameListActivity extends Activity
 		}
 		case R.id.menu_start_game:
 		{
-			// show game
-			final Intent intent = new Intent(GameListActivity.this, GameActivity.class);
-			startActivity(intent);
-
-			// announce
-			final GameInfo newGame = new GameInfo(
-				Settings.playerID,
-				new Game(UUID.randomUUID(), "my game"),
-				"map");
-			Server.initiateGame(this, newGame);
+			showGameStartDialog();
 
 			return true;
 		}
@@ -142,6 +125,23 @@ public class GameListActivity extends Activity
 		menu.findItem(R.id.menu_running_games).setVisible(!getIntent().getAction().equals(RUNNING));
 
 		return super.onPrepareOptionsMenu(menu);
+	}
+
+	@Override
+	protected void onNewIntent(final Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+		loadList();
+	}
+
+	@Override
+	protected void onCreate(final Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		Client.announcedGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game"), "test"));
+		Client.runningGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game2"), "test"));
+
+		loadList();
 	}
 
 	@Override
@@ -168,6 +168,19 @@ public class GameListActivity extends Activity
 
 	private GameListView listView;
 	private final BroadcastReceiver updateReceiver;
+
+	void showGameStartDialog() {
+	    final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+	    final Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
+	    if (prev != null) {
+	        ft.remove(prev);
+	    }
+	    ft.addToBackStack(null);
+
+		// Create and show the dialog.
+	    final DialogFragment newFragment = new GameStartDialog();
+	    newFragment.show(ft, "dialog");
+	}
 
 	private void loadList()
 	{
@@ -208,5 +221,51 @@ public class GameListActivity extends Activity
 		};
 
 		setContentView(listView);
+	}
+
+	public static class GameStartDialog extends DialogFragment {
+
+		@Override
+		public Dialog onCreateDialog(final Bundle savedInstanceState) {
+			final LayoutInflater inflater = LayoutInflater.from(getActivity());
+	        final View layout = inflater.inflate(R.layout.start_game_dialog, null);
+
+	        return new AlertDialog.Builder(getActivity())
+	        .setView(layout)
+			.setTitle(R.string.title_start_game)
+            .setCancelable(true)
+			.setPositiveButton(R.string.button_ok,
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(final DialogInterface dialog, final int id) {
+						final EditText input = (EditText) getDialog()
+							.findViewById(R.id.edit_game_name);
+
+						// announce
+						final GameInfo newGame = new GameInfo(
+							Settings.playerID,
+							new Game(UUID.randomUUID(),
+								input.getText().toString()),
+							Settings.defaultMap);
+						Server.initiateGame(getActivity(), newGame);
+
+						// close dialog before Activity gets destroyed
+						dismiss();
+
+						// show game
+						final Intent intent = new Intent(getActivity(), GameActivity.class);
+						startActivity(intent);
+					}
+				}
+			)
+			.setNegativeButton(R.string.button_cancel,
+				new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(final DialogInterface dialog, final int id) {
+						dialog.cancel();
+					}
+				}
+			).create();
+		}
 	}
 }
