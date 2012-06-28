@@ -141,13 +141,13 @@ public class GameActivity extends BaseGameActivity
 			soldiers.get(soldier.getTeam()).add(soldier);
 		}
 	}
-	
+
 	public TMXLayer getFloorLayer() {
 		return floorLayer;
 	}
-	
-	
-	
+
+
+
 	public Scene getMainScene() {
 		return mainScene;
 	}
@@ -241,7 +241,7 @@ public class GameActivity extends BaseGameActivity
 			contextMenuHandler.onMenuCreated(pMenu);
 		}
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
 	    final MenuInflater inflater = getMenuInflater();
@@ -301,7 +301,9 @@ public class GameActivity extends BaseGameActivity
 
 							@Override
 							public void run() {
-								Toast.makeText(GameActivity.this, "Selected soldier by waypoint", Toast.LENGTH_SHORT).show();
+								Toast.makeText(GameActivity.this,
+									"Selected soldier by waypoint",
+									Toast.LENGTH_SHORT).show();
 							}
 						});
 					}
@@ -320,13 +322,16 @@ public class GameActivity extends BaseGameActivity
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
 					&& (selectedSoldier != null))
 			{
-				contextMenuHandler = new EmptyTile(tile);
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						mRenderSurfaceView.showContextMenu();
-					}
-				});
+				final Path soldierPath =
+					selectedSoldier.findPath(getPathFinder(), tile);
+
+				if(soldierPath != null)
+				{
+					final WayPoint waypoint =
+						new WayPoint(selectedSoldier, soldierPath, tile);
+					selectedSoldier.addWayPoint(waypoint);
+					addObject(waypoint);
+				}
 			}
 		}
 	}
@@ -350,9 +355,9 @@ public class GameActivity extends BaseGameActivity
 
 		mainScene.registerUpdateHandler(holdDetector);
 		mainScene.setOnSceneTouchListener(this);
-		
+
 final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
-			
+
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
 				checkTargets();
@@ -360,7 +365,7 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		});
 		gameTimer.setAutoReset(true);
 		getEngine().registerUpdateHandler(gameTimer);
-	
+
 	}
 
 	@Override
@@ -418,7 +423,7 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		mainScene = new Scene();
 
         mRenderSurfaceView.setOnCreateContextMenuListener(this);
-		
+
 		return mainScene;
 	}
 
@@ -625,36 +630,36 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
 							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
 							);
-					
+
 					parallelA = new Line(
 							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
 							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
 							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
 							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
 							);
-					
+
 					lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
 							s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
 							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
 							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
-					
+
 					lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
 							s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
 							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
 							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
-				
-					
+
+
 					if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){
-				
+
 							s.fireShot(t.getTile(), this);
-						
+
 					}
-					
+
 				}
 			}
 		}
 	}
-	
+
 	private synchronized void selectSoldier(final Soldier pSoldier) {
 		if(selectedSoldier != pSoldier)
 		{
@@ -668,57 +673,5 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 			loadHUD();
 			mainScene.sortChildren();
 		}
-	}
-	
-	private class EmptyTile implements ContextMenuHandler {
-		public final TMXTile tile;
-
-		public EmptyTile(final TMXTile pTile)
-		{
-			tile = pTile;
-		}
-
-		@Override
-		public int getMenuID() {
-			return R.menu.context_tile;
-		}
-
-		@Override
-		public void onMenuCreated(final ContextMenu pMenu) {
-			pMenu.setHeaderTitle(R.string.context_menu_empty_tile);
-
-			if(getSelectedSoldier() == null)
-			{
-				for(int i = 0; i < pMenu.size(); ++i)
-				{
-					pMenu.getItem(i).setEnabled(false);
-				}
-			}
-			else
-			{
-				soldierPath = getSelectedSoldier().findPath(getPathFinder(), tile);
-				pMenu.findItem(R.id.context_menu_move).setEnabled(soldierPath != null);
-			}
-		}
-
-		@Override
-		public boolean onMenuItemClick(final MenuItem pItem) {
-			switch(pItem.getItemId())
-			{
-			case R.id.context_menu_move:
-				if(soldierPath != null)
-				{
-					final WayPoint waypoint = new WayPoint(getSelectedSoldier(), soldierPath, tile);
-					getSelectedSoldier().addWayPoint(waypoint);
-					addObject(waypoint);
-				}
-
-				return true;
-			default:
-			return false;
-			}
-		}
-
-		private Path soldierPath;
 	}
 }
