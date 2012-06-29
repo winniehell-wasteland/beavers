@@ -223,7 +223,16 @@ public class GameListActivity extends FragmentActivity
 		setContentView(listView);
 	}
 
+	/**
+	 * gets opened when presses "start game"
+	 */
 	public static class GameStartDialog extends DialogFragment {
+
+		/** default constructor */
+		public GameStartDialog()
+		{
+
+		}
 
 		@Override
 		public Dialog onCreateDialog(final Bundle savedInstanceState) {
@@ -241,19 +250,25 @@ public class GameListActivity extends FragmentActivity
 						final EditText input = (EditText) getDialog()
 							.findViewById(R.id.edit_game_name);
 
-						// announce
-						final GameInfo newGame = new GameInfo(
+						// create new game
+						final GameInfo game = new GameInfo(
 							Settings.playerID,
 							new Game(UUID.randomUUID(),
 								input.getText().toString()),
 							Settings.defaultMap);
-						Server.initiateGame(getActivity(), newGame);
+
+						// announce to clients
+						Server.initiateGame(getActivity(), game);
 
 						// close dialog before Activity gets destroyed
 						dismiss();
 
 						// show game
-						final Intent intent = new Intent(getActivity(), GameActivity.class);
+						final Intent intent =
+							new Intent(getActivity(), GameActivity.class);
+						intent.putExtra(
+							getActivity().getApplicationInfo().packageName
+							+ "game", game);
 						startActivity(intent);
 					}
 				}

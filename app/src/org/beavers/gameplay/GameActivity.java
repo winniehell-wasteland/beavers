@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.UUID;
 
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.SmoothCamera;
@@ -43,7 +42,6 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.R;
-import org.beavers.Settings;
 import org.beavers.Textures;
 import org.beavers.communication.Client;
 import org.beavers.ingame.GameObject;
@@ -56,6 +54,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -338,9 +337,6 @@ public class GameActivity extends BaseGameActivity
 
 	@Override
 	public void onLoadComplete() {
-		// TODO load game
-		currentGame = new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "foo game"), "map");
-
 		loadMap(currentGame.getMapName());
 		loadSoldiers();
 
@@ -480,8 +476,24 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		mainScene.detachChild(pObject);
 	}
 
-	public void startPlanningPhase() {
-		// TODO Auto-generated method stub
+	@Override
+	protected void onCreate(final Bundle pSavedInstanceState) {
+		super.onCreate(pSavedInstanceState);
+
+		if(!getIntent().hasExtra(getApplicationInfo().packageName + "game"))
+		{
+			Log.e(TAG, "no extra");
+			return;
+		}
+
+		currentGame = getIntent().getParcelableExtra(
+			getApplicationInfo().packageName + "game");
+
+		// don't show game if we have nothing to show
+		if(currentGame == null)
+		{
+			finish();
+		}
 	}
 
 	@Override
