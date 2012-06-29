@@ -1,6 +1,5 @@
 package org.beavers.ingame;
 
-import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.path.Direction;
@@ -21,18 +20,16 @@ import android.view.MenuItem;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
-
-	
-
 	/**
 	 * default constructor
 	 * @param pSoldier soldier this waypoint belongs to
 	 * @param pPath path from previous waypoint
 	 * @param pTile position of waypoint
 	 */
-	public WayPoint(final Soldier pSoldier, final Path pPath, final TMXTile pTile)
+	public WayPoint(final Soldier pSoldier, final Path pPath, final Tile pTile)
 	{
-		super(pTile.getTileX(), pTile.getTileY(), pTile.getTileWidth(), pTile.getTileHeight(), Textures.WAYPOINT.deepCopy());
+		super(pTile.getX(), pTile.getY(), pTile.getTileWidth(),
+			pTile.getTileHeight(), Textures.WAYPOINT.deepCopy());
 
 		path = pPath;
 		soldier = pSoldier;
@@ -49,9 +46,10 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	}
 
 	@Override
-	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
-		return pPathFinder.findPath(this, 0, getTile().getTileColumn(), getTile().getTileRow(),
-        		pTarget.getTileColumn(), pTarget.getTileRow());
+	public Path findPath(final IPathFinder<GameObject> pPathFinder,
+	                     final Tile pTarget) {
+		return pPathFinder.findPath(this, 0, getTile().getColumn(),
+			getTile().getRow(), pTarget.getColumn(), pTarget.getRow());
 	}
 
 	public Aim getAim() {
@@ -72,13 +70,14 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	}
 
 	@Override
-	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
+	public float getStepCost(final ITiledMap<GameObject> pMap, final Tile pFrom, final Tile pTo) {
+		final Direction direction = pFrom.getDirectionTo(pTo);
+
 		// prevent diagonals at blocked tiles
-		if((Math.abs(pTo.getTileRow() - pFrom.getTileRow()) == 1)
-				&& (Math.abs(pTo.getTileColumn() - pFrom.getTileColumn()) == 1))
+		if(!direction.isHorizontal() && !direction.isVertical())
 		{
-			if(pMap.isTileBlocked(this, pFrom.getTileColumn(), pTo.getTileRow())
-					|| pMap.isTileBlocked(this, pTo.getTileColumn(), pFrom.getTileRow()))
+			if(pMap.isTileBlocked(this, pFrom.getColumn(), pTo.getRow())
+					|| pMap.isTileBlocked(this, pTo.getColumn(), pFrom.getRow()))
 			{
 				return Integer.MAX_VALUE;
 			}
@@ -88,20 +87,20 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	}
 
 	@Override
-	public TMXTile getTile() {
+	public Tile getTile() {
 		return tile;
 	}
 
 	public boolean isWaitingForAim() {
 		return waitForAim;
 	}
-	
+
 	@Override
 	public void onAttached() {
 		super.onAttached();
 		getParent().sortChildren();
 	}
-	
+
 	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
@@ -120,7 +119,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 				soldier.removeWayPoint();
 
 				detachChildren();
-			
+
 				// FIXME parent is no longer GameActivity
 				//assert (getParent() instanceof GameActivity);
 				//((GameActivity)getParent()).removeObject(this);
@@ -140,7 +139,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		}
 	}
 
-	public void setAim(final TMXTile pTile){
+	public void setAim(final Tile pTile){
 		if(pTile == null)
 		{
 			detachChild(aim);
@@ -152,7 +151,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 			waitForAim = false;
 		}
 	}
-	
+
 	public void setFirst() {
 		isFirst = true;
 	}
@@ -160,7 +159,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	public void setLast(final boolean isLast) {
 		this.isLast = isLast;
 	}
-	
+
 	@Override
 	protected void onManagedUpdate(final float pSecondsElapsed) {
 		/**/
@@ -175,17 +174,18 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		super.onManagedUpdate(pSecondsElapsed);
 	}
 
-	
 	private final Path path;
 	private final Soldier soldier;
-	private final TMXTile tile;
+	private final Tile tile;
 
 	private Aim aim;
 	private boolean waitForAim;
+
 	/** true iff this is the first waypoint of the corresponding soldier */
 	private boolean isFirst = false;
 	/** true iff this is the last waypoint of the corresponding soldier */
 	private boolean isLast = true;
+
 	private void drawPath() {
 		Line line = new Line(0, 0, tile.getTileWidth()/2, tile.getTileHeight()/2,0);
 
@@ -204,4 +204,3 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		}
 	}
 }
-
