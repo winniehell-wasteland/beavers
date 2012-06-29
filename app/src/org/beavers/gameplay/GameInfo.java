@@ -167,9 +167,9 @@ public final class GameInfo implements Parcelable {
 	private GameState state;
 
     private GameInfo(final Parcel in) {
-		game = (Game) in.readParcelable(null);
+		game = in.readParcelable(Game.class.getClassLoader());
 		map = in.readString();
-    	server = (Player) in.readParcelable(null);
-		state = (GameState) in.readParcelable(null);
+    	server = in.readParcelable(Player.class.getClassLoader());
+		state = in.readParcelable(GameState.class.getClassLoader());
     }
 }
