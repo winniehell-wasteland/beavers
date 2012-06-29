@@ -170,16 +170,18 @@ public class GameListActivity extends FragmentActivity
 	private final BroadcastReceiver updateReceiver;
 
 	void showGameStartDialog() {
-	    final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-	    final Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-	    if (prev != null) {
-	        ft.remove(prev);
-	    }
-	    ft.addToBackStack(null);
+	    final FragmentTransaction transaction =
+	    	getSupportFragmentManager().beginTransaction();
+	    final Fragment old =
+	    	getSupportFragmentManager().findFragmentByTag("dialog");
 
-		// Create and show the dialog.
-	    final DialogFragment newFragment = new GameStartDialog();
-	    newFragment.show(ft, "dialog");
+	    if (old != null) {
+	    	transaction.remove(old);
+	    }
+	    transaction.addToBackStack(null);
+
+	    final DialogFragment dialog = new GameStartDialog();
+	    dialog.show(transaction, "dialog");
 	}
 
 	private void loadList()
