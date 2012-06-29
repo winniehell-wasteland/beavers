@@ -268,6 +268,12 @@ public class GameListActivity extends FragmentActivity
 						final EditText input = (EditText) getDialog()
 							.findViewById(R.id.edit_game_name);
 
+						if(input.getText().length() < 1)
+						{
+							dialog.cancel();
+							return;
+						}
+
 						// create new game
 						final GameInfo game = new GameInfo(
 							Settings.playerID,
