@@ -13,6 +13,9 @@ import android.os.Parcelable;
  */
 public final class GameInfo implements Parcelable {
 
+	/** name for parcel in intent extras */
+	public static final String parcelName = GameInfo.class.getName();
+
 	/**
 	 * default constructor
 	 * @param pServer server of the game

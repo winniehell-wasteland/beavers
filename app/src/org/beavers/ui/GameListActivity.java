@@ -266,9 +266,7 @@ public class GameListActivity extends FragmentActivity
 						// show game
 						final Intent intent =
 							new Intent(getActivity(), GameActivity.class);
-						intent.putExtra(
-							getActivity().getApplicationInfo().packageName
-							+ "game", game);
+						intent.putExtra(GameInfo.parcelName, game);
 						startActivity(intent);
 					}
 				}

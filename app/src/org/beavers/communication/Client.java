@@ -250,7 +250,7 @@ public enum Client {
 			final GameInfo pGame) {
 		final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
 
-		update_intent.putExtra("game", pGame);
+		update_intent.putExtra(GameInfo.parcelName, pGame);
 
 		pContext.sendBroadcast(update_intent);
 	}
