@@ -162,6 +162,8 @@ public enum Client {
 
 				break;
 			}
+			default:
+				break;
 			}
 		}
 	}

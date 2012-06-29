@@ -164,6 +164,8 @@ public enum Server {
 
 				break;
 			}
+			default:
+				break;
 			}
 		}
 	}

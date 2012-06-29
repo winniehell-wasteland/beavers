@@ -5,6 +5,7 @@ import org.beavers.Settings;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,7 @@ import android.widget.TextView;
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
+@SuppressLint("ViewConstructor")
 public abstract class GameListView extends ListView
 	implements OnItemClickListener {
 
@@ -99,9 +101,14 @@ public abstract class GameListView extends ListView
 			final GameInfo item = list.get(position);
 
 			holder.txtName.setText(item.getGame().getName());
-			holder.txtServer.setText(
-				item.isServer(Settings.playerID)?"(self)":
-					item.getServer().getName());
+
+			if(item.isServer(Settings.playerID))
+			{
+				holder.txtServer.setText("");
+			} else {
+				holder.txtServer.setText(item.getServer().getName());
+			}
+
 			holder.txtState.setText(
 				activity.getString(R.string.state) + ": "
 				+ item.getState().getName(activity));
