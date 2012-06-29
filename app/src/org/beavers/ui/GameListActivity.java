@@ -79,7 +79,7 @@ public class GameListActivity extends FragmentActivity
 	public boolean onMenuItemClick(final MenuItem pItem) {
 		switch(pItem.getItemId())
 		{
-		case R.id.menu_join:
+		case R.id.context_menu_join:
 		{
 			assert listView.getCheckedItemIds().length == 1;
 			Client.joinGame(this, (GameInfo) listView.getItemAtPosition(listView.getCheckedItemPosition()));
@@ -139,7 +139,10 @@ public class GameListActivity extends FragmentActivity
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		Client.announcedGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game"), "test"));
+		final GameInfo game = new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game"), "test");
+		game.setState(GameState.ANNOUNCED);
+		Client.announcedGames.add(game);
+
 		Client.runningGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game2"), "test"));
 
 		loadList();
@@ -207,8 +210,7 @@ public class GameListActivity extends FragmentActivity
 			protected void onCreateContextMenu(final ContextMenu menu) {
 				final GameInfo game = (GameInfo) getItemAtPosition(getCheckedItemPosition());
 
-				// disable context menu
-				if((game == null) || game.getState().equals(GameState.JOINED))
+				if(game == null)
 				{
 					menu.clear();
 					return;
@@ -219,6 +221,9 @@ public class GameListActivity extends FragmentActivity
 				if(getIntent().getAction().equals(ANNOUNCED))
 				{
 			        inflater.inflate(R.menu.context_announced_game, menu);
+
+			        menu.findItem(R.id.context_menu_join).setVisible(
+			        	game.getState().equals(GameState.ANNOUNCED));
 				}
 				else if(getIntent().getAction().equals(RUNNING))
 				{
