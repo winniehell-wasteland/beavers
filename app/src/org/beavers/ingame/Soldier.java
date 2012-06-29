@@ -126,11 +126,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		{
 			final RotationByModifier rotation = new RotationByModifier(Math.abs(angle)/ROTATION_SPEED, angle);
 
-			if(pListener != null)
-			{
-				rotation.addModifierListener(pListener);
-			}
-
+			rotation.addModifierListener(pListener);
 			registerEntityModifier(rotation);
 		}
 	}
@@ -265,24 +261,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	/**
 	 * move to target tile
 	 * @param pTarget target tile
-	 */
-	public void move(final TMXTile pTarget) {
-		move(pTarget,null, new IModifierListener<IEntity>() {
-			@Override
-			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
-
-			}
-
-			@Override
-			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				Soldier.this.stopAnimation(0);
-			}
-		});
-	}
-
-	/**
-	 * move to target tile
-	 * @param pTarget target tile
 	 * @param pListener listener for movement
 	 */
 	public void move(final TMXTile pTarget, final TMXTile pAim, final IModifierListener<IEntity> pListener) {
@@ -292,10 +270,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		final MoveModifier movement = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED), getX(),
 				GameActivity.getTileCenterX(pTarget)-getWidth()/2, getY(), GameActivity.getTileCenterY(pTarget)-getHeight()/2);
 
-		if(pListener != null)
-		{
-			movement.addModifierListener(pListener);
-		}
+		movement.addModifierListener(pListener);
 
 		faceTarget(pAim != null?pAim:pTarget, new IModifierListener<IEntity>() {
 			@Override
@@ -327,7 +302,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public WayPoint popWayPoint() {
 		if(wayPoints.size() > 1)
 		{
-			wayPoints.removeFirst();
+			wayPoints.removeFirst().detachSelf();
+
 			wayPoints.getFirst().setFirst();
 			return wayPoints.getFirst();
 		}

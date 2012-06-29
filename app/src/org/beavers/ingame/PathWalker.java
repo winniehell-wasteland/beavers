@@ -23,12 +23,12 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 		waypoint = null;
 		stepIndex = 0;
-		
-	
-		
+
+
+
 	}
-	
-	
+
+
 	public void checkTargets(){
 		final Iterator itr=gameActivity.getSoldiers(0).iterator();
 		while(itr.hasNext()){
@@ -49,31 +49,31 @@ public class PathWalker implements IModifierListener<IEntity> {
 							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
 							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
 							);
-					
+
 					parallelA = new Line(
 							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
 							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
 							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
 							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
 							);
-					
+
 					lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
 							s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
 							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
 							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
-					
+
 					lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
 							s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
 							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
 							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
-				
-					
+
+
 					if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){
-				
+
 							s.fireShot(t.getTile(), gameActivity);
-						
+
 					}
-					
+
 				}
 			}
 		}
@@ -97,17 +97,31 @@ public class PathWalker implements IModifierListener<IEntity> {
 			{
 				soldier.move(targetTile, aim, this);
 			}
+			else if(aim != null)
+			{
+				soldier.faceTarget(aim, null);
+			}
 		}
 	}
 
 	public void start()
 	{
-		targetTile = soldier.getTile();
+		waypoint = soldier.getFirstWaypoint();
 
 		nextWaypoint();
-		nextTile();
 
-		soldier.move(targetTile, aim, this);
+		// check if there are way points left
+		if(waypoint != null)
+		{
+			targetTile = soldier.getTile();
+			nextTile();
+
+			soldier.move(targetTile, aim, this);
+		}
+		else if(aim != null)
+		{
+			soldier.faceTarget(aim, null);
+		}
 	}
 
 	private final GameActivity gameActivity;
@@ -118,13 +132,23 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private int stepIndex;
 	private TMXTile sourceTile, targetTile;
 	private TMXTile aim;
-	
+
 	private Line lineA,lineB,parallelA,parallelB;
 
 	private void nextWaypoint()
 	{
 		if(waypoint != null)
 		{
+			if(waypoint.getAim() != null)
+			{
+				aim = waypoint.getAim().getTile();
+				waypoint.setAim(null);
+			}
+			else
+			{
+				aim = null;
+			}
+
 			waypoint.detachChildren();
 			gameActivity.removeObject(waypoint);
 		}
@@ -144,15 +168,6 @@ public class PathWalker implements IModifierListener<IEntity> {
 		if(waypoint != null)
 		{
 			final Step nextStep = waypoint.getPath().getStep(stepIndex);
-
-			if(waypoint.getAim() != null)
-			{
-				aim = waypoint.getAim().getTile();
-			}
-			else
-			{
-				aim = null;
-			}
 
 			++stepIndex;
 

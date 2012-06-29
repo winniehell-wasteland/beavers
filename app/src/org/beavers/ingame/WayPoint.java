@@ -129,8 +129,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 			return true;
 		case R.id.context_menu_remove_aim:
-			detachChild(aim);
-			aim = null;
+			setAim(null);
 
 			return true;
 		default:
@@ -139,10 +138,16 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	}
 
 	public void setAim(final TMXTile pTile){
-		aim = new Aim(this, pTile);
-		attachChild(aim);
+		if(pTile == null)
+		{
+			detachChild(aim);
+			aim = null;
+		} else {
+			aim = new Aim(this, pTile);
+			attachChild(aim);
 
-		waitForAim = false;
+			waitForAim = false;
+		}
 	}
 
 	public void setFirst() {
@@ -155,13 +160,14 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 	@Override
 	protected void onManagedUpdate(final float pSecondsElapsed) {
-
+		/**/
 		// make first way point invisible
 		if(isFirst && soldier.getTile().equals(tile))
 		{
 			getTextureRegion().setHeight(0);
 			getTextureRegion().setWidth(0);
 		}
+		/**/
 
 		super.onManagedUpdate(pSecondsElapsed);
 	}

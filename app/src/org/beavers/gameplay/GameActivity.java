@@ -495,8 +495,6 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		{
 			gameObjects.remove(pObject.getTile());
 		}
-
-		mainScene.detachChild(pObject);
 	}
 
 	@Override
