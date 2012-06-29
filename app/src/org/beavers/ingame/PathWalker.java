@@ -3,12 +3,10 @@ package org.beavers.ingame;
 import java.util.Iterator;
 
 import org.anddev.andengine.entity.IEntity;
-import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
-import org.anddev.andengine.util.path.Path.Step;
 import org.beavers.gameplay.GameActivity;
 
 /**
@@ -130,8 +128,8 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private WayPoint waypoint;
 
 	private int stepIndex;
-	private TMXTile sourceTile, targetTile;
-	private TMXTile aim;
+	private Tile sourceTile, targetTile;
+	private Tile aim;
 
 	private Line lineA,lineB,parallelA,parallelB;
 
@@ -167,11 +165,9 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 		if(waypoint != null)
 		{
-			final Step nextStep = waypoint.getPath().getStep(stepIndex);
+			targetTile = new Tile(waypoint.getPath().getStep(stepIndex));
 
 			++stepIndex;
-
-			targetTile = gameActivity.getCollisionLayer().getTMXTile(nextStep.getTileColumn(), nextStep.getTileRow());
 		}
 		else
 		{

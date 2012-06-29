@@ -3,8 +3,6 @@ package org.beavers.ingame;
 import java.util.ArrayDeque;
 
 import org.anddev.andengine.entity.IEntity;
-import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
-import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.entity.modifier.RotationByModifier;
@@ -34,13 +32,9 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTeam team this soldier is in
 	 * @param pInitialPosition initial position
 	 */
-	public Soldier(final int pTeam, final TMXLayer floor, final TMXTile pInitialPosition) {
-		super(GameActivity.getTileCenterX(pInitialPosition),
-				GameActivity.getTileCenterY(pInitialPosition),
-				getTexture(pTeam));
-
-		floorLayer=floor;
-
+	public Soldier(final int pTeam, final Tile pInitialPosition) {
+		super(pInitialPosition.getCenterX(), pInitialPosition.getCenterY(),
+			getTexture(pTeam));
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
@@ -112,7 +106,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTarget target tile
 	 * @param pListener listener for rotation
 	 */
-	public void faceTarget(final TMXTile pTarget, final IModifierListener<IEntity> pListener){
+	public void faceTarget(final Tile pTarget, final IModifierListener<IEntity> pListener){
 		final float angle = calcViewAngle((getX()+getWidth()/2), (getY()+getHeight()/2), pTarget);
 
 		if(angle == 0)
@@ -137,7 +131,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @return a path from last waypoint to the target position (or null if there is none)
 	 */
 	@Override
-	public Path findPath(final IPathFinder<GameObject> pPathFinder, final TMXTile pTarget) {
+	public Path findPath(final IPathFinder<GameObject> pPathFinder, final Tile pTarget) {
 		return wayPoints.getLast().findPath(pPathFinder, pTarget);
 	}
 
@@ -146,7 +140,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pShot shot object
 	 * @param pTarget target tile
 	 */
-	public void fireShot(final TMXTile pTarget, final GameActivity pActivity){
+	public void fireShot(final Tile pTarget, final GameActivity pActivity){
 
 		final Shot tmpshot = new Shot(this, pActivity);
 		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
@@ -191,7 +185,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @return step cost for soldier and given tiles
 	 */
 	@Override
-	public float getStepCost(final ITiledMap<GameObject> pMap, final TMXTile pFrom, final TMXTile pTo) {
+	public float getStepCost(final ITiledMap<GameObject> pMap, final Tile pFrom, final Tile pTo) {
 		return wayPoints.getLast().getStepCost(pMap, pFrom, pTo);
 	}
 
@@ -206,8 +200,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @return current soldier position
 	 */
 	@Override
-	public TMXTile getTile() {
-		return floorLayer.getTMXTileAt(getCenter()[0]+getWidth()/2, getCenter()[1]+getHeight()/2);
+	public Tile getTile() {
+		return Tile.fromCoordinates(getCenter()[0]+getWidth()/2, getCenter()[1]+getHeight()/2);
 	}
 
 	/**
@@ -263,12 +257,18 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTarget target tile
 	 * @param pListener listener for movement
 	 */
-	public void move(final TMXTile pTarget, final TMXTile pAim, final IModifierListener<IEntity> pListener) {
-		final float distx = Math.abs(GameActivity.getTileCenterX(pTarget) - (getX()+getWidth()/2));
-		final float disty = Math.abs(GameActivity.getTileCenterY(pTarget) - (getY()+getHeight()/2));
+	public void move(final Tile pTarget, final Tile pAim, final IModifierListener<IEntity> pListener) {
+		final float distx =
+			Math.abs(pTarget.getCenterX() - (getX()+getWidth()/2));
+		final float disty =
+			Math.abs(pTarget.getCenterY() - (getY()+getHeight()/2));
 
-		final MoveModifier movement = new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED), getX(),
-				GameActivity.getTileCenterX(pTarget)-getWidth()/2, getY(), GameActivity.getTileCenterY(pTarget)-getHeight()/2);
+		final float duartion = (float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED);
+
+		final MoveModifier movement =
+			new MoveModifier(duartion,
+				getX(), pTarget.getCenterX() - getWidth()/2,
+				getY(), pTarget.getCenterY() - getHeight()/2);
 
 		movement.addModifierListener(pListener);
 
@@ -287,7 +287,8 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 				if(pAim != null)
 				{
-					final float angle = calcViewAngle(GameActivity.getTileCenterX(pTarget), GameActivity.getTileCenterY(pTarget), pAim);
+					final float angle =
+						calcViewAngle(pTarget.getCenterX(), pTarget.getCenterY(), pAim);
 					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
 					Soldier.this.registerEntityModifier(rotation);
 				}
@@ -370,13 +371,11 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	private Shot shot;
 	private final Line lineA,lineB;
-	private final TMXLayer floorLayer;
 
-	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final TMXTile pTarget) {
-		final float angleX = GameActivity.getTileCenterX(pTarget)-pCurrentX;
-		final float angleY = GameActivity.getTileCenterY(pTarget)-pCurrentY;
-		float angle=(float)Math.toDegrees(Math.atan2(angleY,angleX))+90;
-
+	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final Tile pTarget) {
+		final float angleX = pTarget.getCenterX() - pCurrentX;
+		final float angleY = pTarget.getCenterY() - pCurrentY;
+		float angle = (float) Math.toDegrees(Math.atan2(angleY,angleX))+90;
 
 		if((angle-getRotation())>180)angle=(angle-getRotation())-360;
 		else if((angle-getRotation())<-180)angle=360+(angle-getRotation());

@@ -1,6 +1,5 @@
 package org.beavers.ingame;
 
-import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.beavers.Textures;
@@ -8,9 +7,9 @@ import org.beavers.gameplay.GameActivity;
 
 public class Aim extends Sprite {
 
-	public Aim(final WayPoint pWayPoint, final TMXTile pTile){
-		super(pTile.getTileX() - pWayPoint.getX(), pTile.getTileY() - pWayPoint.getY(),
-				pTile.getTileWidth(), pTile.getTileHeight(), Textures.AIM.deepCopy());
+	public Aim(final WayPoint pWayPoint, final Tile pTile){
+		super(pTile.getX() - pWayPoint.getX(), pTile.getY() - pWayPoint.getY(),
+			pTile.getTileWidth(), pTile.getTileHeight(), Textures.AIM.deepCopy());
 		tile = pTile;
 
 		drawLineOfSight(getWidth()/2, getHeight()/2, -getX() + pWayPoint.getWidth()/2, -getY() + pWayPoint.getHeight()/2);
@@ -18,11 +17,11 @@ public class Aim extends Sprite {
 		setZIndex(GameActivity.ZINDEX_AIMPOINTS);
 	}
 
-	public TMXTile getTile() {
+	public Tile getTile() {
 		return tile;
 	}
 
-	private final TMXTile tile;
+	private final Tile tile;
 
 	private void drawLineOfSight(final float pFromX, final float pFromY, final float pToX, final float pToY) {
 		float distX = (pToX - pFromX), distY = (pToY - pFromY);

@@ -47,6 +47,7 @@ import org.beavers.communication.Client;
 import org.beavers.ingame.GameObject;
 import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
+import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
 import org.beavers.ui.ContextMenuHandler;
 
@@ -91,23 +92,6 @@ public class GameActivity extends BaseGameActivity
 	 */
 
 	/**
-	 * @name helper functions
-	 * @{
-	 */
-	public static int getTileCenterX(final TMXTile pTile)
-	{
-		return pTile.getTileX() + pTile.getTileWidth()/2;
-	}
-
-	public static int getTileCenterY(final TMXTile pTile)
-	{
-		return pTile.getTileY() + pTile.getTileHeight()/2;
-	}
-	/**
-	 * @}
-	 */
-
-	/**
 	 * default constructor
 	 * @param pApp
 	 */
@@ -120,7 +104,7 @@ public class GameActivity extends BaseGameActivity
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
 
 		// initialize game object containers
-		gameObjects = new HashMap<TMXTile, GameObject>();
+		gameObjects = new HashMap<Tile, GameObject>();
 		soldiers = new ArrayList<HashSet<Soldier>>(getTeamCount());
 
 		for(int i = 0; i < getTeamCount(); ++i)
@@ -185,8 +169,9 @@ public class GameActivity extends BaseGameActivity
 	public float getStepCost(final GameObject pObject, final int pFromTileColumn,
 			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
 
-		return pObject.getStepCost(this, collisionLayer.getTMXTile(pFromTileColumn, pFromTileRow),
-				collisionLayer.getTMXTile(pToTileColumn, pToTileRow));
+		return pObject.getStepCost(this,
+			new Tile(pFromTileColumn, pFromTileRow),
+			new Tile(pToTileColumn, pToTileRow));
 	}
 
 	/**
@@ -225,7 +210,8 @@ public class GameActivity extends BaseGameActivity
 	 * @param pSourceTile old position
 	 * @param pTargetTile new position
 	 */
-	public void moveObject(final GameObject pObject, final TMXTile pSourceTile, final TMXTile pTargetTile) {
+	public void moveObject(final GameObject pObject,
+	                       final Tile pSourceTile, final Tile pTargetTile) {
 		gameObjects.remove(pSourceTile);
 		gameObjects.put(pTargetTile, pObject);
 	}
@@ -265,11 +251,11 @@ public class GameActivity extends BaseGameActivity
 	public void onHoldFinished(final HoldDetector pHoldDetector,
 			final long pHoldTimeMilliseconds, final float pHoldX, final float pHoldY) {
 
-		final TMXTile tile = collisionLayer.getTMXTileAt(pHoldX, pHoldY);
+		final Tile tile = Tile.fromCoordinates(pHoldX, pHoldY);
 
 		if(tile != null)
 		{
-			Log.d(TAG, "Hold on tile ("+tile.getTileColumn()+","+tile.getTileRow()+")");
+			Log.d(TAG, "Hold on tile ("+tile.getColumn()+","+tile.getRow()+")");
 
 			// create new Aim if necessary
 			if(contextMenuHandler instanceof WayPoint)
@@ -341,7 +327,7 @@ public class GameActivity extends BaseGameActivity
 					});
 				}
 			}
-			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
+			else if(!isTileBlocked(null, tile.getColumn(), tile.getRow())
 					&& (selectedSoldier != null))
 			{
 				final Path soldierPath =
@@ -552,7 +538,7 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 	 * @name game object containers
 	 * @{
 	 */
-	private final HashMap<TMXTile, GameObject> gameObjects;
+	private final HashMap<Tile, GameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> soldiers;
 	/**
 	 * @}
@@ -633,8 +619,8 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 
 	}
 	private void loadSoldiers(){
-		addObject(new Soldier(0,collisionLayer, collisionLayer.getTMXTile(0, 0)));
-		addObject(new Soldier(0,collisionLayer, collisionLayer.getTMXTile(2, 0)));
+		addObject(new Soldier(0, new Tile(0, 0)));
+		addObject(new Soldier(0, new Tile(2, 0)));
 	}
 
 	public void checkTargets(){
