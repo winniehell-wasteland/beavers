@@ -69,14 +69,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a>  </div>
+<a href="#pub-methods">Public Member Functions</a>  </div>
   <div class="headertitle">
 <div class="title">org.beavers.ui.GameListView Class Reference</div>  </div>
 </div>
 <div class="contents">
-<!-- doxytag: class="org::beavers::ui::GameListView" --><!-- doxytag: inherits="android::widget::ListView,android::view::MenuItem::OnMenuItemClickListener,android::widget::AdapterView::OnItemClickListener" -->
-<p>Inherits ListView, OnMenuItemClickListener, and OnItemClickListener.</p>
+<!-- doxytag: class="org::beavers::ui::GameListView" --><!-- doxytag: inherits="android::widget::ListView,android::widget::AdapterView::OnItemClickListener" -->
+<p>Inherits ListView, and OnItemClickListener.</p>
 
 <p><a href="classorg_1_1beavers_1_1ui_1_1_game_list_view-members.html">List of all members.</a></p>
 <table class="memberdecls">
@@ -85,24 +84,23 @@ Classes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view_1_1_list_view_adapter.html">ListViewAdapter</a></td></tr>
 <tr><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view.html#ad5ea770701262088707c4f7c090aff19">GameListView</a> (final <a class="el" href="classorg_1_1beavers_1_1_app_activity.html">AppActivity</a> pApp, final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_list.html">GameList</a> pList)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view.html#a9dd0daa2df91e52ce755cde28774b205">GameListView</a> (final Activity pActivity, final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_list.html">GameList</a> pList)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">BaseAdapter&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view.html#a7305ba967b0122bd8119c84543714a45">getAdapter</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view.html#a9d426e57376db639ddf1ddddabf77447">onItemClick</a> (final AdapterView&lt;?&gt; pParent, final View pView, final int pPosition, final long pID)</td></tr>
-<tr><td colspan="2"><h2><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view.html#afc868ae5245a672711ab6715ddaabf5b">onCreateContextMenu</a> (final ContextMenu menu)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">abstract int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ui_1_1_game_list_view.html#a3f5f6cb2e8ded9a125a9f786a699b99d">getContextMenuRes</a> ()</td></tr>
 </table>
-<hr/><h2>Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="ad5ea770701262088707c4f7c090aff19"></a><!-- doxytag: member="org::beavers::ui::GameListView::GameListView" ref="ad5ea770701262088707c4f7c090aff19" args="(final AppActivity pApp, final GameList pList)" -->
+<hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
+<div class="textblock"><p>list view for GameList</p>
+<dl class="author"><dt><b>Author:</b></dt><dd><a href="https://github.com/winniehell/">winniehell</a> </dd></dl>
+</div><hr/><h2>Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="a9dd0daa2df91e52ce755cde28774b205"></a><!-- doxytag: member="org::beavers::ui::GameListView::GameListView" ref="a9dd0daa2df91e52ce755cde28774b205" args="(final Activity pActivity, final GameList pList)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">org.beavers.ui.GameListView.GameListView </td>
           <td>(</td>
-          <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1_app_activity.html">AppActivity</a>&#160;</td>
-          <td class="paramname"><em>pApp</em>, </td>
+          <td class="paramtype">final Activity&#160;</td>
+          <td class="paramname"><em>pActivity</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -131,40 +129,6 @@ Protected Member Functions</h2></td></tr>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-</div>
-</div>
-<a class="anchor" id="a3f5f6cb2e8ded9a125a9f786a699b99d"></a><!-- doxytag: member="org::beavers::ui::GameListView::getContextMenuRes" ref="a3f5f6cb2e8ded9a125a9f786a699b99d" args="()" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">abstract int org.beavers.ui.GameListView.getContextMenuRes </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td><code> [protected, pure virtual]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<dl class="return"><dt><b>Returns:</b></dt><dd>the context menu resource ID </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="afc868ae5245a672711ab6715ddaabf5b"></a><!-- doxytag: member="org::beavers::ui::GameListView::onCreateContextMenu" ref="afc868ae5245a672711ab6715ddaabf5b" args="(final ContextMenu menu)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void org.beavers.ui.GameListView.onCreateContextMenu </td>
-          <td>(</td>
-          <td class="paramtype">final ContextMenu&#160;</td>
-          <td class="paramname"><em>menu</em></td><td>)</td>
-          <td><code> [protected]</code></td>
         </tr>
       </table>
 </div>
@@ -229,7 +193,7 @@ Protected Member Functions</h2></td></tr>
 </iframe>
 </div>
 
-<hr class="footer"/><address class="footer"><small>Generated on Mon Jun 25 2012 02:42:29 for App by&#160;
+<hr class="footer"/><address class="footer"><small>Generated on Fri Jun 29 2012 21:28:47 for App by&#160;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.4 </small></address>
 </body>

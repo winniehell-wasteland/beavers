@@ -68,7 +68,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div>
 <div class="header">
   <div class="summary">
-<a href="#pub-methods">Public Member Functions</a>  </div>
+<a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pac-attribs">Package Attributes</a>  </div>
   <div class="headertitle">
 <div class="title">org.beavers.ingame.Soldier Class Reference</div>  </div>
 </div>
@@ -87,33 +88,39 @@ Inheritance diagram for org.beavers.ingame.Soldier:</div>
 <table class="memberdecls">
 <tr><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a0d7c7ee3364ada442ebef527692c1034">Soldier</a> (final int pTeam, final TMXTile pInitialPosition)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#af43bb172a02d349f1db3e21405ef85b9">Soldier</a> (final int pTeam, final TMXLayer floor, final TMXTile pInitialPosition)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html">Shot</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a5c75e7cdad60be20db4a82ffed414e66">getShot</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#aad2ddf9f06e87449526ee9501ca5c8da">getLineA</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ae95ac9e2e1ee3b39612ed7663df7b547">getLineB</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">float[]&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a9b4dbbd416463f9362afaf528e67d1e8">getCenter</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#adf3cd226307e577581b7235397758b71">addWayPoint</a> (final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_way_point.html">WayPoint</a> pWayPoint)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a0fbece8a86a0e010a56e7e068875bed8">changeHP</a> (final int pOffset)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ac7e39867e30322db973ce84938fbf788">faceTarget</a> (final TMXTile pTarget, final IModifierListener&lt; IEntity &gt; pListener)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">Path&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a730f893fe5976cf266aaaadd0999c794">findPath</a> (final IPathFinder&lt; <a class="el" href="interfaceorg_1_1beavers_1_1ingame_1_1_game_object.html">GameObject</a> &gt; pPathFinder, final TMXTile pTarget)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a133531f9db5cfda08c5a0898818d24c4">fireShot</a> (final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html">Shot</a> pShot, final TMXTile pTarget)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a73bc971fc3e80fd1dd949e330121057c">getHealthPercentage</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#adc8789a6ae9ced8fe4069e4d3986bdc9">fireShot</a> (final TMXTile pTarget, final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_activity.html">GameActivity</a> pActivity)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_way_point.html">WayPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ab52e883b40786c4cbd0b6742750b6293">getFirstWaypoint</a> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a70fb09f46e4612a9d416e9b63e582e1d">getHP</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ae8b59300b099e08928044c3c3b4c6c13">getStepCost</a> (final ITiledMap&lt; <a class="el" href="interfaceorg_1_1beavers_1_1ingame_1_1_game_object.html">GameObject</a> &gt; pMap, final TMXTile pFrom, final TMXTile pTo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#abc2b2d8d9871558f21b3b0796c316bee">getTeam</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">TMXTile&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a1d20d42f8df7bda7a8966208eabd1f4b">getTile</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_weapon.html">Weapon</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a1a8ad8b3c0e5a29f331ca9b4adc586c4">getWeapon</a> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a7e231443c2b4446f215e2e79be6ae125">changeHP</a> (final int health)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a70fb09f46e4612a9d416e9b63e582e1d">getHP</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#abc16aeb2d621659cbfde3547ccc8e243">markSelected</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ac238b975d1ceee4834034a1823e31a03">markDeselected</a> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a552da1e1b994cacdbabff69b82390be5">move</a> (final TMXTile pTarget)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a65ce9a58c909edaf40251897b50bd898">move</a> (final TMXTile pTarget, final TMXTile pAim, final IModifierListener&lt; IEntity &gt; pListener)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_way_point.html">WayPoint</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a7af8e1b71a6e612f620b64ac21a824d4">popWayPoint</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a03c2d8fb5ba084a9a886924b13cde4d7">removeWayPoint</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#a3d8f75fbe607861bfb805cea5a6e5e9a">stop</a> ()</td></tr>
+<tr><td colspan="2"><h2><a name="pac-attribs"></a>
+Package Attributes</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">final Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ad362024a356a930a36bbd49c6f01b7d4">lineB</a></td></tr>
 </table>
 <hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
-<div class="textblock"><p>soldier sprite </p>
+<div class="textblock"><p>soldier sprite</p>
 <dl class="author"><dt><b>Author:</b></dt><dd><a href="https://github.com/wintermadnezz/">wintermadnezz</a> </dd>
 <dd>
 <a href="https://github.com/winniehell/">winniehell</a> </dd></dl>
 </div><hr/><h2>Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a0d7c7ee3364ada442ebef527692c1034"></a><!-- doxytag: member="org::beavers::ingame::Soldier::Soldier" ref="a0d7c7ee3364ada442ebef527692c1034" args="(final int pTeam, final TMXTile pInitialPosition)" -->
+<a class="anchor" id="af43bb172a02d349f1db3e21405ef85b9"></a><!-- doxytag: member="org::beavers::ingame::Soldier::Soldier" ref="af43bb172a02d349f1db3e21405ef85b9" args="(final int pTeam, final TMXLayer floor, final TMXTile pInitialPosition)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -122,6 +129,12 @@ Public Member Functions</h2></td></tr>
           <td>(</td>
           <td class="paramtype">final int&#160;</td>
           <td class="paramname"><em>pTeam</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">final TMXLayer&#160;</td>
+          <td class="paramname"><em>floor</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -173,7 +186,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a7e231443c2b4446f215e2e79be6ae125"></a><!-- doxytag: member="org::beavers::ingame::Soldier::changeHP" ref="a7e231443c2b4446f215e2e79be6ae125" args="(final int health)" -->
+<a class="anchor" id="a0fbece8a86a0e010a56e7e068875bed8"></a><!-- doxytag: member="org::beavers::ingame::Soldier::changeHP" ref="a0fbece8a86a0e010a56e7e068875bed8" args="(final int pOffset)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -181,12 +194,20 @@ Public Member Functions</h2></td></tr>
           <td class="memname">int org.beavers.ingame.Soldier.changeHP </td>
           <td>(</td>
           <td class="paramtype">final int&#160;</td>
-          <td class="paramname"><em>health</em></td><td>)</td>
+          <td class="paramname"><em>pOffset</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
+<p>increase HP by offset (can be negative) </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pOffset</td><td>increment </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>new HP </dd></dl>
 
 </div>
 </div>
@@ -262,21 +283,21 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a133531f9db5cfda08c5a0898818d24c4"></a><!-- doxytag: member="org::beavers::ingame::Soldier::fireShot" ref="a133531f9db5cfda08c5a0898818d24c4" args="(final Shot pShot, final TMXTile pTarget)" -->
+<a class="anchor" id="adc8789a6ae9ced8fe4069e4d3986bdc9"></a><!-- doxytag: member="org::beavers::ingame::Soldier::fireShot" ref="adc8789a6ae9ced8fe4069e4d3986bdc9" args="(final TMXTile pTarget, final GameActivity pActivity)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void org.beavers.ingame.Soldier.fireShot </td>
           <td>(</td>
-          <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html">Shot</a>&#160;</td>
-          <td class="paramname"><em>pShot</em>, </td>
+          <td class="paramtype">final TMXTile&#160;</td>
+          <td class="paramname"><em>pTarget</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">final TMXTile&#160;</td>
-          <td class="paramname"><em>pTarget</em>&#160;</td>
+          <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_activity.html">GameActivity</a>&#160;</td>
+          <td class="paramname"><em>pActivity</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -297,12 +318,12 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a73bc971fc3e80fd1dd949e330121057c"></a><!-- doxytag: member="org::beavers::ingame::Soldier::getHealthPercentage" ref="a73bc971fc3e80fd1dd949e330121057c" args="()" -->
+<a class="anchor" id="a9b4dbbd416463f9362afaf528e67d1e8"></a><!-- doxytag: member="org::beavers::ingame::Soldier::getCenter" ref="a9b4dbbd416463f9362afaf528e67d1e8" args="()" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int org.beavers.ingame.Soldier.getHealthPercentage </td>
+          <td class="memname">float [] org.beavers.ingame.Soldier.getCenter </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -310,7 +331,23 @@ Public Member Functions</h2></td></tr>
       </table>
 </div>
 <div class="memdoc">
-<p>TODO not yet used </p>
+
+</div>
+</div>
+<a class="anchor" id="ab52e883b40786c4cbd0b6742750b6293"></a><!-- doxytag: member="org::beavers::ingame::Soldier::getFirstWaypoint" ref="ab52e883b40786c4cbd0b6742750b6293" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_way_point.html">WayPoint</a> org.beavers.ingame.Soldier.getFirstWaypoint </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<dl class="return"><dt><b>Returns:</b></dt><dd>first way point assigned to this soldier </dd></dl>
 
 </div>
 </div>
@@ -320,6 +357,55 @@ Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">int org.beavers.ingame.Soldier.getHP </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<dl class="return"><dt><b>Returns:</b></dt><dd>health percentage </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="aad2ddf9f06e87449526ee9501ca5c8da"></a><!-- doxytag: member="org::beavers::ingame::Soldier::getLineA" ref="aad2ddf9f06e87449526ee9501ca5c8da" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Line org.beavers.ingame.Soldier.getLineA </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ae95ac9e2e1ee3b39612ed7663df7b547"></a><!-- doxytag: member="org::beavers::ingame::Soldier::getLineB" ref="ae95ac9e2e1ee3b39612ed7663df7b547" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Line org.beavers.ingame.Soldier.getLineB </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a5c75e7cdad60be20db4a82ffed414e66"></a><!-- doxytag: member="org::beavers::ingame::Soldier::getShot" ref="a5c75e7cdad60be20db4a82ffed414e66" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_shot.html">Shot</a> org.beavers.ingame.Soldier.getShot </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -461,30 +547,6 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a552da1e1b994cacdbabff69b82390be5"></a><!-- doxytag: member="org::beavers::ingame::Soldier::move" ref="a552da1e1b994cacdbabff69b82390be5" args="(final TMXTile pTarget)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void org.beavers.ingame.Soldier.move </td>
-          <td>(</td>
-          <td class="paramtype">final TMXTile&#160;</td>
-          <td class="paramname"><em>pTarget</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>move to target tile </p>
-<dl><dt><b>Parameters:</b></dt><dd>
-  <table class="params">
-    <tr><td class="paramname">pTarget</td><td>target tile </td></tr>
-  </table>
-  </dd>
-</dl>
-
-</div>
-</div>
 <a class="anchor" id="a65ce9a58c909edaf40251897b50bd898"></a><!-- doxytag: member="org::beavers::ingame::Soldier::move" ref="a65ce9a58c909edaf40251897b50bd898" args="(final TMXTile pTarget, final TMXTile pAim, final IModifierListener&lt; IEntity &gt; pListener)" -->
 <div class="memitem">
 <div class="memproto">
@@ -540,7 +602,7 @@ Public Member Functions</h2></td></tr>
 </div>
 <div class="memdoc">
 <p>remove first waypoint </p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>removed waypoint </dd></dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>next invisible waypoint </dd></dl>
 
 </div>
 </div>
@@ -578,6 +640,20 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<hr/><h2>Member Data Documentation</h2>
+<a class="anchor" id="ad362024a356a930a36bbd49c6f01b7d4"></a><!-- doxytag: member="org::beavers::ingame::Soldier::lineB" ref="ad362024a356a930a36bbd49c6f01b7d4" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">final Line <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html#ad362024a356a930a36bbd49c6f01b7d4">org.beavers.ingame.Soldier.lineB</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>app/src/org/beavers/ingame/<a class="el" href="_soldier_8java.html">Soldier.java</a></li>
 </ul>
@@ -596,7 +672,7 @@ Public Member Functions</h2></td></tr>
 </iframe>
 </div>
 
-<hr class="footer"/><address class="footer"><small>Generated on Mon Jun 25 2012 02:42:29 for App by&#160;
+<hr class="footer"/><address class="footer"><small>Generated on Fri Jun 29 2012 21:28:46 for App by&#160;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.4 </small></address>
 </body>

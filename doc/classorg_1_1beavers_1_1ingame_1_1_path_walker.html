@@ -81,7 +81,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr><td colspan="2"><h2><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a29a1ec6967e9fee243138410190fb4cd">PathWalker</a> (final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_scene.html">GameScene</a> pGameScene, final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html">Soldier</a> pSoldier)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#ab5dc97235e9e93574bc39d9bd8f19120">PathWalker</a> (final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_activity.html">GameActivity</a> pGameActivity, final <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_soldier.html">Soldier</a> pSoldier)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a49951e316994dc36c9034a3ce6dd4612">checkTargets</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a2dcf47427e825ee181ea17d550d8b7a5">onModifierStarted</a> (final IModifier&lt; IEntity &gt; pModifier, final IEntity pItem)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a9db6ff5abd13f0c476eed3db74b26bbf">onModifierFinished</a> (final IModifier&lt; IEntity &gt; pModifier, final IEntity pItem)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a7fcadd36b81f742c3dc02468a57e278e">start</a> ()</td></tr>
@@ -89,20 +90,23 @@ Public Member Functions</h2></td></tr>
 <tr><td colspan="2"><h2><a name="pac-attribs"></a>
 Package Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">TMXTile&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a99fe337f3537e4b6e6d833ef3bdc4501">targetTile</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a45bb20dbcb003fffeb825027913599fe">lineB</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a28c2796c410b9569936142eff2dc8c69">parallelA</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">Line&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a8e68f8302b70bf416e8f4693d9a70abb">parallelB</a></td></tr>
 </table>
 <hr/><a name="details" id="details"></a><h2>Detailed Description</h2>
 <div class="textblock"><p>let a soldier walk its waypoints </p>
 <dl class="author"><dt><b>Author:</b></dt><dd><a href="https://github.com/winniehell/">winniehell</a> </dd></dl>
 </div><hr/><h2>Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a29a1ec6967e9fee243138410190fb4cd"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::PathWalker" ref="a29a1ec6967e9fee243138410190fb4cd" args="(final GameScene pGameScene, final Soldier pSoldier)" -->
+<a class="anchor" id="ab5dc97235e9e93574bc39d9bd8f19120"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::PathWalker" ref="ab5dc97235e9e93574bc39d9bd8f19120" args="(final GameActivity pGameActivity, final Soldier pSoldier)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">org.beavers.ingame.PathWalker.PathWalker </td>
           <td>(</td>
-          <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_scene.html">GameScene</a>&#160;</td>
-          <td class="paramname"><em>pGameScene</em>, </td>
+          <td class="paramtype">final <a class="el" href="classorg_1_1beavers_1_1gameplay_1_1_game_activity.html">GameActivity</a>&#160;</td>
+          <td class="paramname"><em>pGameActivity</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -122,6 +126,22 @@ Package Attributes</h2></td></tr>
 </div>
 </div>
 <hr/><h2>Member Function Documentation</h2>
+<a class="anchor" id="a49951e316994dc36c9034a3ce6dd4612"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::checkTargets" ref="a49951e316994dc36c9034a3ce6dd4612" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void org.beavers.ingame.PathWalker.checkTargets </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="ab7a2080cb2e6dbeef4c2bf7688550efc"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::nextTile" ref="ab7a2080cb2e6dbeef4c2bf7688550efc" args="()" -->
 <div class="memitem">
 <div class="memproto">
@@ -209,6 +229,45 @@ Package Attributes</h2></td></tr>
 </div>
 </div>
 <hr/><h2>Member Data Documentation</h2>
+<a class="anchor" id="a45bb20dbcb003fffeb825027913599fe"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::lineB" ref="a45bb20dbcb003fffeb825027913599fe" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Line <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a45bb20dbcb003fffeb825027913599fe">org.beavers.ingame.PathWalker.lineB</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a28c2796c410b9569936142eff2dc8c69"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::parallelA" ref="a28c2796c410b9569936142eff2dc8c69" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Line <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a28c2796c410b9569936142eff2dc8c69">org.beavers.ingame.PathWalker.parallelA</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a8e68f8302b70bf416e8f4693d9a70abb"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::parallelB" ref="a8e68f8302b70bf416e8f4693d9a70abb" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Line <a class="el" href="classorg_1_1beavers_1_1ingame_1_1_path_walker.html#a8e68f8302b70bf416e8f4693d9a70abb">org.beavers.ingame.PathWalker.parallelB</a><code> [package]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a99fe337f3537e4b6e6d833ef3bdc4501"></a><!-- doxytag: member="org::beavers::ingame::PathWalker::targetTile" ref="a99fe337f3537e4b6e6d833ef3bdc4501" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -240,7 +299,7 @@ Package Attributes</h2></td></tr>
 </iframe>
 </div>
 
-<hr class="footer"/><address class="footer"><small>Generated on Mon Jun 25 2012 02:42:29 for App by&#160;
+<hr class="footer"/><address class="footer"><small>Generated on Fri Jun 29 2012 21:28:46 for App by&#160;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.7.4 </small></address>
 </body>
