@@ -13,6 +13,7 @@ import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
+import org.beavers.gameplay.GameState;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -204,6 +205,15 @@ public class GameListActivity extends FragmentActivity
 		listView = new GameListView(this, list) {
 			@Override
 			protected void onCreateContextMenu(final ContextMenu menu) {
+				final GameInfo game = (GameInfo) getItemAtPosition(getCheckedItemPosition());
+
+				// disable context menu
+				if((game == null) || game.getState().equals(GameState.JOINED))
+				{
+					menu.clear();
+					return;
+				}
+
 		        final MenuInflater inflater = getMenuInflater();
 
 				if(getIntent().getAction().equals(ANNOUNCED))
@@ -220,6 +230,7 @@ public class GameListActivity extends FragmentActivity
 		        	menu.getItem(i).setOnMenuItemClickListener(GameListActivity.this);
 		        }
 			}
+
 		};
 
 		setContentView(listView);
