@@ -36,14 +36,14 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	private Shot shot;
 	private final Line lineA,lineB;
 	private final TMXLayer floorLayer;
-	
+
 	public Soldier(final int pTeam, final TMXLayer floor, final TMXTile pInitialPosition) {
 		super(GameActivity.getTileCenterX(pInitialPosition),
 				GameActivity.getTileCenterY(pInitialPosition),
 				getTexture(pTeam));
-		
+
 		floorLayer=floor;
-	
+
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
@@ -52,29 +52,30 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
 
 		team = pTeam;
-		
+
 		wayPoints = new ArrayDeque<WayPoint>();
 		wayPoints.push(new WayPoint(this, null, pInitialPosition));
+		getFirstWaypoint().setFirst();
 
 		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
 
 		setZIndex(GameActivity.ZINDEX_SOLDIERS);
-		
-	
+
+
 		lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
 		lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
 		//this.attachChild(lineA);
 		//this.attachChild(lineB);
-	
-		
+
+
 		//cone.setVisible(false);
 	}
-	
+
 	public Shot getShot(){
 		return shot;
 	}
-	
+
 	public Line getLineA(){
 		return lineA;
 	}
@@ -84,14 +85,14 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public float[] getCenter(){
 		return this.convertLocalToSceneCoordinates(getWidth()/2, getHeight()/2);
 	}
-	
+
 	/**
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
 	 */
 	public void addWayPoint(final WayPoint pWayPoint)
 	{
-		wayPoints.getLast().isLast = false;
+		wayPoints.getLast().setLast(false);
 		wayPoints.addLast(pWayPoint);
 	}
 
@@ -139,7 +140,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTarget target tile
 	 */
 	public void fireShot(final TMXTile pTarget, final GameActivity pActivity){
-		
+
 		final Shot tmpshot = new Shot(this, pActivity);
 		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
 		if(shot!=null){
@@ -147,7 +148,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 		shot = tmpshot;
 		stop();
-		
+
 		faceTarget(pTarget, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
@@ -159,6 +160,11 @@ public class Soldier extends AnimatedSprite implements GameObject {
 				shot.fire(pTarget);
 			}
 		});
+	}
+
+	public WayPoint getFirstWaypoint()
+	{
+		return wayPoints.getFirst();
 	}
 
 	/**
@@ -312,12 +318,13 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	/**
 	 * remove first waypoint
-	 * @return removed waypoint
+	 * @return next invisible waypoint
 	 */
 	public WayPoint popWayPoint() {
 		if(wayPoints.size() > 1)
 		{
 			wayPoints.removeFirst();
+			wayPoints.getFirst().setFirst();
 			return wayPoints.getFirst();
 		}
 		else
@@ -334,7 +341,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		if(wayPoints.size() > 1)
 		{
 			wayPoints.removeLast();
-			wayPoints.getLast().isLast = true;
+			wayPoints.getLast().setLast(true);
 		}
 	}
 

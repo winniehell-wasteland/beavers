@@ -21,10 +21,6 @@ import android.view.MenuItem;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
-
-	/** true iff this is the last waypoint of the corresponding soldier */
-	public boolean isLast = true;
-
 	/**
 	 * default constructor
 	 * @param pSoldier soldier this waypoint belongs to
@@ -98,9 +94,16 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	}
 
 	@Override
+	public void onAttached() {
+		super.onAttached();
+		getParent().sortChildren();
+	}
+
+	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
 		pMenu.findItem(R.id.context_menu_waypoint_remove).setEnabled(isLast);
+		pMenu.findItem(R.id.context_menu_waypoint_remove).setVisible(!isFirst);
 		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
 		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
 	}
@@ -115,8 +118,9 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 
 				detachChildren();
 
-				assert (getParent() instanceof GameActivity);
-				((GameActivity)getParent()).removeObject(this);
+				// FIXME parent is no longer GameActivity
+				//assert (getParent() instanceof GameActivity);
+				//((GameActivity)getParent()).removeObject(this);
 			}
 
 			return true;
@@ -141,12 +145,38 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		waitForAim = false;
 	}
 
+	public void setFirst() {
+		isFirst = true;
+	}
+
+	public void setLast(final boolean isLast) {
+		this.isLast = isLast;
+	}
+
+	@Override
+	protected void onManagedUpdate(final float pSecondsElapsed) {
+
+		// make first way point invisible
+		if(isFirst && soldier.getTile().equals(tile))
+		{
+			getTextureRegion().setHeight(0);
+			getTextureRegion().setWidth(0);
+		}
+
+		super.onManagedUpdate(pSecondsElapsed);
+	}
+
 	private final Path path;
 	private final Soldier soldier;
 	private final TMXTile tile;
 
 	private Aim aim;
 	private boolean waitForAim;
+
+	/** true iff this is the first waypoint of the corresponding soldier */
+	private boolean isFirst = false;
+	/** true iff this is the last waypoint of the corresponding soldier */
+	private boolean isLast = true;
 
 	private void drawPath() {
 		Line line = new Line(0, 0, tile.getTileWidth()/2, tile.getTileHeight()/2,0);
@@ -160,7 +190,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 					2 + Math.abs(dir.getDeltaX()) + Math.abs(dir.getDeltaY()));
 
 			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-			line.setZIndex(GameActivity.ZINDEX_BACKGROUND);
+			line.setZIndex(GameActivity.ZINDEX_WAYPOINTS);
 
 			attachChild(line);
 		}

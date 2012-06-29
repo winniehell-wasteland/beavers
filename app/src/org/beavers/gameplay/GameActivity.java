@@ -138,6 +138,7 @@ public class GameActivity extends BaseGameActivity
 		{
 			final Soldier soldier = (Soldier) pObject;
 			soldiers.get(soldier.getTeam()).add(soldier);
+			mainScene.attachChild(soldier.getFirstWaypoint());
 		}
 	}
 
@@ -281,13 +282,25 @@ public class GameActivity extends BaseGameActivity
 				}
 			}
 
+			contextMenuHandler = null;
+
+			// there is an GameObject on the tile
 			if(gameObjects.containsKey(tile))
 			{
 				final GameObject obj = gameObjects.get(tile);
 
 				if(obj instanceof Soldier)
 				{
-					selectSoldier((Soldier) obj);
+					final Soldier soldier = (Soldier) obj;
+
+					if(soldier.equals(selectedSoldier))
+					{
+						contextMenuHandler = soldier.getFirstWaypoint();
+					}
+					else
+					{
+						selectSoldier(soldier);
+					}
 				}
 				else if(obj instanceof WayPoint)
 				{
@@ -309,13 +322,17 @@ public class GameActivity extends BaseGameActivity
 					else
 					{
 						contextMenuHandler = waypoint;
-						runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								mRenderSurfaceView.showContextMenu();
-							}
-						});
 					}
+				}
+
+				if(contextMenuHandler != null)
+				{
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							mRenderSurfaceView.showContextMenu();
+						}
+					});
 				}
 			}
 			else if(!isTileBlocked(null, tile.getTileColumn(), tile.getTileRow())
