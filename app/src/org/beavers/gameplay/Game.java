@@ -61,7 +61,7 @@ public final class Game implements Parcelable {
 
 	@Override
 	public String toString() {
-		return String.format("%s (%s)", name, id.toString());
+		return id.toString();
 	}
 
 	@Override
