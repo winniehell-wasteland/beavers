@@ -41,7 +41,7 @@ public class Aim extends Sprite {
 		for(double pos = padding; pos < Math.max(dist-padding, 0); pos += STEP_SIZE)
 		{
 			line.setColor(1.0f, 0.0f, 0.0f, 0.5f);
-			line.setZIndex(GameActivity.ZINDEX_BACKGROUND);
+			line.setZIndex(GameActivity.ZINDEX_AIMPOINTS);
 			attachChild(line);
 
 			line = new Line(line.getX1() + STEP_SIZE*distX, line.getY1() + STEP_SIZE*distY,

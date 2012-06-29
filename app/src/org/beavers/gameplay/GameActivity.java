@@ -66,6 +66,12 @@ import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
 
+/**
+ * Activity for game display
+ *
+ * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
+ */
 public class GameActivity extends BaseGameActivity
 	implements ITiledMap<GameObject>,
 		IOnSceneTouchListener,

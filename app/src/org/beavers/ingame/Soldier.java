@@ -23,6 +23,7 @@ import org.beavers.gameplay.GameActivity;
 
 /**
  * soldier sprite
+ *
  * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
@@ -33,10 +34,6 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @param pTeam team this soldier is in
 	 * @param pInitialPosition initial position
 	 */
-	private Shot shot;
-	private final Line lineA,lineB;
-	private final TMXLayer floorLayer;
-
 	public Soldier(final int pTeam, final TMXLayer floor, final TMXTile pInitialPosition) {
 		super(GameActivity.getTileCenterX(pInitialPosition),
 				GameActivity.getTileCenterY(pInitialPosition),
@@ -94,6 +91,20 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		wayPoints.getLast().setLast(false);
 		wayPoints.addLast(pWayPoint);
+	}
+
+	/**
+	 * increase HP by offset (can be negative)
+	 * @param pOffset increment
+	 * @return new HP
+	 */
+	public int changeHP(final int pOffset){
+		hp += pOffset;
+
+		if(hp>100)hp=100;
+		if(hp<0)hp=0;
+
+		return hp;
 	}
 
 	/**
@@ -162,17 +173,19 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		});
 	}
 
+	/**
+	 * @return first way point assigned to this soldier
+	 */
 	public WayPoint getFirstWaypoint()
 	{
 		return wayPoints.getFirst();
 	}
 
 	/**
-	 * TODO not yet used
+	 * @return health percentage
 	 */
-	public int getHealthPercentage()
-	{
-		return 1/0;
+	public int getHP(){
+		return hp;
 	}
 
 	/**
@@ -210,16 +223,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	}
 
 	private int hp=100;
-	public int changeHP(final int health){
-		hp+=health;
-		if(hp>100)hp=100;
-		if(hp<0)hp=0;
-		return hp;
-	}
 
-	public int getHP(){
-		return hp;
-	}
 
 	/**
 	 * add selection mark and draw waypoints
@@ -387,6 +391,10 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	/** assigned waypoints */
 	private final ArrayDeque<WayPoint> wayPoints;
+
+	private Shot shot;
+	private final Line lineA,lineB;
+	private final TMXLayer floorLayer;
 
 	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final TMXTile pTarget) {
 		final float angleX = GameActivity.getTileCenterX(pTarget)-pCurrentX;
