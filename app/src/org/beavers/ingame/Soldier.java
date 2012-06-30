@@ -113,6 +113,20 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		{
 			final RotationByModifier rotation = new RotationByModifier(Math.abs(angle)/ROTATION_SPEED, angle);
 
+			// update angle in storage
+			rotation.addModifierListener(new IModifierListener<IEntity>() {
+
+				@Override
+				public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+					storage.viewAngle = getRotation();
+				}
+
+				@Override
+				public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+					storage.viewAngle = getRotation();
+				}
+			});
+
 			rotation.addModifierListener(pListener);
 			registerEntityModifier(rotation);
 		}
@@ -374,6 +388,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			}
 
 		});
+
+		storage.viewAngle = getRotation();
 	}
 
 	/**

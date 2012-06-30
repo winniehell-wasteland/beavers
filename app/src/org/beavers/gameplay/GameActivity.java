@@ -50,7 +50,7 @@ import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
-import org.beavers.storage.SoldierStorage;
+import org.beavers.storage.CustomGSON;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.content.BroadcastReceiver;
@@ -443,11 +443,11 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
+			final Gson gson = CustomGSON.getInstance();
+			Log.e(TAG, gson.toJson(selectedSoldier.getStorage()));
+
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();
-
-			final Gson gson = new Gson();
-			Log.e(TAG, gson.toJson(selectedSoldier.getStorage()));
 
 			//Client.sendDecisions(this, currentGame, new DecisionContainer());
 
@@ -635,8 +635,8 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 	}
 
 	private void loadSoldiers(){
-		addObject(new Soldier(new SoldierStorage(0, new Tile(0, 0))));
-		addObject(new Soldier(new SoldierStorage(0, new Tile(2, 0))));
+		addObject(new Soldier(0, new Tile(0, 0)));
+		addObject(new Soldier(0, new Tile(2, 0)));
 	}
 
 	public void checkTargets(){
