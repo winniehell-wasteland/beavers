@@ -32,6 +32,7 @@ import org.anddev.andengine.input.touch.detector.HoldDetector.IHoldDetectorListe
 import org.anddev.andengine.input.touch.detector.ScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.anddev.andengine.opengl.texture.ITexture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -54,6 +55,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -375,11 +377,15 @@ public class GameActivity extends BaseGameActivity
 		mainScene.registerUpdateHandler(holdDetector);
 		mainScene.setOnSceneTouchListener(this);
 
-final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
+		
+final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
+			
 
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
-				checkTargets();
+				checkTargets(0,1);
+				checkTargets(1,0);
+				updateHUD();
 			}
 		});
 		gameTimer.setAutoReset(true);
@@ -422,7 +428,11 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
 		getTextureManager().loadTexture(textureAtlas);
-
+		
+		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SOLDIER_TEAM1 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96red.png", 0, 0, 3, 2);
+		getTextureManager().loadTexture(textureAtlas);
+		
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
@@ -526,6 +536,8 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 
 	private final static float CAMERA_SPEED = 1.50f;
 	private static final String TAG = "GameScene";
+	private static final ITexture ITexture = null;
+	private static final Typeface Typeface = null;
 
 	/**
 	 * @name detectors
@@ -614,71 +626,88 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		mainScene.attachChild(collisionLayer);
 		mainScene.attachChild(floorLayer);
 	}
-
+	
+	private void updateHUD(){
+		if(getSelectedSoldier()!=null)health_bar.setWidth(getSelectedSoldier().getHP());
+		//update AP;
+	}
+	
+	private Rectangle health_bar;
+	
 	private void loadHUD(){
 		hud=new HUD();
 		hud.setPosition(0, 0);
-        getSelectedSoldier().changeHP(-10);
+        
 		final Rectangle hud_back = new Rectangle(0,0, camera.getWidth(),30);
 		final Rectangle missing_health = new Rectangle(10,10,100,8);
-		final Rectangle health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
-
+		health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
+		
+		
+		//final Font font= new Font(ITexture, Typeface, 12, false, 50);
+		//final Text apText= new Text(0, 0, f, "test");
 		health_bar.setColor(1,0,0);
 		hud_back.setColor(0.2f,0.2f,0.2f);
 		hud_back.setAlpha(0.5f);
 		hud.attachChild(hud_back);
 		hud.attachChild(missing_health);
 		hud.attachChild(health_bar);
+		//hud.attachChild(apText);
 		camera.setHUD(hud);
 
 	}
 	private void loadSoldiers(){
-		addObject(new Soldier(0,collisionLayer, collisionLayer.getTMXTile(0, 0)));
-		addObject(new Soldier(0,collisionLayer, collisionLayer.getTMXTile(2, 0)));
+		addObject(new Soldier(0,collisionLayer, collisionLayer.getTMXTile(0,0)));
+		addObject(new Soldier(0,collisionLayer, collisionLayer.getTMXTile(2,0)));
+		addObject(new Soldier(1,collisionLayer, collisionLayer.getTMXTile(6,9)));
+		addObject(new Soldier(1,collisionLayer, collisionLayer.getTMXTile(8,9)));
 	}
-
-	public void checkTargets(){
-		final Iterator itr=getSoldiers(0).iterator();
-		while(itr.hasNext()){
+/**
+ * 
+ * @param attacking das angreifende Team
+ * @param targets das angegriffene Team
+ */
+	public void checkTargets(final int attacking, final int targets){
+		final Iterator itr=getSoldiers(attacking).iterator();
+		while(itr.hasNext()){  //durchläuft Liste des ersten Teams
 			final Soldier s=(Soldier)itr.next();
-			final Iterator itr2=getSoldiers(0).iterator();
-			while(itr2.hasNext()){
-				final Soldier t=(Soldier)itr2.next();
-				if(s!=t){
-					/* parallelA = new Line(
-							t.getCenter()[0]-(s.getLineA().getX1()-s.getLineA().getX2()),
-							t.getCenter()[1]-(s.getLineA().getY1()-s.getLineA().getY2()),
-							t.getCenter()[0]+(s.getLineA().getX1()-s.getLineA().getX2()),
-							t.getCenter()[1]+(s.getLineA().getY1()-s.getLineA().getY2())
-							);*/
-					parallelB = new Line(
-							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
-							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]),
-							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
-							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
-							);
 
-					parallelA = new Line(
-							t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
-							t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
-							t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
-							t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
-							);
-
-					lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
-							s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
-							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
-							s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
-
-					lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
-							s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
-							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
-							s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
-
-
-					if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){
-
-							s.fireShot(t.getTile(), this);
+			final Iterator itr2=getSoldiers(targets).iterator();
+			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schießt
+				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
+					final Soldier t=(Soldier)itr2.next();
+					if(!t.isdead() && !s.isdead()){  //beide Soldaten müssen noch leben
+						
+						parallelB = new Line(
+								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
+								t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]),
+								t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
+								t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
+								);
+						
+						parallelA = new Line(
+								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
+								t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
+								t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
+								t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
+								);
+						
+						lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
+								s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
+								s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
+								s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
+						
+						lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
+								s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
+								s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
+								s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
+					
+						
+						if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){ //Soldat des zweiten Teams ist im Sichtbereich
+					
+								s.fireShot(t, this);
+							
+						}
+						
 
 					}
 
@@ -700,5 +729,8 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 			loadHUD();
 			mainScene.sortChildren();
 		}
+
 	}
+	
+	
 }

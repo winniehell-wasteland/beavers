@@ -12,4 +12,5 @@ public enum Textures {
 	public static TiledTextureRegion SOLDIER_TEAM0 = null;
 	public static TextureRegion WAYPOINT = null;
 	public static TextureRegion CONE =null;
+	public static TiledTextureRegion SOLDIER_TEAM1 =null;
 }

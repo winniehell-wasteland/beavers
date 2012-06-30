@@ -106,8 +106,8 @@ public class Shot implements GameObject{
    TimerHandler shootTimer;
    Sprite currentShot;
 	
-   public void fire(final TMXTile pTarget){
-		
+   public void fire(final Soldier targetSoldier){
+		final TMXTile pTarget=targetSoldier.getTile();
 	
 		shootTimer = new TimerHandler(delay,new ITimerCallback() {
 			
@@ -130,11 +130,11 @@ public class Shot implements GameObject{
 				flash.setPosition(soldier.getWidth()/2,soldier.getHeight()/2-31);
 				soldier.attachChild(flash);
 				
-				final float distx=Math.abs(shot.getX() - GameActivity.getTileCenterX(pTarget));
-					final float disty=Math.abs(shot.getY() - GameActivity.getTileCenterY(pTarget));
+				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);//GameActivity.getTileCenterX(pTarget));
+					final float disty=Math.abs(shot.getY() - targetSoldier.getCenter()[1]);//GameActivity.getTileCenterY(pTarget));
 
 
-					final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (GameActivity.getTileCenterX(target)-10+Math.random()*20), shot.getY(), (float) (GameActivity.getTileCenterY(target)-10+Math.random()*20));
+					final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (targetSoldier.getCenter()[0]-10+Math.random()*20), shot.getY(), (float) (targetSoldier.getCenter()[1]-10+Math.random()*20));
 					moveMod.addModifierListener(new IModifierListener<IEntity>() {
 						Sprite current=currentShot;
 						@Override
@@ -147,7 +147,18 @@ public class Shot implements GameObject{
 						public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
 							// TODO Auto-generated method stub
 							current.detachSelf();
-							
+							if(targetSoldier.getRotation()>soldier.getRotation()-10 && targetSoldier.getRotation()<soldier.getRotation()+10){
+								targetSoldier.changeHP(-20);
+							}
+							else targetSoldier.changeHP(-10);
+							if(!targetSoldier.isShooting())targetSoldier.fireShot(soldier, activity);
+							if(soldier.isdead())stopShooting();
+							if(targetSoldier.isdead()){
+								stopShooting();
+								soldier.setShooting(false);
+								soldier.resume();
+								if(targetSoldier.getShot()!=null)targetSoldier.getShot().stopShooting();
+							}
 						}
 					});
 					
@@ -170,6 +181,7 @@ public class Shot implements GameObject{
 	 
 	 activity.getEngine().unregisterUpdateHandler(shootTimer);
 	 shootTimer=null;
+	 soldier.setShooting(false);
  }
 
 	private void spriteExpire(final Sprite flash)

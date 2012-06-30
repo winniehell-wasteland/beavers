@@ -21,6 +21,9 @@ import android.view.MenuItem;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
+
+	
+
 	/**
 	 * default constructor
 	 * @param pSoldier soldier this waypoint belongs to
@@ -92,13 +95,13 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	public boolean isWaitingForAim() {
 		return waitForAim;
 	}
-
+	
 	@Override
 	public void onAttached() {
 		super.onAttached();
 		getParent().sortChildren();
 	}
-
+	
 	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
@@ -117,7 +120,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 				soldier.removeWayPoint();
 
 				detachChildren();
-
+			
 				// FIXME parent is no longer GameActivity
 				//assert (getParent() instanceof GameActivity);
 				//((GameActivity)getParent()).removeObject(this);
@@ -149,7 +152,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 			waitForAim = false;
 		}
 	}
-
+	
 	public void setFirst() {
 		isFirst = true;
 	}
@@ -157,7 +160,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 	public void setLast(final boolean isLast) {
 		this.isLast = isLast;
 	}
-
+	
 	@Override
 	protected void onManagedUpdate(final float pSecondsElapsed) {
 		/**/
@@ -172,18 +175,17 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		super.onManagedUpdate(pSecondsElapsed);
 	}
 
+	
 	private final Path path;
 	private final Soldier soldier;
 	private final TMXTile tile;
 
 	private Aim aim;
 	private boolean waitForAim;
-
 	/** true iff this is the first waypoint of the corresponding soldier */
 	private boolean isFirst = false;
 	/** true iff this is the last waypoint of the corresponding soldier */
 	private boolean isLast = true;
-
 	private void drawPath() {
 		Line line = new Line(0, 0, tile.getTileWidth()/2, tile.getTileHeight()/2,0);
 
@@ -202,3 +204,4 @@ public class WayPoint extends Sprite implements ContextMenuHandler, GameObject {
 		}
 	}
 }
+
