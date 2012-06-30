@@ -8,6 +8,7 @@ import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.sprite.AnimatedSprite;
 import org.anddev.andengine.entity.sprite.Sprite;
+import org.anddev.andengine.opengl.texture.region.TextureRegion;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
@@ -33,50 +34,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @param pTeam team this soldier is in
 	 * @param pInitialPosition initial position
 	 */
-	public Soldier(final SoldierStorage pStorage) {
-		super(pStorage.waypoints.getFirst().tile.getCenterX(),
-			pStorage.waypoints.getFirst().tile.getCenterY(),
-			getTexture(pStorage.team));
-
-		storage = pStorage;
-
-		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
-
-		//Selection Circle
-		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
-		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
-
-		for(final WaypointStorage wpstorage : storage.waypoints)
-		{
-			final WayPoint waypoint = new WayPoint(this, wpstorage);
-
-			if(firstWaypoint == null)
-			{
-				firstWaypoint = waypoint;
-			}
-
-			if(lastWaypoint != null)
-			{
-				lastWaypoint.setNext(waypoint);
-				waypoint.setPrevious(lastWaypoint);
-			}
-
-			lastWaypoint = waypoint;
-		}
-
-		stopAnimation(0);
-		setRotationCenter(getWidth()/2, getHeight()/2);
-
-		setZIndex(GameActivity.ZINDEX_SOLDIERS);
-
-
-		lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
-		lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
-		//this.attachChild(lineA);
-		//this.attachChild(lineB);
-
-
-		//cone.setVisible(false);
+	public Soldier(final int pTeam, final Tile pInitialPosition) {
+		this(pTeam, pInitialPosition, getTexture(pTeam));
 	}
 
 	public Shot getShot(){
@@ -439,6 +398,60 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	private Shot shot;
 	private final Line lineA,lineB;
+
+		/**
+		 * automatically center soldier on tile using the texture region
+		 * @see Soldier#Soldier(int, Tile)
+		 * @param pTiledTextureRegion
+		 */
+		private Soldier(final int pTeam, final Tile pTile,
+		                final TiledTextureRegion pTiledTextureRegion) {
+			super(pTile.getCenterX() - pTiledTextureRegion.getTileWidth()/2,
+			      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
+			      pTiledTextureRegion);
+
+			storage = new SoldierStorage(pTeam, pTile);
+
+			//Selection Circle
+			final TextureRegion selectionTexture =
+				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
+			selectionMark = new Sprite(
+				getWidth()/2 - selectionTexture.getWidth()/2,
+				getHeight()/2 - selectionTexture.getHeight()/2 + 5,
+				selectionTexture);
+
+			for(final WaypointStorage wpstorage : storage.waypoints)
+			{
+				final WayPoint waypoint = new WayPoint(this, wpstorage);
+
+				if(firstWaypoint == null)
+				{
+					firstWaypoint = waypoint;
+				}
+
+				if(lastWaypoint != null)
+				{
+					lastWaypoint.setNext(waypoint);
+					waypoint.setPrevious(lastWaypoint);
+				}
+
+				lastWaypoint = waypoint;
+			}
+
+			stopAnimation(0);
+			setRotationCenter(getWidth()/2, getHeight()/2);
+
+			setZIndex(GameActivity.ZINDEX_SOLDIERS);
+
+
+			lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
+			lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
+			//this.attachChild(lineA);
+			//this.attachChild(lineB);
+
+
+			//cone.setVisible(false);
+		}
 
 	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final Tile pTarget) {
 		final float angleX = pTarget.getCenterX() - pCurrentX;
