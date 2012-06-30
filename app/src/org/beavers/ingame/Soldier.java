@@ -1,5 +1,7 @@
 package org.beavers.ingame;
 
+import java.util.ArrayDeque;
+
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
@@ -18,8 +20,6 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
-import org.beavers.storage.SoldierStorage;
-import org.beavers.storage.WaypointStorage;
 
 /**
  * soldier sprite
@@ -67,10 +67,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			return null;
 		}
 
-		final WaypointStorage wpstorage = new WaypointStorage(path, pTile);
-		storage.waypoints.addLast(wpstorage);
+		final WayPoint waypoint = new WayPoint(this, path, pTile);
+		return addWayPoint(waypoint);
+	}
 
-		final WayPoint waypoint = new WayPoint(this, wpstorage);
+	public WayPoint addWayPoint(final WayPoint waypoint) {
+		waypoints.addLast(waypoint);
 
 		lastWaypoint.setNext(waypoint);
 		waypoint.setPrevious(lastWaypoint);
@@ -116,20 +118,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		else
 		{
 			final RotationByModifier rotation = new RotationByModifier(Math.abs(angle)/ROTATION_SPEED, angle);
-
-			// update angle in storage
-			rotation.addModifierListener(new IModifierListener<IEntity>() {
-
-				@Override
-				public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
-					storage.viewAngle = getRotation();
-				}
-
-				@Override
-				public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-					storage.viewAngle = getRotation();
-				}
-			});
 
 			rotation.addModifierListener(pListener);
 			registerEntityModifier(rotation);
@@ -222,17 +210,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	}
 
 	/**
-	 * @return serializable storage
-	 */
-	public SoldierStorage getStorage() {
-		return storage;
-	}
-
-	/**
 	 * @return team the soldier belongs to
 	 */
 	public int getTeam() {
-		return storage.team;
+		return team;
 	}
 
 	/**
@@ -241,6 +222,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	@Override
 	public Tile getTile() {
 		return Tile.fromCoordinates(getCenter()[0], getCenter()[1]);
+	}
+
+	public ArrayDeque<WayPoint> getWaypoints() {
+		return waypoints;
 	}
 
 	/**
@@ -373,7 +358,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			firstWaypoint.detachSelf();
 			firstWaypoint = firstWaypoint.getNext();
 
-			storage.waypoints.removeFirst();
+			waypoints.removeFirst();
 
 			return firstWaypoint;
 		}
@@ -402,7 +387,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			lastWaypoint.getPrevious().setNext(null);
 			lastWaypoint = lastWaypoint.getPrevious();
 
-			storage.waypoints.removeLast();
+			waypoints.removeLast();
 		}
 	}
 
@@ -433,8 +418,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			}
 
 		});
-
-		storage.viewAngle = getRotation();
 	}
 
 	public void resume(){
@@ -462,13 +445,17 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private boolean dead=false;
 	private boolean shooting=false;
 
-	private final SoldierStorage storage;
-
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
 
 	private WayPoint firstWaypoint;
 	private WayPoint lastWaypoint;
+
+	/** team the soldier belongs to */
+	private int team;
+
+	/** waypoints of the soldier */
+	private final ArrayDeque<WayPoint> waypoints;
 
 	private Shot shot;
 	private final Line lineA,lineB;
@@ -484,8 +471,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
 			      pTiledTextureRegion);
 
-			storage = new SoldierStorage(pTeam, pTile);
-
 			//Selection Circle
 			final TextureRegion selectionTexture =
 				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
@@ -494,23 +479,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				getHeight()/2 - selectionTexture.getHeight()/2 + 5,
 				selectionTexture);
 
-			for(final WaypointStorage wpstorage : storage.waypoints)
-			{
-				final WayPoint waypoint = new WayPoint(this, wpstorage);
+			waypoints = new ArrayDeque<WayPoint>();
 
-				if(firstWaypoint == null)
-				{
-					firstWaypoint = waypoint;
-				}
+			firstWaypoint = new WayPoint(this, null, pTile);
+			lastWaypoint = firstWaypoint;
 
-				if(lastWaypoint != null)
-				{
-					lastWaypoint.setNext(waypoint);
-					waypoint.setPrevious(lastWaypoint);
-				}
-
-				lastWaypoint = waypoint;
-			}
+			waypoints.add(firstWaypoint);
 
 			stopAnimation(0);
 			setRotationCenter(getWidth()/2, getHeight()/2);

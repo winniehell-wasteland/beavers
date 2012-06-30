@@ -454,7 +454,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
 			final Gson gson = CustomGSON.getInstance();
-			Log.e(TAG, gson.toJson(selectedSoldier.getStorage()));
+			Log.e(TAG, gson.toJson(selectedSoldier));
 
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();

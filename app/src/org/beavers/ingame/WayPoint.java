@@ -8,7 +8,6 @@ import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.storage.CustomGSON;
-import org.beavers.storage.WaypointStorage;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.util.Log;
@@ -28,33 +27,26 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	 * @param pPath path from previous waypoint
 	 * @param pTile position of waypoint
 	 */
-	public WayPoint(final Soldier pSoldier, final WaypointStorage pStorage) {
-		super(pStorage.tile.getX(), pStorage.tile.getY(),
-				pStorage.tile.getTileWidth(), pStorage.tile.getTileHeight(),
-				Textures.WAYPOINT.deepCopy());
+	public WayPoint(final Soldier pSoldier, final Path pPath, final Tile pTile) {
+		super(pTile.getX(), pTile.getY(),
+			pTile.getTileWidth(), pTile.getTileHeight(),
+			Textures.WAYPOINT.deepCopy());
 
 		soldier = pSoldier;
-		storage = pStorage;
+		tile = pTile;
+
+		path = pPath;
 
 		waitForAim = false;
 
-		if(storage.aim != null)
-		{
-			setAim(storage.aim);
-		}
-
-		if(storage.path != null)
+		if(path != null)
 		{
 			drawPath();
 
-			Log.e(getClass().getName(), CustomGSON.getInstance().toJson(pStorage));
+			Log.e(getClass().getName(), CustomGSON.getInstance().toJson(this));
 		}
 
 		setZIndex(GameActivity.ZINDEX_WAYPOINTS);
-	}
-
-	public WayPoint(final Soldier pSoldier, final Path pPath, final Tile pTile) {
-		this(pSoldier, new WaypointStorage(pPath, pTile));
 	}
 
 	public Aim getAim() {
@@ -71,7 +63,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	}
 
 	public Path getPath() {
-		return storage.path;
+		return path;
 	}
 
 	public WayPoint getPrevious() {
@@ -84,7 +76,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 
 	@Override
 	public Tile getTile() {
-		return storage.tile;
+		return tile;
 	}
 
 	public boolean isWaitingForAim() {
@@ -134,13 +126,9 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		{
 			detachChild(aim);
 			aim = null;
-
-			storage.aim = null;
 		} else {
 			aim = new Aim(this, pTile);
 			attachChild(aim);
-
-			storage.aim = pTile;
 
 			waitForAim = false;
 		}
@@ -172,12 +160,13 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	}
 
 	private final Soldier soldier;
-	private final WaypointStorage storage;
+	private final Tile tile;
 
 	/**
 	 * @name path
 	 * @{
 	 */
+	private final Path path;
 	private WayPoint next;
 	private WayPoint previous;
 	/**
