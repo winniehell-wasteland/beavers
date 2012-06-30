@@ -1,8 +1,5 @@
 package org.beavers.ingame;
 
-import java.util.ArrayList;
-import java.util.ListIterator;
-
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.path.Direction;
@@ -10,9 +7,11 @@ import org.anddev.andengine.util.path.Path;
 import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
+import org.beavers.storage.CustomGSON;
 import org.beavers.storage.WaypointStorage;
 import org.beavers.ui.ContextMenuHandler;
 
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 
@@ -39,9 +38,16 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 
 		waitForAim = false;
 
+		if(storage.aim != null)
+		{
+			setAim(storage.aim);
+		}
+
 		if(storage.path != null)
 		{
 			drawPath();
+
+			Log.e(getClass().getName(), CustomGSON.getInstance().toJson(pStorage));
 		}
 
 		setZIndex(GameActivity.ZINDEX_WAYPOINTS);
@@ -64,7 +70,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		return next;
 	}
 
-	public ArrayList<int[]> getPath() {
+	public Path getPath() {
 		return storage.path;
 	}
 
@@ -194,31 +200,19 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		Line line = new Line(0, 0,
 			getTile().getTileWidth()/2, getTile().getTileHeight()/2, 0);
 
-		Tile lastTile = null;
-
-		final ListIterator<int[]> it = getPath().listIterator(getPath().size());
-
-		while(it.hasPrevious())
+		for(int i = getPath().getLength() - 1; i > 0; --i)
 		{
-			final int[] step = it.previous();
-			final Tile tile = new Tile(step[0], step[1]);
+			final Direction dir = getPath().getDirectionToPreviousStep(i);
 
-			if(lastTile != null)
-			{
-				final Direction dir = lastTile.getDirectionTo(tile);
-
-				line = new Line(line.getX2(), line.getY2(),
+			line = new Line(line.getX2(), line.getY2(),
 					line.getX2() + dir.getDeltaX()*getTile().getTileWidth(),
 					line.getY2() + dir.getDeltaY()*getTile().getTileHeight(),
 					2 + Math.abs(dir.getDeltaX()) + Math.abs(dir.getDeltaY()));
 
-				line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
-				line.setZIndex(GameActivity.ZINDEX_WAYPOINTS);
+			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
+			line.setZIndex(GameActivity.ZINDEX_WAYPOINTS);
 
-				attachChild(line);
-			}
-
-			lastTile = tile;
+			attachChild(line);
 		}
 	}
 }

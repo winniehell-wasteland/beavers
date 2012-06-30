@@ -16,7 +16,7 @@ public class SoldierStorage {
 	public int team;
 	/** direction in that the soldier looks */
 	@SerializedName("view_angle")
-	public int viewAngle;
+	public float viewAngle;
 	/** waypoints of the soldier */
 	public ArrayDeque<WaypointStorage> waypoints;
 
