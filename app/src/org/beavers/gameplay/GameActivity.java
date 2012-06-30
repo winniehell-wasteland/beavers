@@ -51,6 +51,7 @@ import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
+import org.beavers.storage.SoldierStorage;
 import org.beavers.ui.ContextMenuHandler;
 
 import android.content.BroadcastReceiver;
@@ -69,6 +70,8 @@ import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
+
+import com.google.gson.Gson;
 
 /**
  * Activity for game display
@@ -135,16 +138,9 @@ public class GameActivity extends BaseGameActivity
 			{
 				final Soldier soldier = (Soldier) pObject;
 				soldiers.get(soldier.getTeam()).add(soldier);
-				mainScene.attachChild(soldier.getFirstWaypoint());
 			}
 		}
 	}
-
-	public TMXLayer getFloorLayer() {
-		return floorLayer;
-	}
-
-
 
 	public Scene getMainScene() {
 		return mainScene;
@@ -208,6 +204,12 @@ public class GameActivity extends BaseGameActivity
 	@Override
 	public boolean isTileBlocked(final IMovableObject pObject,
 	                             final int pTileColumn, final int pTileRow) {
+		if((pTileColumn < 0) || (pTileColumn >= getTileColumns())
+		   || (pTileRow < 0) || (pTileRow >= getTileRows()))
+		{
+			return true;
+		}
+
 		final TMXTile tile = collisionLayer.getTMXTile(pTileColumn, pTileRow);
 		//return tile!=null;
 
@@ -344,6 +346,10 @@ public class GameActivity extends BaseGameActivity
 					selectedSoldier.addWayPoint(getPathFinder(), tile);
 				addObject(waypoint);
 			}
+			else
+			{
+				Log.e(TAG, "no obj");
+			}
 		}
 	}
 
@@ -449,6 +455,9 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		case R.id.menu_execute:
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();
+
+			final Gson gson = new Gson();
+			Log.e(TAG, gson.toJson(selectedSoldier.getStorage()));
 
 			//Client.sendDecisions(this, currentGame, new DecisionContainer());
 
@@ -649,10 +658,10 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	private void loadSoldiers(){
-		addObject(new Soldier(0, new Tile(0, 0)));
-		addObject(new Soldier(0, new Tile(2, 0)));
-		addObject(new Soldier(1, new Tile(6, 9)));
-		addObject(new Soldier(1, new Tile(8, 9)));
+		addObject(new Soldier(new SoldierStorage(0, new Tile(0, 0))));
+		addObject(new Soldier(new SoldierStorage(0, new Tile(2, 0))));
+		addObject(new Soldier(new SoldierStorage(1, new Tile(6, 9))));
+		addObject(new Soldier(new SoldierStorage(1, new Tile(8, 9))));
 	}
 /**
  * 

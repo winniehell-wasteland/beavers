@@ -4,7 +4,6 @@ import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
-import org.anddev.andengine.util.path.Path.Step;
 import org.beavers.gameplay.GameActivity;
 
 /**
@@ -100,14 +99,14 @@ public class PathWalker implements IModifierListener<IEntity> {
 	public void nextTile() {
 		sourceTile = targetTile;
 
-		if(stepIndex >= waypoint.getPath().getLength())
+		if(stepIndex >= waypoint.getPath().size())
 		{
 			nextWaypoint();
 		}
 
 		if(waypoint != null)
 		{
-			final Step nextStep = waypoint.getPath().getStep(stepIndex);
+			final int[] nextStep = waypoint.getPath().get(stepIndex);
 
 			++stepIndex;
 
@@ -119,3 +118,4 @@ public class PathWalker implements IModifierListener<IEntity> {
 		}
 	}
 }
+
