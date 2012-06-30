@@ -158,14 +158,14 @@ public class PathWalker implements IModifierListener<IEntity> {
 	public void nextTile() {
 		sourceTile = targetTile;
 
-		if(stepIndex >= waypoint.getPath().getLength())
+		if(stepIndex >= waypoint.getPath().size())
 		{
 			nextWaypoint();
 		}
 
 		if(waypoint != null)
 		{
-			targetTile = new Tile(waypoint.getPath().getStep(stepIndex));
+			targetTile = new Tile(waypoint.getPath().get(stepIndex));
 
 			++stepIndex;
 		}

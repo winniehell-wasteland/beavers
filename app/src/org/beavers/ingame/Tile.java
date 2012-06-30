@@ -49,6 +49,23 @@ public class Tile {
 		this(pTile.getTileColumn(), pTile.getTileRow());
 	}
 
+	public Tile(final int[] pComponents) {
+		this(pComponents[0], pComponents[1]);
+	}
+
+	@Override
+	public boolean equals(final Object pOther) {
+		if(pOther instanceof Tile)
+		{
+			final Tile other = (Tile) pOther;
+
+			return (getColumn() == other.getColumn())
+			        && (getRow() == other.getRow());
+		}
+
+		return false;
+	}
+
 	/**
 	 * @return x-coordinate of tile center
 	 */
@@ -118,11 +135,16 @@ public class Tile {
 		return TILE_HEIGHT*row;
 	}
 
+	@Override
+	public int hashCode() {
+		return 101*((column << 16) | row);
+	}
+
 	/**
 	 * @return tile at given coordinates
 	 */
 	public static Tile fromCoordinates(final float pX, final float pY) {
-		return new Tile(Math.round(pX/TILE_WIDTH), Math.round(pY/TILE_HEIGHT));
+		return new Tile((int) Math.floor(pX/TILE_WIDTH), (int) Math.floor(pY/TILE_HEIGHT));
 	}
 
 	/**

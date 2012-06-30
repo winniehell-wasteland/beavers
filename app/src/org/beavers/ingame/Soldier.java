@@ -1,7 +1,5 @@
 package org.beavers.ingame;
 
-import java.util.ArrayDeque;
-
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
@@ -13,11 +11,14 @@ import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
+import org.anddev.andengine.util.path.Direction;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
+import org.beavers.storage.SoldierStorage;
+import org.beavers.storage.WaypointStorage;
 
 /**
  * soldier sprite
@@ -25,16 +26,19 @@ import org.beavers.gameplay.GameActivity;
  * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class Soldier extends AnimatedSprite implements GameObject {
+public class Soldier extends AnimatedSprite implements IGameObject, IMovableObject {
 
 	/**
 	 * default constructor
 	 * @param pTeam team this soldier is in
 	 * @param pInitialPosition initial position
 	 */
-	public Soldier(final int pTeam, final Tile pInitialPosition) {
-		super(pInitialPosition.getCenterX(), pInitialPosition.getCenterY(),
-			getTexture(pTeam));
+	public Soldier(final SoldierStorage pStorage) {
+		super(pStorage.waypoints.getFirst().tile.getCenterX(),
+			pStorage.waypoints.getFirst().tile.getCenterY(),
+			getTexture(pStorage.team));
+
+		storage = pStorage;
 
 		setPosition(getX() - getWidth()/2, getY() - getHeight()/2);
 
@@ -42,11 +46,23 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		selectionMark = new Sprite(0, 0, Textures.SOLDIER_SELECTION_CIRCLE.deepCopy());
 		selectionMark.setPosition((getWidth()-selectionMark.getWidth())/2, (getHeight()-selectionMark.getHeight())/2+5);
 
-		team = pTeam;
+		for(final WaypointStorage wpstorage : storage.waypoints)
+		{
+			final WayPoint waypoint = new WayPoint(this, wpstorage);
 
-		wayPoints = new ArrayDeque<WayPoint>();
-		wayPoints.push(new WayPoint(this, null, pInitialPosition));
-		getFirstWaypoint().setFirst();
+			if(firstWaypoint == null)
+			{
+				firstWaypoint = waypoint;
+			}
+
+			if(lastWaypoint != null)
+			{
+				lastWaypoint.setNext(waypoint);
+				waypoint.setPrevious(lastWaypoint);
+			}
+
+			lastWaypoint = waypoint;
+		}
 
 		stopAnimation(0);
 		setRotationCenter(getWidth()/2, getHeight()/2);
@@ -81,10 +97,28 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
 	 */
-	public void addWayPoint(final WayPoint pWayPoint)
+	public WayPoint addWayPoint(final IPathFinder<IMovableObject> pPathFinder,
+	                            final Tile pTile)
 	{
-		wayPoints.getLast().setLast(false);
-		wayPoints.addLast(pWayPoint);
+		final Path path = findPath(pPathFinder, pTile);
+
+		// there is no path
+		if(path == null)
+		{
+			return null;
+		}
+
+		final WaypointStorage wpstorage = new WaypointStorage(path, pTile);
+		storage.waypoints.addLast(wpstorage);
+
+		final WayPoint waypoint = new WayPoint(this, wpstorage);
+
+		lastWaypoint.setNext(waypoint);
+		waypoint.setPrevious(lastWaypoint);
+
+		lastWaypoint = waypoint;
+
+		return waypoint;
 	}
 
 	/**
@@ -131,8 +165,10 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @return a path from last waypoint to the target position (or null if there is none)
 	 */
 	@Override
-	public Path findPath(final IPathFinder<GameObject> pPathFinder, final Tile pTarget) {
-		return wayPoints.getLast().findPath(pPathFinder, pTarget);
+	public Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
+		return pPathFinder.findPath(this, 0,
+			lastWaypoint.getTile().getColumn(), lastWaypoint.getTile().getRow(),
+			pTarget.getColumn(), pTarget.getRow());
 	}
 
 	/**
@@ -168,7 +204,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	public WayPoint getFirstWaypoint()
 	{
-		return wayPoints.getFirst();
+		return firstWaypoint;
 	}
 
 	/**
@@ -176,6 +212,12 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	public int getHP(){
 		return hp;
+	}
+	/**
+	 * @return last way point assigned to this soldier
+	 */
+	public WayPoint getLastWaypoint() {
+		return lastWaypoint;
 	}
 
 	/**
@@ -185,15 +227,34 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @return step cost for soldier and given tiles
 	 */
 	@Override
-	public float getStepCost(final ITiledMap<GameObject> pMap, final Tile pFrom, final Tile pTo) {
-		return wayPoints.getLast().getStepCost(pMap, pFrom, pTo);
+	public float getStepCost(final ITiledMap<IMovableObject> pMap, final Tile pFrom, final Tile pTo) {
+		final Direction direction = pFrom.getDirectionTo(pTo);
+
+		// prevent diagonals at blocked tiles
+		if(!direction.isHorizontal() && !direction.isVertical())
+		{
+			if(pMap.isTileBlocked(this, pFrom.getColumn(), pTo.getRow())
+					|| pMap.isTileBlocked(this, pTo.getColumn(), pFrom.getRow()))
+			{
+				return Integer.MAX_VALUE;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * @return serializable storage
+	 */
+	public SoldierStorage getStorage() {
+		return storage;
 	}
 
 	/**
 	 * @return team the soldier belongs to
 	 */
 	public int getTeam() {
-		return team;
+		return storage.team;
 	}
 
 	/**
@@ -201,7 +262,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 */
 	@Override
 	public Tile getTile() {
-		return Tile.fromCoordinates(getCenter()[0]+getWidth()/2, getCenter()[1]+getHeight()/2);
+		return Tile.fromCoordinates(getCenter()[0], getCenter()[1]);
 	}
 
 	/**
@@ -222,16 +283,14 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		attachChild(selectionMark);
 
 		assert getParent() instanceof Scene;
-		final Scene gameScene = (Scene) getParent();
+		final Scene scene = (Scene) getParent();
 
-	    for(final WayPoint waypoint : wayPoints)
+		WayPoint waypoint = firstWaypoint;
+
+		while(waypoint != null)
 		{
-	    	if(waypoint == wayPoints.getFirst())
-	    	{
-	    		continue;
-	    	}
-
-			gameScene.attachChild(waypoint);
+			scene.attachChild(waypoint);
+			waypoint = waypoint.getNext();
 		}
 	}
 
@@ -241,14 +300,12 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	public void markDeselected(){
 		detachChild(selectionMark);
 
-	    for(final WayPoint waypoint : wayPoints)
-		{
-	    	if(waypoint == wayPoints.getFirst())
-	    	{
-	    		continue;
-	    	}
+		WayPoint waypoint = firstWaypoint;
 
+		while(waypoint != null)
+		{
 			waypoint.detachSelf();
+			waypoint = waypoint.getNext();
 		}
 	}
 
@@ -298,15 +355,18 @@ public class Soldier extends AnimatedSprite implements GameObject {
 
 	/**
 	 * remove first waypoint
-	 * @return next invisible waypoint
+	 * @return new first waypoint
 	 */
 	public WayPoint popWayPoint() {
-		if(wayPoints.size() > 1)
+		if(firstWaypoint != lastWaypoint)
 		{
-			wayPoints.removeFirst().detachSelf();
+			firstWaypoint.getNext().setPrevious(null);
+			firstWaypoint.detachSelf();
+			firstWaypoint = firstWaypoint.getNext();
 
-			wayPoints.getFirst().setFirst();
-			return wayPoints.getFirst();
+			storage.waypoints.removeFirst();
+
+			return firstWaypoint;
 		}
 		else
 		{
@@ -314,15 +374,24 @@ public class Soldier extends AnimatedSprite implements GameObject {
 		}
 	}
 
+	@Override
+	public void setRemoveObjectListener(final IRemoveObjectListener pListener) {
+		// TODO Auto-generated method stub
+
+	}
+
 	/**
 	 * remove last waypoint
 	 */
-	public void removeWayPoint()
+	public void removeLastWayPoint()
 	{
-		if(wayPoints.size() > 1)
+		if(firstWaypoint != lastWaypoint)
 		{
-			wayPoints.removeLast();
-			wayPoints.getLast().setLast(true);
+			lastWaypoint.detachSelf();
+			lastWaypoint.getPrevious().setNext(null);
+			lastWaypoint = lastWaypoint.getPrevious();
+
+			storage.waypoints.removeLast();
 		}
 	}
 
@@ -360,14 +429,13 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	 * @}
 	 */
 
+	private final SoldierStorage storage;
+
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
 
-	/** team the soldier belongs to */
-	private final int team;
-
-	/** assigned waypoints */
-	private final ArrayDeque<WayPoint> wayPoints;
+	private WayPoint firstWaypoint;
+	private WayPoint lastWaypoint;
 
 	private Shot shot;
 	private final Line lineA,lineB;
