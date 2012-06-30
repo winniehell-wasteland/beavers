@@ -40,12 +40,13 @@ import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
-import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.communication.Client;
-import org.beavers.ingame.GameObject;
+import org.beavers.ingame.IGameObject;
+import org.beavers.ingame.IMovableObject;
+import org.beavers.ingame.IRemoveObjectListener;
 import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
@@ -76,10 +77,11 @@ import android.widget.Toast;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public class GameActivity extends BaseGameActivity
-	implements ITiledMap<GameObject>,
+	implements ITiledMap<IMovableObject>,
 		IOnSceneTouchListener,
 		IHoldDetectorListener,
-		IScrollDetectorListener
+		IScrollDetectorListener,
+		IRemoveObjectListener
 {
 	/**
 	 * @name z-index constants
@@ -106,7 +108,7 @@ public class GameActivity extends BaseGameActivity
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
 
 		// initialize game object containers
-		gameObjects = new HashMap<Tile, GameObject>();
+		gameObjects = new HashMap<Tile, IGameObject>();
 		soldiers = new ArrayList<HashSet<Soldier>>(getTeamCount());
 
 		for(int i = 0; i < getTeamCount(); ++i)
@@ -119,18 +121,22 @@ public class GameActivity extends BaseGameActivity
 	 * insert a new game object on the map
 	 * @param pObject the object to insert
 	 */
-	public void addObject(final GameObject pObject)
+	public void addObject(final IGameObject pObject)
 	{
-		gameObjects.put(pObject.getTile(), pObject);
-		mainScene.attachChild(pObject);
-
-		mainScene.sortChildren();
-
-		if(pObject instanceof Soldier)
+		if(pObject != null)
 		{
-			final Soldier soldier = (Soldier) pObject;
-			soldiers.get(soldier.getTeam()).add(soldier);
-			mainScene.attachChild(soldier.getFirstWaypoint());
+			gameObjects.put(pObject.getTile(), pObject);
+			pObject.setRemoveObjectListener(this);
+
+			mainScene.attachChild(pObject);
+			mainScene.sortChildren();
+
+			if(pObject instanceof Soldier)
+			{
+				final Soldier soldier = (Soldier) pObject;
+				soldiers.get(soldier.getTeam()).add(soldier);
+				mainScene.attachChild(soldier.getFirstWaypoint());
+			}
 		}
 	}
 
@@ -148,7 +154,7 @@ public class GameActivity extends BaseGameActivity
 		return map;
 	}
 
-	public IPathFinder<GameObject> getPathFinder() {
+	public IPathFinder<IMovableObject> getPathFinder() {
 		return pathFinder;
 	}
 
@@ -168,8 +174,9 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	public float getStepCost(final GameObject pObject, final int pFromTileColumn,
-			final int pFromTileRow, final int pToTileColumn, final int pToTileRow) {
+	public float getStepCost(final IMovableObject pObject,
+		final int pFromTileColumn, final int pFromTileRow,
+		final int pToTileColumn, final int pToTileRow) {
 
 		return pObject.getStepCost(this,
 			new Tile(pFromTileColumn, pFromTileRow),
@@ -199,7 +206,8 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	public boolean isTileBlocked(final GameObject pObject, final int pTileColumn, final int pTileRow) {
+	public boolean isTileBlocked(final IMovableObject pObject,
+	                             final int pTileColumn, final int pTileRow) {
 		final TMXTile tile = collisionLayer.getTMXTile(pTileColumn, pTileRow);
 		//return tile!=null;
 
@@ -207,12 +215,12 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	/**
-	 * move a {@link GameObject} to a new tile
+	 * move a {@link IGameObject} to a new tile
 	 * @param pObject moving object
 	 * @param pSourceTile old position
 	 * @param pTargetTile new position
 	 */
-	public void moveObject(final GameObject pObject,
+	public void moveObject(final IGameObject pObject,
 	                       final Tile pSourceTile, final Tile pTargetTile) {
 		gameObjects.remove(pSourceTile);
 		gameObjects.put(pTargetTile, pObject);
@@ -281,7 +289,7 @@ public class GameActivity extends BaseGameActivity
 			// there is an GameObject on the tile
 			if(gameObjects.containsKey(tile))
 			{
-				final GameObject obj = gameObjects.get(tile);
+				final IGameObject obj = gameObjects.get(tile);
 
 				if(obj instanceof Soldier)
 				{
@@ -332,16 +340,9 @@ public class GameActivity extends BaseGameActivity
 			else if(!isTileBlocked(null, tile.getColumn(), tile.getRow())
 					&& (selectedSoldier != null))
 			{
-				final Path soldierPath =
-					selectedSoldier.findPath(getPathFinder(), tile);
-
-				if(soldierPath != null)
-				{
-					final WayPoint waypoint =
-						new WayPoint(selectedSoldier, soldierPath, tile);
-					selectedSoldier.addWayPoint(waypoint);
-					addObject(waypoint);
-				}
+				final WayPoint waypoint =
+					selectedSoldier.addWayPoint(getPathFinder(), tile);
+				addObject(waypoint);
 			}
 		}
 	}
@@ -353,7 +354,7 @@ public class GameActivity extends BaseGameActivity
 
 		if(map != null)
 		{
-			pathFinder = new AStarPathFinder<GameObject>(this, 1600, true);
+			pathFinder = new AStarPathFinder<IMovableObject>(this, 1600, true);
 		}
 		else
 		{
@@ -458,6 +459,11 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	@Override
+	public void onRemoveObject(final IGameObject pObject) {
+		removeObject(pObject);
+	}
+
+	@Override
 	public boolean onSceneTouchEvent(final Scene pScene, final TouchEvent pSceneTouchEvent) {
 		if(holdDetector.onSceneTouchEvent(pScene, pSceneTouchEvent)
 				| scrollDetector.onSceneTouchEvent(pScene, pSceneTouchEvent))
@@ -486,7 +492,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		// TODO Auto-generated method stub
 	}
 
-	public void removeObject(final GameObject pObject) {
+	public void removeObject(final IGameObject pObject) {
 		if(gameObjects.get(pObject.getTile()).equals(pObject))
 		{
 			gameObjects.remove(pObject.getTile());
@@ -550,7 +556,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	 * @name game object containers
 	 * @{
 	 */
-	private final HashMap<Tile, GameObject> gameObjects;
+	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> soldiers;
 	/**
 	 * @}
@@ -580,7 +586,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	private Line parallelA,parallelB,lineA,lineB;
 
 	private GameInfo currentGame;
-	private AStarPathFinder<GameObject> pathFinder;
+	private AStarPathFinder<IMovableObject> pathFinder;
 
 	private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
 		@Override
@@ -641,6 +647,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		camera.setHUD(hud);
 
 	}
+
 	private void loadSoldiers(){
 		addObject(new Soldier(0, new Tile(0, 0)));
 		addObject(new Soldier(0, new Tile(2, 0)));
