@@ -1,6 +1,11 @@
 package org.beavers.storage;
 
 
+import org.anddev.andengine.util.path.Path;
+import org.beavers.ingame.Soldier;
+import org.beavers.ingame.Tile;
+import org.beavers.ingame.WayPoint;
+
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -20,11 +25,11 @@ public class CustomGSON {
 			final GsonBuilder builder = new GsonBuilder();
 
 			try {
-				setupSerialization(builder, "Path");
-				setupSerialization(builder, "Soldier");
-				setupSerialization(builder, "Tile");
-				setupSerialization(builder, "WayPoint");
-			} catch (final ClassNotFoundException e) {
+				setupSerialization(builder, Path.class);
+				setupSerialization(builder, Soldier.class);
+				setupSerialization(builder, Tile.class);
+				setupSerialization(builder, WayPoint.class);
+			} catch (final Exception e) {
 				Log.e(CustomGSON.class.getName(),
 				      "Could not setup serialization!", e);
 			}
@@ -35,14 +40,19 @@ public class CustomGSON {
 		return instance;
 	}
 
-	/** setup serialization/deserialization for class with given name */
+	/** setup serialization/deserialization for class with given name  */
 	private static void setupSerialization(final GsonBuilder pBuilder,
-	                                       final String pClassName)
-	                    throws ClassNotFoundException {
-		pBuilder.registerTypeAdapter(Class.forName(pClassName),
-                                     Class.forName(pClassName+"Serializer"));
-		pBuilder.registerTypeAdapter(Class.forName(pClassName),
-                                     Class.forName(pClassName+"Deserializer"));
+	                                       final Class<?> pClass)
+	                    throws ClassNotFoundException,
+                               InstantiationException,
+                               IllegalAccessException {
+		final String prefix = CustomGSON.class.getPackage().getName() + "."
+	                          + pClass.getSimpleName();
+
+		pBuilder.registerTypeAdapter(
+			pClass, Class.forName(prefix+"Serializer").newInstance());
+		pBuilder.registerTypeAdapter(
+			pClass, Class.forName(prefix+"Deserializer").newInstance());
 	}
 
 	/** singleton instance */
