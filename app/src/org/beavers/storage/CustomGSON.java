@@ -2,6 +2,7 @@ package org.beavers.storage;
 
 
 import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.Path.Step;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
@@ -28,6 +29,7 @@ public class CustomGSON {
 				final Class<?>[] classes = {
 					Path.class,
 					Soldier.class,
+					Step.class,
 					Tile.class,
 					WayPoint.class
 				};
