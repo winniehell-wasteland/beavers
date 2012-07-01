@@ -42,27 +42,35 @@ class SoldierDeserializer implements JsonDeserializer<Soldier> {
 
     	soldier.setRotation(object.get("view_angle").getAsFloat());
 
-    	final JsonArray waypoints = object.get("waypoints").getAsJsonArray();
+    	synchronized (currentSoldier) {
+        	currentSoldier = soldier;
 
-    	final Iterator<JsonElement> it = waypoints.iterator();
+	    	final JsonArray waypoints = object.get("waypoints").getAsJsonArray();
 
-    	final WayPoint firstWaypoint =
-    		pContext.deserialize(it.next(), WayPoint.class);
+	    	final Iterator<JsonElement> it = waypoints.iterator();
 
-    	if(firstWaypoint.getAim() != null)
-    	{
-    		soldier.getFirstWaypoint().setAim(
-    			firstWaypoint.getAim().getTile());
-    	}
+	    	final WayPoint firstWaypoint =
+	    		pContext.deserialize(it.next(), WayPoint.class);
 
-    	while(it.hasNext())
-    	{
-    		final WayPoint waypoint =
-    			pContext.deserialize(it.next(),WayPoint.class);
+	    	if(firstWaypoint.getAim() != null)
+	    	{
+	    		soldier.getFirstWaypoint().setAim(
+	    			firstWaypoint.getAim().getTile());
+	    	}
 
-    		soldier.addWayPoint(waypoint);
+	    	while(it.hasNext())
+	    	{
+	    		final WayPoint waypoint =
+	    			pContext.deserialize(it.next(),WayPoint.class);
+
+	    		soldier.addWayPoint(waypoint);
+	    	}
+
+	    	currentSoldier = null;
     	}
 
         return soldier;
     }
+
+    static Soldier currentSoldier;
 }
