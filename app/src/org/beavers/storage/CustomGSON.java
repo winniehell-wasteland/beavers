@@ -25,10 +25,17 @@ public class CustomGSON {
 			final GsonBuilder builder = new GsonBuilder();
 
 			try {
-				setupSerialization(builder, Path.class);
-				setupSerialization(builder, Soldier.class);
-				setupSerialization(builder, Tile.class);
-				setupSerialization(builder, WayPoint.class);
+				final Class<?>[] classes = {
+					Path.class,
+					Soldier.class,
+					Tile.class,
+					WayPoint.class
+				};
+
+				for(final Class<?> c : classes)
+				{
+					setupSerialization(builder, c);
+				}
 			} catch (final Exception e) {
 				Log.e(CustomGSON.class.getName(),
 				      "Could not setup serialization!", e);
@@ -40,7 +47,7 @@ public class CustomGSON {
 		return instance;
 	}
 
-	/** setup serialization/deserialization for class with given name  */
+	/** setup serialization/deserialization for given class */
 	private static void setupSerialization(final GsonBuilder pBuilder,
 	                                       final Class<?> pClass)
 	                    throws ClassNotFoundException,
