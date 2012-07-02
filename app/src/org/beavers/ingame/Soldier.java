@@ -223,11 +223,7 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	{
 		return null;
 	}
-	
-	private int ap=20;
-	private int hp=100;
-	private boolean dead=false;
-	private boolean shooting=false;
+
 	
 	
 
@@ -415,7 +411,11 @@ public class Soldier extends AnimatedSprite implements GameObject {
 	/**
 	 * @}
 	 */
-
+	
+	private int ap=20;
+	private int hp=100;
+	private boolean dead=false;
+	private boolean shooting=false;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
 

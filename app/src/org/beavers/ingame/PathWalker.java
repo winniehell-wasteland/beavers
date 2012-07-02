@@ -47,17 +47,31 @@ public class PathWalker implements IModifierListener<IEntity> {
 			{
 				soldier.move(targetTile, aim, this);
 			}
+			else if(aim != null)
+			{
+				soldier.faceTarget(aim, null);
+			}
 		}
 	}
 
 	public void start()
 	{
-		targetTile = soldier.getTile();
+		waypoint = soldier.getFirstWaypoint();
 
 		nextWaypoint();
-		nextTile();
 
-		soldier.move(targetTile, aim, this);
+		// check if there are way points left
+		if(waypoint != null)
+		{
+			targetTile = soldier.getTile();
+			nextTile();
+
+			soldier.move(targetTile, aim, this);
+		}
+		else if(aim != null)
+		{
+			soldier.faceTarget(aim, null);
+		}
 	}
 
 	private final GameActivity gameActivity;
@@ -75,6 +89,16 @@ public class PathWalker implements IModifierListener<IEntity> {
 	{
 		if(waypoint != null)
 		{
+			if(waypoint.getAim() != null)
+			{
+				aim = waypoint.getAim().getTile();
+				waypoint.setAim(null);
+			}
+			else
+			{
+				aim = null;
+			}
+
 			waypoint.detachChildren();
 			gameActivity.removeObject(waypoint);
 		}
@@ -94,15 +118,6 @@ public class PathWalker implements IModifierListener<IEntity> {
 		if(waypoint != null)
 		{
 			final Step nextStep = waypoint.getPath().getStep(stepIndex);
-
-			if(waypoint.getAim() != null)
-			{
-				aim = waypoint.getAim().getTile();
-			}
-			else
-			{
-				aim = null;
-			}
 
 			++stepIndex;
 
