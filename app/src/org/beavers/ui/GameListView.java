@@ -102,7 +102,7 @@ public abstract class GameListView extends ListView
 
 			holder.txtName.setText(item.getGame().getName());
 
-			if(item.isServer(Settings.playerID))
+			if(item.isServer(Settings.player))
 			{
 				holder.txtServer.setText("");
 			} else {

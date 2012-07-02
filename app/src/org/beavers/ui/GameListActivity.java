@@ -139,11 +139,13 @@ public class GameListActivity extends FragmentActivity
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		final GameInfo game = new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game"), "test");
-		game.setState(GameState.ANNOUNCED);
-		Client.announcedGames.add(game);
+		final GameInfo agame = new GameInfo(Settings.player, new Game(UUID.randomUUID(), "test game (announced)"), "test");
+		agame.setState(GameState.ANNOUNCED);
+		Client.announcedGames.add(agame);
 
-		Client.runningGames.add(new GameInfo(Settings.playerID, new Game(UUID.randomUUID(), "my game2"), "test"));
+		final GameInfo rgame = new GameInfo(Settings.player, new Game(UUID.randomUUID(), "test game (running)"), "test");
+		rgame.setState(GameState.PLANNING_PHASE);
+		Client.runningGames.add(rgame);
 
 		loadList();
 	}
@@ -276,7 +278,7 @@ public class GameListActivity extends FragmentActivity
 
 						// create new game
 						final GameInfo game = new GameInfo(
-							Settings.playerID,
+							Settings.player,
 							new Game(UUID.randomUUID(),
 								input.getText().toString()),
 							Settings.defaultMap);
