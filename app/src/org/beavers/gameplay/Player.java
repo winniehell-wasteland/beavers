@@ -2,9 +2,6 @@ package org.beavers.gameplay;
 
 import java.util.UUID;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -44,21 +41,6 @@ public final class Player implements Parcelable {
 		return name;
 	}
 
-	public Object toJSON()
-	{
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("id", id.toString());
-			json.put("name", name);
-		} catch (final JSONException e) {
-			e.printStackTrace();
-			return null;
-		}
-
-		return json;
-	}
-
 	@Override
 	public String toString() {
 		return id.toString();
@@ -82,18 +64,6 @@ public final class Player implements Parcelable {
 				return new Player[size];
 			}
 	};
-
-	public static Player fromJSON(final Object pJSON) {
-		if(pJSON instanceof JSONObject)
-		{
-			final JSONObject obj = (JSONObject) pJSON;
-			return new Player(
-				UUID.fromString(obj.optString("id")),
-				obj.optString("name"));
-		}
-
-		return null;
-	}
 
 	private final UUID id;
 	private final String name;

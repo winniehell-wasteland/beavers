@@ -1,18 +1,24 @@
 package org.beavers.communication;
 
+import java.util.HashSet;
+
 import org.beavers.R;
 import org.beavers.Settings;
+import org.beavers.communication.CustomDTNDataHandler.Message;
 import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.beavers.storage.CustomGSON;
 
 import android.content.Context;
 import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 
 /**
@@ -43,18 +49,6 @@ public enum Server {
 	 */
 
 	/**
-	 * @name intents
-	 * @{
-	 */
-	public static final String ANNOUNCED_INTENT =
-			Server.class.getName()+".ANNOUNCED";
-	public static final String PLANNING_PHASE_INTENT =
-			Server.class.getName()+".PLANNING_PHASE";
-	/**
-	 * @}
-	 */
-
-	/**
 	 * game container
 	 */
 	public static GameList hostedGames = new GameList();
@@ -66,7 +60,8 @@ public enum Server {
 	 * @param pGame game
 	 *
 	 */
-	public static void acquireGame(final Context pContext, final GameInfo pGame) {
+	public static void acquireGame(final Context pContext,
+	                               final GameInfo pGame) {
 		if(hostedGames.contains(pGame))
 		{
 			Log.e(TAG, pContext.getString(R.string.error_game_exists,
@@ -86,14 +81,15 @@ public enum Server {
 	 *
 	 */
 	public static synchronized void addPlayer(final Context pContext,
-			GameInfo pGame, final Player pPlayer)
+	                                          GameInfo pGame,
+	                                          final Player pPlayer)
 	{
 		Log.d(TAG, "Somebody joins "+pGame.toString());
 
 		if(!hostedGames.contains(pGame))
 		{
 			Log.e(TAG, pContext.getString(R.string.error_not_hosted,
-					pGame.toString()));
+			                              pGame.toString()));
 			return;
 		}
 
@@ -102,7 +98,7 @@ public enum Server {
 		// TODO allow more than 2 players
 		final int MAX_PLAYERS = 2;
 
-		final PlayerSet gamePlayers = players.get(pGame);
+		final HashSet<Player> gamePlayers = players.get(pGame);
 
 		if(gamePlayers.size() < MAX_PLAYERS)
 		{
@@ -122,12 +118,14 @@ public enum Server {
 	 * @param pJSON payload in JSON format
 	 */
 	public static void handlePayload(final Context pContext,
-			final JSONObject pJSON) {
-		if(pJSON.has("state"))
+			final JsonObject pJSON) {
+		if(pJSON.has("game") && pJSON.has("player"))
 		{
-			GameInfo game = GameInfo.fromJSON(pJSON.opt("game"));
+			final Gson gson = CustomGSON.getInstance();
 
-			if(!game.isServer(Settings.playerID))
+			GameInfo game = gson.fromJson(pJSON.get("game"), GameInfo.class);
+
+			if(!game.isServer(Settings.player))
 			{
 				return;
 			}
@@ -141,26 +139,27 @@ public enum Server {
 
 			game = hostedGames.find(game);
 
-			switch (GameState.valueOf(pJSON.optString("state"))) {
+			final Player player =
+				gson.fromJson(pJSON.get("player"), Player.class);
+
+			switch (game.getState()) {
 			case JOINED:
 			{
-				addPlayer(pContext, game,
-						Player.fromJSON(pJSON.opt("player")));
+				addPlayer(pContext, game, player);
 
 				break;
 			}
 			case PLANNING_PHASE:
 			{
-				onReceiveDecisions(pContext, game,
-						Player.fromJSON(pJSON.opt("player")),
-						DecisionContainer.fromJSON(pJSON.opt("decisions")));
+				onReceiveDecisions(pContext, game, player,
+				                   gson.fromJson(pJSON.get("decisions"),
+				                		         DecisionContainer.class));
 
 				break;
 			}
 			case ABORTED:
 			{
-				onPlayerAborts(pContext, game,
-						Player.fromJSON(pJSON.opt("player")));
+				onPlayerAborts(pContext, game, player);
 
 				break;
 			}
@@ -189,38 +188,19 @@ public enum Server {
 		pGame.setState(GameState.ANNOUNCED);
 		hostedGames.add(pGame);
 
-		Log.d(TAG, "Add "+pGame.toString());
-
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.ANNOUNCED.toJSON());
-			json.put("game", pGame.toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToClients(pContext, json);
+		final Message message = new Message(pGame);
+		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
 	}
 
 	/**
 	 * distribute outcome to clients
 	 */
 	public static void distributeOutcome(final Context pContext,
-			final GameInfo pGame,
-			final OutcomeContainer outcome)
+	                                     final GameInfo pGame,
+	                                     final OutcomeContainer pOutcome)
 	{
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.EXECUTION_PHASE.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("outcome", outcome.toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToClients(pContext, json);
+		final Message message = new OutcomeMessage(pGame, pOutcome);
+		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
 	}
 
 	/**
@@ -244,25 +224,55 @@ public enum Server {
 	private static PlayerMap players = new PlayerMap();
 
 	/**
+	 * @name messages
+	 * @{
+	 */
+	static class NewServerMessage extends Message
+	{
+		Player new_server;
+
+		NewServerMessage(final GameInfo pGame, final Player pServer) {
+			super(pGame);
+			new_server = pServer;
+		}
+	}
+
+	static class OutcomeMessage extends Message
+	{
+		OutcomeContainer outcome;
+
+		OutcomeMessage(final GameInfo pGame, final OutcomeContainer pOutcome) {
+			super(pGame);
+			outcome = pOutcome;
+		}
+	}
+
+	static class PlanningPhaseMessage extends Message
+	{
+		HashSet<Player> players;
+
+		PlanningPhaseMessage(final GameInfo pGame) {
+			super(pGame);
+			players = Server.players.get(pGame);
+		}
+	}
+	/**
+	 * @}
+	 */
+
+	/**
 	 * server has quit, inform clients about new server
 	 *
 	 * @param pContext activity context
 	 * @param pGame old game info
 	 * @param pServer new server
 	 */
-	private static void announceNewServer(final Context pContext, final GameInfo pGame, final Player pServer)
+	private static void announceNewServer(final Context pContext,
+	                                      final GameInfo pGame,
+	                                      final Player pServer)
 	{
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.ABORTED.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("new_server", pServer.toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToClients(pContext, json);
+		final Message message = new NewServerMessage(pGame, pServer);
+		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
 	}
 
 	/**
@@ -304,17 +314,8 @@ public enum Server {
 	 * @param pGame game
 	 */
 	private static void startPlanningPhase(final Context pContext,
-			GameInfo pGame)
+			final GameInfo pGame)
 	{
-		if(!hostedGames.contains(pGame))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_not_hosted,
-					pGame.toString()));
-			return;
-		}
-
-		pGame = hostedGames.find(pGame);
-
 		if(!pGame.isInState(GameState.ANNOUNCED))
 		{
 			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
@@ -324,16 +325,7 @@ public enum Server {
 
 		pGame.setState(GameState.PLANNING_PHASE);
 
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.PLANNING_PHASE.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("players", players.get(pGame).toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToClients(pContext, json);
+		final Message message = new PlanningPhaseMessage(pGame);
+		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
 	}
 }
