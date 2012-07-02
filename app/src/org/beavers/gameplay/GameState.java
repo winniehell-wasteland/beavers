@@ -56,10 +56,6 @@ public enum GameState implements Parcelable {
 		}
 	}
 
-	public Object toJSON() {
-		return name();
-	}
-
 	@Override
 	public void writeToParcel(final Parcel pOut, final int pFlags) {
 		pOut.writeString(name());

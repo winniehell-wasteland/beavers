@@ -1,19 +1,27 @@
 package org.beavers.communication;
 
+import java.lang.reflect.Type;
+import java.util.HashSet;
+
 import org.beavers.R;
 import org.beavers.Settings;
+import org.beavers.communication.CustomDTNDataHandler.Message;
 import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.beavers.storage.CustomGSON;
 
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 
 /**
@@ -49,8 +57,6 @@ public enum Client {
 	 */
 	public static final String GAME_STATE_CHANGED_INTENT =
 		Client.class.getName() + ".GAME_STATE_CHANGED";
-	public static final String JOIN_GAME_INTENT =
-		Client.class.getName() + ".JOIN_GAME";
 	/**
 	 * @}
 	 */
@@ -80,20 +86,12 @@ public enum Client {
 
 		pGame = runningGames.find(pGame);
 
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.ABORTED.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("player", Settings.playerID.toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(), json);
-
 		runningGames.remove(pGame);
 		broadcastGameInfo(pContext, pGame);
+
+		final Message message = new ClientMessage(pGame);
+		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(),
+		                                  message.toJsonObject());
 	}
 
 	/**
@@ -103,27 +101,23 @@ public enum Client {
 	 * @param pJSON payload in JSON format
 	 */
 	public static void handlePayload(final Context pContext,
-			final JSONObject pJSON) {
-		if(pJSON.has("state"))
+	                                 final JsonObject pJSON) {
+		if(pJSON.has("game"))
 		{
-			Log.e(TAG, "game: "+pJSON.optString("game"));
+			final Gson gson = CustomGSON.getInstance();
 
-			final GameInfo game = GameInfo.fromJSON(pJSON.opt("game"));
-			final PlayerSet players = PlayerSet.fromJSON(pJSON.opt("players"));
+			final GameInfo game =
+				gson.fromJson(pJSON.get("game"), GameInfo.class);
+			Log.e(TAG, "game: "+game);
 
-			if((players != null) && !players.contains(Settings.playerID))
-			{
-				// ignore
-				return;
-			}
-
-			switch (GameState.valueOf(pJSON.optString("state"))) {
+			switch (game.getState()) {
 			case ABORTED:
 			{
 				if(runningGames.contains(game))
 				{
 					onReceiveNewServer(pContext, runningGames.find(game),
-						Player.fromJSON(pJSON.opt("new_server")));
+					                   gson.fromJson(pJSON.get("new_server"),
+					                                 Player.class));
 				}
 
 				break;
@@ -133,7 +127,7 @@ public enum Client {
 				if(announcedGames.contains(game)) {
 					Log.e(TAG,
 						pContext.getString(R.string.error_already_announced,
-							game.toString()));
+						                   game.toString()));
 				}
 				else
 				{
@@ -147,17 +141,26 @@ public enum Client {
 				if(runningGames.contains(game))
 				{
 					onReceiveOutcome(pContext, runningGames.find(game),
-						OutcomeContainer.fromJSON(pJSON.opt("outcome")));
+					                 gson.fromJson(pJSON.get("outcome"),
+					                               OutcomeContainer.class));
 				}
 
 				break;
 			}
 			case PLANNING_PHASE:
 			{
-				if(runningGames.contains(game))
+
+				if(runningGames.contains(game) || announcedGames.contains(game))
 				{
+					final Type type =
+						new TypeToken<HashSet<Player>>() {}.getType();
+
+					final HashSet<Player> players =
+						gson.fromJson(pJSON.get("players"), type);
+
 					onReceiveStartPlanningPhase(pContext,
-							runningGames.find(game));
+					                            runningGames.find(game),
+					                            players);
 				}
 
 				break;
@@ -177,7 +180,7 @@ public enum Client {
 	public static void joinGame(final Context pContext, GameInfo pGame) {
 		if (!announcedGames.contains(pGame)) {
 			Log.e(TAG, pContext.getString(R.string.error_not_announced,
-					pGame.toString()));
+			                              pGame.toString()));
 			return;
 		}
 
@@ -185,24 +188,17 @@ public enum Client {
 
 		if (!pGame.isInState(GameState.ANNOUNCED)) {
 			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
+			                              pGame.toString(),
+			                              pGame.getState().toString()));
 			return;
 		}
 
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("state", GameState.JOINED.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("player", Settings.playerID.toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
-		}
-
-		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(), json);
-
 		pGame.setState(GameState.JOINED);
 		broadcastGameInfo(pContext, pGame);
+
+		final Message message = new ClientMessage(pGame);
+		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(),
+		                                  message.toJsonObject());
 	}
 
 	/**
@@ -212,7 +208,7 @@ public enum Client {
 	 * @param pGame running game
 	 * @param decisions
 	 */
-	public static void sendDecisions(final Context pContext, GameInfo pGame,
+	public static void sendDecisions(final Context pContext, final GameInfo pGame,
 			final DecisionContainer pDecisions) {
 		if (!runningGames.contains(pGame)) {
 			Log.e(TAG, pContext.getString(R.string.error_not_running,
@@ -220,27 +216,48 @@ public enum Client {
 			return;
 		}
 
-		pGame = runningGames.find(pGame);
+		final GameInfo rgame = runningGames.find(pGame);
 
 		if (!pGame.isInState(GameState.PLANNING_PHASE)) {
 			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
+			                              rgame.toString(),
+			                              rgame.getState().toString()));
 			return;
 		}
 
-		final JSONObject json = new JSONObject();
+		final Message message = new DecissionMessage(pGame, pDecisions);
+		CustomDTNDataHandler.sendToServer(pContext, rgame.getServer(),
+		                                  message.toJsonObject());
+	}
 
-		try {
-			json.put("state", GameState.JOINED.toJSON());
-			json.put("game", pGame.toJSON());
-			json.put("player", Settings.playerID.toJSON());
-			json.put("decisions", pDecisions.toJSON());
-		} catch (final JSONException e) {
-			Log.e(TAG, pContext.getString(R.string.error_json), e);
+	/**
+	 * @name messages
+	 * @{
+	 */
+
+	static class ClientMessage extends Message
+	{
+		Player player = Settings.player;
+
+		ClientMessage(final GameInfo pGame) {
+			super(pGame);
 		}
 
-		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(), json);
 	}
+
+	static class DecissionMessage extends ClientMessage
+	{
+		DecisionContainer decisions;
+
+		DecissionMessage(final GameInfo pGame,
+		                 final DecisionContainer pDecisions) {
+			super(pGame);
+			decisions = pDecisions;
+		}
+	}
+	/**
+	 * @}
+	 */
 
 	/**
 	 * inform activities about a changed game
@@ -265,12 +282,10 @@ public enum Client {
 	 */
 	private static void onReceiveGameInfo(final Context pContext,
                                        final GameInfo pGame) {
-		pGame.setState(GameState.ANNOUNCED);
 		announcedGames.add(pGame);
-
 		broadcastGameInfo(pContext, pGame);
 
-		if(pGame.isServer(Settings.playerID))
+		if(pGame.isServer(Settings.player))
 		{
 			// auto join own game
 			joinGame(pContext, pGame);
@@ -296,7 +311,7 @@ public enum Client {
 		pGame.setServer(pNewServer);
 
 		// we become server
-		if (Settings.playerID.equals(pNewServer)) {
+		if (Settings.player.equals(pNewServer)) {
 			Server.acquireGame(pContext, pGame);
 		}
 
@@ -322,9 +337,9 @@ public enum Client {
 	 * @param pGame running game
 	 */
 	private static void onReceiveStartPlanningPhase(final Context pContext,
-			final GameInfo pGame) {
-		if (!pGame.isInState(GameState.JOINED)
-				&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
+			final GameInfo pGame, final HashSet<Player> players) {
+		if(!pGame.isInState(GameState.JOINED)
+		   && !pGame.isInState(GameState.EXECUTION_PHASE)) {
 
 			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
 					pGame.toString(), pGame.getState().toString()));
@@ -335,7 +350,15 @@ public enum Client {
 		if (pGame.isInState(GameState.JOINED))
 		{
 			announcedGames.remove(pGame);
-			runningGames.add(pGame);
+
+			if(players.contains(Settings.player))
+			{
+				runningGames.add(pGame);
+			}
+		}
+		else if(!players.contains(Settings.player))
+		{
+			// TODO do something, we got kicked out!
 		}
 
 		// start planning phase

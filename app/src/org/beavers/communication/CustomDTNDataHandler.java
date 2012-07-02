@@ -5,8 +5,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.beavers.Settings;
+import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.Player;
-import org.json.JSONObject;
+import org.beavers.storage.CustomGSON;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,6 +16,10 @@ import android.content.IntentFilter;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.util.Log;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
@@ -34,6 +39,21 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	/**
 	 * @}
 	 */
+
+	public static class Message
+	{
+		GameInfo game;
+
+		Message(final GameInfo pGame)
+		{
+			game = pGame;
+		}
+
+		JsonObject toJsonObject()
+		{
+			return (JsonObject) CustomGSON.getInstance().toJsonTree(this);
+		}
+	}
 
 	/**
 	 * default constructor
@@ -119,7 +139,10 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	        @Override
 			public void run() {
 				try {
-					final JSONObject json = new JSONObject(new String(data, "UTF-8"));
+					final JsonParser parser = new JsonParser();
+
+					final JsonObject json =
+						(JsonObject) parser.parse(new String(data, "UTF-8"));
 
 					if(destination.equals(Server.GROUP_EID.toString()))
 					{
@@ -181,13 +204,16 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	 * @param pContext activity context
 	 * @param pJSON payload in JSON format
 	 */
-	public static void sendToClients(final Context pContext, final JSONObject pJSON) {
+	public static void sendToClients(final Context pContext,
+	                                 final JsonObject pJSON) {
 		final Intent intent = new Intent(SEND_DATA_INTENT);
 
 		intent.putExtra("EID", (Parcelable) Client.GROUP_EID);
 		intent.putExtra("data", pJSON.toString() );
 
 		pContext.sendBroadcast(intent);
+
+		Log.e(TAG, "Sending: "+pJSON.toString());
 
 		// don't forget our client (loopback is suppressed)
 		Client.handlePayload(pContext, pJSON);
@@ -200,8 +226,8 @@ public class CustomDTNDataHandler extends BroadcastReceiver implements DataHandl
 	 * @param pServer server
 	 * @param pJSON payload in JSON format
 	 */
-	public static void sendToServer(final Context pContext, final Player pServer, final JSONObject json) {
-		if(pServer.equals(Settings.playerID))
+	public static void sendToServer(final Context pContext, final Player pServer, final JsonObject json) {
+		if(pServer.equals(Settings.player))
 		{
 			Server.handlePayload(pContext, json);
 		}

@@ -1,8 +1,5 @@
 package org.beavers.gameplay;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -100,23 +97,6 @@ public final class GameInfo implements Parcelable {
 		state = pState;
 	}
 
-	public Object toJSON() {
-		final JSONObject json = new JSONObject();
-
-		try {
-			json.put("id", game.toJSON());
-			json.put("map", getMapName());
-			json.put("server", server.toJSON());
-			json.put("state", state.toJSON());
-
-		} catch (final JSONException e) {
-			e.printStackTrace();
-			return null;
-		}
-
-		return json;
-	}
-
 	@Override
 	public String toString() {
 		return server.toString()+"/"+game.toString();
@@ -142,23 +122,6 @@ public final class GameInfo implements Parcelable {
             return new GameInfo[size];
         }
     };
-
-	public static GameInfo fromJSON(final Object pJSON) {
-		if((pJSON instanceof JSONObject))
-		{
-			final JSONObject obj = (JSONObject) pJSON;
-
-			if(obj.has("server") && obj.has("id") && obj.has("map"))
-			{
-				return new GameInfo(
-					Player.fromJSON(obj.opt("server")),
-					Game.fromJSON(obj.opt("id")),
-					obj.optString("map"));
-			}
-		}
-
-		return null;
-	}
 
 	/** unique game on server */
 	private final Game game;
