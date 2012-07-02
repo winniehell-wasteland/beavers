@@ -40,18 +40,10 @@ public class Shot implements GameObject{
 	public Line targetLine;
 
 	public Shot(final Soldier pSoldier, final GameActivity pActivity){
-		//super(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1], Textures.SHOT_BULLET);
+		
         activity = pActivity;
 		soldier = pSoldier;
 
-		//shot = new Sprite(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1], Textures.SHOT_BULLET.deepCopy());
-		
-		
-				
-			//	new Sprite(0, 0, Textures.MUZZLE_FLASH.deepCopy());
-		//shot.setPosition(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1]);
-		
-		
 	}
 
 	@Override
@@ -162,8 +154,7 @@ public class Shot implements GameObject{
 						}
 					});
 					
-					//flash.setPosition(soldier.convertSceneToLocalCoordinates(flash.getX(), flash.getY())[0]-5, soldier.convertSceneToLocalCoordinates(flash.getX(), flash.getY())[1]-13);
-					//soldier.attachChild(flash);
+					
 					shot.registerEntityModifier(moveMod);
 					spriteExpire(flash);
 					
