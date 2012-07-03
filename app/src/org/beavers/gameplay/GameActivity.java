@@ -384,7 +384,8 @@ public class GameActivity extends BaseGameActivity
 		{
 			pathFinder = null;
 		}
-
+		camera.setBounds(0, map.getWidth()*64,0, map.getHeight()*64);
+		camera.setBoundsEnabled(true);
 		mainScene.registerUpdateHandler(holdDetector);
 		mainScene.setOnSceneTouchListener(this);
 
@@ -418,7 +419,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
         }
 
 		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
-
+		
 		return new Engine(new EngineOptions(true, orientation,
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
 	}
@@ -514,6 +515,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
 		camera.offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
+		
 	}
 
 	@Override
