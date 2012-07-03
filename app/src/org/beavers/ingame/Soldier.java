@@ -250,9 +250,13 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return ap;
 	}
 	
+	public int getmaxAP(){
+		return maxAP;
+	}
+	
 	public int changeAP(final int points){
 		ap+=points;
-		if(ap>20)ap=20;
+		if(ap>maxAP)ap=maxAP;
 		else if(ap<0){
 			ap=0;
 		}
@@ -381,7 +385,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	{
 		if(firstWaypoint != lastWaypoint)
 		{
-			changeAP(lastWaypoint.getPath().getLength());
+			
 
 			lastWaypoint.detachSelf();
 			lastWaypoint.getPrevious().setNext(null);
@@ -439,8 +443,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	/**
 	 * @}
 	 */
-	
-	private int ap=20;
+		
+	private final int maxAP=20;
+	private int ap=maxAP;
 	private int hp=100;
 	private boolean dead=false;
 	private boolean shooting=false;

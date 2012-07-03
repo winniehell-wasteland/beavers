@@ -25,6 +25,7 @@ import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
+import org.anddev.andengine.entity.text.Text;
 import org.anddev.andengine.entity.util.FPSLogger;
 import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.input.touch.detector.HoldDetector;
@@ -32,6 +33,7 @@ import org.anddev.andengine.input.touch.detector.HoldDetector.IHoldDetectorListe
 import org.anddev.andengine.input.touch.detector.ScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.anddev.andengine.opengl.font.Font;
 import org.anddev.andengine.opengl.texture.ITexture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
@@ -58,6 +60,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -344,7 +347,22 @@ public class GameActivity extends BaseGameActivity
 			{
 				final WayPoint waypoint =
 					selectedSoldier.addWayPoint(getPathFinder(), tile);
-				addObject(waypoint);
+				if(selectedSoldier.getAP()-(waypoint.getPath().getLength()-1)<0){
+					waypoint.remove();
+					runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							Toast.makeText(GameActivity.this,
+								"No AP left",
+								Toast.LENGTH_SHORT).show();
+						}
+					});
+					}
+				else{
+					addObject(waypoint);
+					selectedSoldier.changeAP(-(waypoint.getPath().getLength()-1));
+				}
 			}
 			else
 			{
@@ -404,12 +422,19 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		return new Engine(new EngineOptions(true, orientation,
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
 	}
-
+	
+	
 	@Override
 	public void onLoadResources() {
+	
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		BitmapTextureAtlas textureAtlas;
-
+		
+		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		mfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.WHITE);
+		getTextureManager().loadTexture(textureAtlas);
+		getFontManager().loadFont(mfont);
+		
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
@@ -591,6 +616,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	/**
 	 * @}
 	 */
+	private Font mfont;
 
 	private Line parallelA,parallelB,lineA,lineB;
 
@@ -629,11 +655,18 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 	
 	private void updateHUD(){
-		if(getSelectedSoldier()!=null)health_bar.setWidth(getSelectedSoldier().getHP());
-		//update AP;
+		if(getSelectedSoldier()!=null){
+			health_bar.setWidth(getSelectedSoldier().getHP());
+			apText.detachSelf();
+			apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
+					getSelectedSoldier().getmaxAP());
+			apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
+			hud.attachChild(apText);
+		}
 	}
 	
 	private Rectangle health_bar;
+	private Text apText;
 	
 	private void loadHUD(){
 		hud=new HUD();
@@ -644,15 +677,16 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
 		
 		
-		//final Font font= new Font(ITexture, Typeface, 12, false, 50);
-		//final Text apText= new Text(0, 0, f, "test");
+		apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
+		getSelectedSoldier().getmaxAP());
+		apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
 		health_bar.setColor(1,0,0);
 		hud_back.setColor(0.2f,0.2f,0.2f);
 		hud_back.setAlpha(0.5f);
 		hud.attachChild(hud_back);
 		hud.attachChild(missing_health);
 		hud.attachChild(health_bar);
-		//hud.attachChild(apText);
+		hud.attachChild(apText);
 		camera.setHUD(hud);
 
 	}
