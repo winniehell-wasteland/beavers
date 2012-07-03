@@ -434,7 +434,16 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		mfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.WHITE);
 		getTextureManager().loadTexture(textureAtlas);
-		getFontManager().loadFont(mfont);
+		
+		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		bluefont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.BLUE);
+		getTextureManager().loadTexture(textureAtlas);
+		
+		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		redfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.RED);
+		getTextureManager().loadTexture(textureAtlas);
+		
+		getFontManager().loadFonts(mfont,bluefont,redfont);
 		
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
@@ -618,7 +627,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	/**
 	 * @}
 	 */
-	private Font mfont;
+	private Font mfont,bluefont,redfont;
 
 	private Line parallelA,parallelB,lineA,lineB;
 
@@ -664,11 +673,19 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 					getSelectedSoldier().getmaxAP());
 			apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
 			hud.attachChild(apText);
+			redText.detachSelf();
+			blueText.detachSelf();
+			redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
+			blueText=new Text(0 ,0, bluefont,""+soldiers.get(0).size() );
+			redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
+			blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
+			hud.attachChild(blueText);
+			hud.attachChild(redText);
 		}
 	}
 	
 	private Rectangle health_bar;
-	private Text apText;
+	private Text apText,redText,blueText, separator;
 	
 	private void loadHUD(){
 		hud=new HUD();
@@ -677,8 +694,12 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		final Rectangle hud_back = new Rectangle(0,0, camera.getWidth(),30);
 		final Rectangle missing_health = new Rectangle(10,10,100,8);
 		health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
-		
-		
+		separator = new Text(0 ,0, mfont,":" );
+		separator.setPosition(getEngine().getCamera().getWidth()/2-2,4);
+		redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
+		blueText=new Text(0 ,0, bluefont,""+soldiers.get(0).size() );
+		redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
+		blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
 		apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
 		getSelectedSoldier().getmaxAP());
 		apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
@@ -689,6 +710,9 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		hud.attachChild(missing_health);
 		hud.attachChild(health_bar);
 		hud.attachChild(apText);
+		hud.attachChild(blueText);
+		hud.attachChild(redText);
+		hud.attachChild(separator);
 		camera.setHUD(hud);
 
 	}
@@ -705,11 +729,11 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
  * @param targets das angegriffene Team
  */
 	public void checkTargets(final int attacking, final int targets){
-		final Iterator itr=getSoldiers(attacking).iterator();
+		final Iterator itr=soldiers.get(attacking).iterator();
 		while(itr.hasNext()){  //durchl‰uft Liste des ersten Teams
 			final Soldier s=(Soldier)itr.next();
 
-			final Iterator itr2=getSoldiers(targets).iterator();
+			final Iterator itr2=soldiers.get(targets).iterator();
 			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schieﬂt
 				while(itr2.hasNext()){  //durchl‰uft Liste des zweiten Teams
 					final Soldier t=(Soldier)itr2.next();

@@ -457,7 +457,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private WayPoint lastWaypoint;
 
 	/** team the soldier belongs to */
-	private int team;
+	private final int team;
 
 	/** waypoints of the soldier */
 	private final ArrayDeque<WayPoint> waypoints;
@@ -475,7 +475,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			super(pTile.getCenterX() - pTiledTextureRegion.getTileWidth()/2,
 			      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
 			      pTiledTextureRegion);
-
+			
+			team=pTeam;
 			//Selection Circle
 			final TextureRegion selectionTexture =
 				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
