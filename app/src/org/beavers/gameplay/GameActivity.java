@@ -505,6 +505,12 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	@Override
 	public void onRemoveObject(final IGameObject pObject) {
 		removeObject(pObject);
+		
+		if(pObject instanceof Soldier)
+		{
+			final Soldier soldier = (Soldier) pObject;
+			soldiers.get(soldier.getTeam()).remove(soldier);
+		}
 	}
 
 	@Override
@@ -538,7 +544,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	public void removeObject(final IGameObject pObject) {
-		if(gameObjects.get(pObject.getTile()).equals(pObject))
+		if((pObject != null) && pObject.equals(gameObjects.get(pObject.getTile())))
 		{
 			gameObjects.remove(pObject.getTile());
 		}
@@ -737,7 +743,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schießt
 				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
 					final Soldier t=(Soldier)itr2.next();
-					if(!t.isdead() && !s.isdead()){  //beide Soldaten müssen noch leben
+					if(s.getHP()>0 && t.getHP()>0){
 						
 						parallelB = new Line(
 								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
@@ -762,17 +768,13 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 								s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
 								s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
 								s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]);
-					
-						
+
+
 						if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){ //Soldat des zweiten Teams ist im Sichtbereich
-					
-								s.fireShot(t, this);
-							
+
+							s.fireShot(t, this);
 						}
-						
-
 					}
-
 				}
 			}
 		}

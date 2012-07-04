@@ -139,23 +139,21 @@ public class Shot implements IMovableObject {
 								damage+=5;
 							}
 							damage+=baseDamage;
-							targetSoldier.changeHP(-damage);
-							damage=0;
-							//target soldier defends himself
-							if(!targetSoldier.isShooting())targetSoldier.fireShot(soldier, activity);
-							//remove dead soldiers from game
-							if(soldier.isdead()){
-								stopShooting();
-								activity.getSoldiers(soldier.getTeam()).remove(soldier);
-								soldier.detachSelf();
+							
+							if(!targetSoldier.isDead()){
+								targetSoldier.changeHP(-damage);
+								damage=0;
+								
+								//target soldier defends himself
+								if(!targetSoldier.isShooting() && !targetSoldier.isDead()) {
+									targetSoldier.fireShot(soldier, activity);
+								}
 							}
-							if(targetSoldier.isdead()){
+
+							//remove dead soldiers from game
+							if(targetSoldier.isDead()) {
 								stopShooting();
-								soldier.setShooting(false);
 								soldier.resume();
-								if(targetSoldier.getShot()!=null)targetSoldier.getShot().stopShooting();
-								activity.getSoldiers(targetSoldier.getTeam()).remove(targetSoldier);
-								targetSoldier.detachSelf();
 							}
 						}
 					});
