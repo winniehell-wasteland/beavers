@@ -24,7 +24,7 @@ public class Shot implements IMovableObject {
 	private final Soldier soldier;
 	private final GameActivity activity;
 
-
+	private final int baseDamage=10;
 
 	public Line targetLine;
 
@@ -84,6 +84,7 @@ public class Shot implements IMovableObject {
    float delay=(float) (0.1+Math.random()*0.4);
    TimerHandler shootTimer;
    Sprite currentShot;
+   int damage=0;
 	
    public void fire(final Soldier targetSoldier){
 		final Tile pTarget=targetSoldier.getTile();
@@ -91,7 +92,7 @@ public class Shot implements IMovableObject {
 
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
-				// TODO Auto-generated method stub
+				
 				target=pTarget;
 
 				//Bullets
@@ -109,51 +110,68 @@ public class Shot implements IMovableObject {
 				flash.setPosition(soldier.getWidth()/2,soldier.getHeight()/2-31);
 				soldier.attachChild(flash);
 				
-				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);//GameActivity.getTileCenterX(pTarget));
-					final float disty=Math.abs(shot.getY() - targetSoldier.getCenter()[1]);//GameActivity.getTileCenterY(pTarget));
-
-
-					final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (targetSoldier.getCenter()[0]-10+Math.random()*20), shot.getY(), (float) (targetSoldier.getCenter()[1]-10+Math.random()*20));
-					moveMod.addModifierListener(new IModifierListener<IEntity>() {
+			
+				
+				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);
+				final float disty=Math.abs(shot.getY() - targetSoldier.getCenter()[1]);
+				final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (targetSoldier.getCenter()[0]-10+Math.random()*20), shot.getY(), (float) (targetSoldier.getCenter()[1]-10+Math.random()*20));
+					
+				moveMod.addModifierListener(new IModifierListener<IEntity>() {
 						Sprite current=currentShot;
 						@Override
 						public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
-							// TODO Auto-generated method stub
 
 						}
 
 						@Override
 						public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-							// TODO Auto-generated method stub
+							//Removes Shot at destination
 							current.detachSelf();
+							//Calculate damage
+								//bonus damage in close combat
+							damage+=10-(moveMod.getDuration()*SPEED/60)*2;
+							//bonus damage if shooting in targets back
+							if(damage<0)damage=0;
 							if(targetSoldier.getRotation()>soldier.getRotation()-10 && targetSoldier.getRotation()<soldier.getRotation()+10){
-								targetSoldier.changeHP(-20);
+								damage+=10;
 							}
-							else targetSoldier.changeHP(-10);
+							else if(targetSoldier.getRotation()>soldier.getRotation()-20 && targetSoldier.getRotation()<soldier.getRotation()+20){
+								damage+=5;
+							}
+							damage+=baseDamage;
+							targetSoldier.changeHP(-damage);
+							damage=0;
+							//target soldier defends himself
 							if(!targetSoldier.isShooting())targetSoldier.fireShot(soldier, activity);
-							if(soldier.isdead())stopShooting();
+							//remove dead soldiers from game
+							if(soldier.isdead()){
+								stopShooting();
+								activity.getSoldiers(soldier.getTeam()).remove(soldier);
+								soldier.detachSelf();
+							}
 							if(targetSoldier.isdead()){
 								stopShooting();
 								soldier.setShooting(false);
 								soldier.resume();
 								if(targetSoldier.getShot()!=null)targetSoldier.getShot().stopShooting();
+								activity.getSoldiers(targetSoldier.getTeam()).remove(targetSoldier);
+								targetSoldier.detachSelf();
 							}
 						}
 					});
-					
 					
 					shot.registerEntityModifier(moveMod);
 					spriteExpire(flash);
 					
 					delay=(float) (0.1+Math.random()*0.4);
-					
 					shootTimer.setTimerSeconds(delay);
 					shootTimer.reset();
 			}
 		});
 		activity.getEngine().registerUpdateHandler(shootTimer);
-
+		
 	}
+   
  public void stopShooting(){
 
 	 activity.getEngine().unregisterUpdateHandler(shootTimer);
