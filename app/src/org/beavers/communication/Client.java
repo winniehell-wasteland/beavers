@@ -1,11 +1,13 @@
 package org.beavers.communication;
 
+import java.io.FileReader;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 
+import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
-import org.beavers.communication.CustomDTNDataHandler.Message;
+import org.beavers.communication.DTNService.Message;
 import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
@@ -14,39 +16,33 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
 
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
-import de.tubs.ibr.dtn.api.GroupEndpoint;
-
 /**
- * client for game communication
+ * client service for game communication
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public enum Client {
-	; // prevent instantiation
+public class Client extends Service {
 
 	/**
 	 * @name debug
 	 * @{
 	 */
-	private static final String TAG = Client.class.getName();
-	/**
-	 * @}
-	 */
-
-	/**
-	 * @name DTN
-	 * @{
-	 */
-	public static final GroupEndpoint GROUP_EID =
-		new GroupEndpoint("dtn://beavergame.dtn/client");
+	private static final String TAG = Client.class.getSimpleName();
 	/**
 	 * @}
 	 */
@@ -61,308 +57,402 @@ public enum Client {
 	 * @}
 	 */
 
+	@Override
+	public IBinder onBind(final Intent pIntent) {
+		Log.d(TAG, "onBind()");
+		return stub;
+	}
+
+	@Override
+	public void onCreate() {
+		Log.d(TAG, "onCreate()");
+		super.onCreate();
+
+		dtn = new DTNService.Connection();
+		Intent intent = new Intent(Client.this, DTNService.class);
+		bindService(intent, dtn, Service.BIND_AUTO_CREATE);
+
+		server = new Server.Connection();
+		intent = new Intent(Client.this, Server.class);
+		bindService(intent, server, Service.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	public void onDestroy() {
+		unbindService(dtn);
+		unbindService(server);
+
+		super.onDestroy();
+	}
+
 	/**
-	 * @name game containers
+	 * service connection
+	 */
+	public static class Connection implements ServiceConnection
+	{
+		public IClient getService() {
+			return service;
+		}
+
+		@Override
+		public void onServiceConnected(final ComponentName pName,
+		                               final IBinder pService) {
+			service = IClient.Stub.asInterface(pService);
+		}
+
+		@Override
+		public void onServiceDisconnected(final ComponentName pName) {
+			service = null;
+		}
+
+		private IClient service;
+	}
+
+	/**
+	 * @name service connections
 	 * @{
 	 */
-	public static GameList announcedGames = new GameList();
-	public static GameList runningGames = new GameList();
+	private Server.Connection server;
+	private DTNService.Connection dtn;
 	/**
 	 * @}
 	 */
 
-	/**
-	 * quit game
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 */
-	public static void abortGame(final Context pContext, GameInfo pGame) {
-		if (!runningGames.contains(pGame)) {
-			Log.e(TAG, pContext.getString(R.string.error_not_running,
-					pGame.toString()));
-			return;
+	private final IClient.Stub stub = new IClient.Stub() {
+
+		@Override
+		public void abortGame(GameInfo pGame) {
+			if (!runningGames.contains(pGame)) {
+				Log.e(TAG, getString(R.string.error_not_running, pGame));
+				return;
+			}
+
+			pGame = runningGames.find(pGame);
+
+			runningGames.remove(pGame);
+			broadcastGameInfo(pGame);
+
+			final Message message =
+				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
+
+			try {
+				dtn.getService().sendToServer(pGame.getServer(),
+				                              message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
-		pGame = runningGames.find(pGame);
+		@Override
+		public GameInfo getAnnouncedGame(final int pPosition) {
+			return announcedGames.get(pPosition);
+		};
 
-		runningGames.remove(pGame);
-		broadcastGameInfo(pContext, pGame);
+		@Override
+		public int getAnnouncedGamesCount() {
+			return announcedGames.size();
+		};
 
-		final Message message = new ClientMessage(pGame);
-		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(),
-		                                  message.toJsonObject());
-	}
+		@Override
+		public GameInfo getRunningGame(final int pPosition) {
+			return runningGames.get(pPosition);
+		};
 
-	/**
-	 * receive a DTN message
-	 *
-	 * @param pContext activity context
-	 * @param pJSON payload in JSON format
-	 */
-	public static void handlePayload(final Context pContext,
-	                                 final JsonObject pJSON) {
-		if(pJSON.has("game"))
+		@Override
+		public int getRunningGamesCount() {
+			return runningGames.size();
+		};
+
+		@Override
+		public boolean handleData(final ParcelFileDescriptor pData) {
+			final JsonParser parser = new JsonParser();
+			final FileReader reader = new FileReader(pData.getFileDescriptor());
+
+			final JsonObject json = (JsonObject) parser.parse(reader);
+
+			if(json.has("game"))
+			{
+				final Gson gson = CustomGSON.getInstance();
+
+				final GameInfo game =
+					gson.fromJson(json.get("game"), GameInfo.class);
+				Log.e(TAG, "game: "+game);
+
+				switch (game.getState()) {
+				case ABORTED:
+				{
+					if(runningGames.contains(game))
+					{
+						onReceiveNewServer(runningGames.find(game),
+						                   gson.fromJson(json.get("new_server"),
+						                                 Player.class));
+					}
+
+					return true;
+				}
+				case ANNOUNCED:
+				{
+					if(announcedGames.contains(game)) {
+						Log.e(TAG, getString(R.string.error_already_announced,
+							                 game));
+					}
+					else
+					{
+						onReceiveGameInfo(game);
+					}
+
+					return true;
+				}
+				case EXECUTION_PHASE:
+				{
+					if(runningGames.contains(game))
+					{
+						onReceiveOutcome(runningGames.find(game),
+						                 gson.fromJson(json.get("outcome"),
+						                               OutcomeContainer.class));
+					}
+
+					return true;
+				}
+				case PLANNING_PHASE:
+				{
+
+					if(runningGames.contains(game) || announcedGames.contains(game))
+					{
+						final Type type =
+							new TypeToken<HashSet<Player>>() {}.getType();
+
+						final HashSet<Player> players =
+							gson.fromJson(json.get("players"), type);
+
+						onReceiveStartPlanningPhase(runningGames.find(game),
+						                            players);
+					}
+
+					return true;
+				}
+				default:
+					break;
+				}
+			}
+
+			return false;
+		}
+
+		@Override
+		public void joinGame(GameInfo pGame) {
+			if (!announcedGames.contains(pGame)) {
+				Log.e(TAG, getString(R.string.error_not_announced, pGame));
+				return;
+			}
+
+			pGame = announcedGames.find(pGame);
+
+			if (!pGame.isInState(GameState.ANNOUNCED)) {
+				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
+				                     pGame.getState()));
+				return;
+			}
+
+			pGame.setState(GameState.JOINED);
+			broadcastGameInfo(pGame);
+
+			final Message message =
+				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
+
+			try {
+				dtn.getService().sendToServer(pGame.getServer(),
+				                              message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void sendDecisions(GameInfo pGame,
+		                          final DecisionContainer pDecisions) {
+			if (!runningGames.contains(pGame)) {
+				Log.e(TAG, getString(R.string.error_not_running, pGame));
+				return;
+			}
+
+			pGame = runningGames.find(pGame);
+
+			if (!pGame.isInState(GameState.PLANNING_PHASE)) {
+				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
+				                     pGame.getState()));
+				return;
+			}
+
+			final Message message =
+				new DecissionMessage(Client.this, getSettings().getPlayer(),
+				                     pGame, pDecisions);
+
+			try {
+				dtn.getService().sendToServer(pGame.getServer(),
+				                              message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		/**
+		 * @name messages
+		 * @{
+		 */
+
+		@SuppressWarnings("unused")
+		class ClientMessage extends Message
 		{
-			final Gson gson = CustomGSON.getInstance();
+			public ClientMessage(final Context pContext, final Player pPlayer,
+			                     final GameInfo pGame) {
+				super(pContext, pGame);
 
-			final GameInfo game =
-				gson.fromJson(pJSON.get("game"), GameInfo.class);
-			Log.e(TAG, "game: "+game);
-
-			switch (game.getState()) {
-			case ABORTED:
-			{
-				if(runningGames.contains(game))
-				{
-					onReceiveNewServer(pContext, runningGames.find(game),
-					                   gson.fromJson(pJSON.get("new_server"),
-					                                 Player.class));
-				}
-
-				break;
+				player = pPlayer;
 			}
-			case ANNOUNCED:
-			{
-				if(announcedGames.contains(game)) {
-					Log.e(TAG,
-						pContext.getString(R.string.error_already_announced,
-						                   game.toString()));
-				}
-				else
-				{
-					onReceiveGameInfo(pContext, game);
-				}
 
-				break;
-			}
-			case EXECUTION_PHASE:
-			{
-				if(runningGames.contains(game))
-				{
-					onReceiveOutcome(pContext, runningGames.find(game),
-					                 gson.fromJson(pJSON.get("outcome"),
-					                               OutcomeContainer.class));
-				}
-
-				break;
-			}
-			case PLANNING_PHASE:
-			{
-
-				if(runningGames.contains(game) || announcedGames.contains(game))
-				{
-					final Type type =
-						new TypeToken<HashSet<Player>>() {}.getType();
-
-					final HashSet<Player> players =
-						gson.fromJson(pJSON.get("players"), type);
-
-					onReceiveStartPlanningPhase(pContext,
-					                            runningGames.find(game),
-					                            players);
-				}
-
-				break;
-			}
-			default:
-				break;
-			}
-		}
-	}
-
-	/**
-	 * join a game
-	 *
-	 * @param pContext activity context
-	 * @param pGame announced game
-	 */
-	public static void joinGame(final Context pContext, GameInfo pGame) {
-		if (!announcedGames.contains(pGame)) {
-			Log.e(TAG, pContext.getString(R.string.error_not_announced,
-			                              pGame.toString()));
-			return;
+			private final Player player;
 		}
 
-		pGame = announcedGames.find(pGame);
-
-		if (!pGame.isInState(GameState.ANNOUNCED)) {
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-			                              pGame.toString(),
-			                              pGame.getState().toString()));
-			return;
-		}
-
-		pGame.setState(GameState.JOINED);
-		broadcastGameInfo(pContext, pGame);
-
-		final Message message = new ClientMessage(pGame);
-		CustomDTNDataHandler.sendToServer(pContext, pGame.getServer(),
-		                                  message.toJsonObject());
-	}
-
-	/**
-	 * send decisions to server
-	 *
-	 * @param pContext activity context
-	 * @param pGame running game
-	 * @param decisions
-	 */
-	public static void sendDecisions(final Context pContext, final GameInfo pGame,
-			final DecisionContainer pDecisions) {
-		if (!runningGames.contains(pGame)) {
-			Log.e(TAG, pContext.getString(R.string.error_not_running,
-					pGame.toString()));
-			return;
-		}
-
-		final GameInfo rgame = runningGames.find(pGame);
-
-		if (!pGame.isInState(GameState.PLANNING_PHASE)) {
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-			                              rgame.toString(),
-			                              rgame.getState().toString()));
-			return;
-		}
-
-		final Message message = new DecissionMessage(pGame, pDecisions);
-		CustomDTNDataHandler.sendToServer(pContext, rgame.getServer(),
-		                                  message.toJsonObject());
-	}
-
-	/**
-	 * @name messages
-	 * @{
-	 */
-
-	static class ClientMessage extends Message
-	{
-		Player player = Settings.player;
-
-		ClientMessage(final GameInfo pGame) {
-			super(pGame);
-		}
-
-	}
-
-	static class DecissionMessage extends ClientMessage
-	{
-		DecisionContainer decisions;
-
-		DecissionMessage(final GameInfo pGame,
-		                 final DecisionContainer pDecisions) {
-			super(pGame);
-			decisions = pDecisions;
-		}
-	}
-	/**
-	 * @}
-	 */
-
-	/**
-	 * inform activities about a changed game
-	 *
-	 * @param pContext activity context
-	 * @param pGame changed game
-	 */
-	private static void broadcastGameInfo(final Context pContext,
-			final GameInfo pGame) {
-		final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
-
-		update_intent.putExtra(GameInfo.parcelName, pGame);
-
-		pContext.sendBroadcast(update_intent);
-	}
-
-	/**
-	 * server has announced new game
-	 *
-	 * @param pContext activity context
-	 * @param pGame new game
-	 */
-	private static void onReceiveGameInfo(final Context pContext,
-                                       final GameInfo pGame) {
-		announcedGames.add(pGame);
-		broadcastGameInfo(pContext, pGame);
-
-		if(pGame.isServer(Settings.player))
+		@SuppressWarnings("unused")
+		class DecissionMessage extends ClientMessage
 		{
-			// auto join own game
-			joinGame(pContext, pGame);
+			public DecissionMessage(final Context pContext,
+									final Player pPlayer, final GameInfo pGame,
+			                        final DecisionContainer pDecisions) {
+				super(pContext, pPlayer, pGame);
+
+				decisions = pDecisions;
+			}
+
+			private final DecisionContainer decisions;
 		}
-	}
+		/**
+		 * @}
+		 */
 
-	/**
-	 * server has quit, inform clients about new server
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 * @param pNewServer new server
-	 */
-	private static void onReceiveNewServer(final Context pContext,
-			final GameInfo pGame, final Player pNewServer) {
-		if (!pGame.isInState(GameState.PLANNING_PHASE)
-				&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
-			return;
+		/**
+		 * @name game containers
+		 * @{
+		 */
+		private final GameList announcedGames = new GameList();
+		private final GameList runningGames = new GameList();
+		/**
+		 * @}
+		 */
+
+		/**
+		 * inform activities about a changed game
+		 *
+		 * @param pGame changed game
+		 */
+		private void broadcastGameInfo(final GameInfo pGame) {
+			final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
+
+			update_intent.putExtra(GameInfo.PARCEL_NAME, pGame);
+
+			sendBroadcast(update_intent);
 		}
 
-		pGame.setServer(pNewServer);
+		/**
+		 * server has announced new game
+		 *
+		 * @param pGame new game
+		 */
+		private void onReceiveGameInfo(final GameInfo pGame) {
+			announcedGames.add(pGame);
+			broadcastGameInfo(pGame);
 
-		// we become server
-		if (Settings.player.equals(pNewServer)) {
-			Server.acquireGame(pContext, pGame);
+			if(pGame.isServer(getSettings().getPlayer()))
+			{
+				// auto join own game
+				joinGame(pGame);
+			}
 		}
 
-		broadcastGameInfo(pContext, pGame);
-	}
+		/**
+		 * server has quit, inform clients about new server
+		 *
+		 * @param pGame game
+		 * @param pNewServer new server
+		 */
+		private void onReceiveNewServer(final GameInfo pGame,
+		                                final Player pNewServer) {
+			if (!pGame.isInState(GameState.PLANNING_PHASE)
+					&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
+				Log.e(TAG, getString(R.string.error_wrong_state,
+						pGame.toString(), pGame.getState().toString()));
+				return;
+			}
 
-	/**
-	 * receive outcome from server
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 * @param pOutcome
-	 */
-	private static void onReceiveOutcome(final Context pContext,
-			final GameInfo pGame, final OutcomeContainer pOutcome) {
-		// TODO handle outcome
-	}
+			pGame.setServer(pNewServer);
 
-	/**
-	 * start planning phase
-	 *
-	 * @param pContext activity context
-	 * @param pGame running game
-	 */
-	private static void onReceiveStartPlanningPhase(final Context pContext,
+			// we become server
+			if (getSettings().getPlayer().equals(pNewServer)) {
+				try {
+					server.getService().acquireGame(pGame);
+				} catch (final RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+			broadcastGameInfo(pGame);
+		}
+
+		/**
+		 * receive outcome from server
+		 *
+		 * @param pGame game
+		 * @param pOutcome
+		 */
+		private void onReceiveOutcome(final GameInfo pGame,
+		                              final OutcomeContainer pOutcome) {
+			// TODO handle outcome
+		}
+
+		/**
+		 * start planning phase
+		 *
+		 * @param pGame running game
+		 */
+		private void onReceiveStartPlanningPhase(
 			final GameInfo pGame, final HashSet<Player> players) {
-		if(!pGame.isInState(GameState.JOINED)
-		   && !pGame.isInState(GameState.EXECUTION_PHASE)) {
 
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
+			if(!pGame.isInState(GameState.JOINED)
+			   && !pGame.isInState(GameState.EXECUTION_PHASE)) {
 
-			return;
-		}
+				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
+				                     pGame.getState()));
 
-		if (pGame.isInState(GameState.JOINED))
-		{
-			announcedGames.remove(pGame);
-
-			if(players.contains(Settings.player))
-			{
-				runningGames.add(pGame);
+				return;
 			}
-		}
-		else if(!players.contains(Settings.player))
-		{
-			// TODO do something, we got kicked out!
-		}
 
-		// start planning phase
-		pGame.setState(GameState.PLANNING_PHASE);
-		broadcastGameInfo(pContext, pGame);
+			if(pGame.isInState(GameState.JOINED))
+			{
+				announcedGames.remove(pGame);
+
+				if(players.contains(getSettings().getPlayer()))
+				{
+					runningGames.add(pGame);
+				}
+			}
+			else if(!players.contains(getSettings().getPlayer()))
+			{
+				// TODO do something, we got kicked out!
+			}
+
+			// start planning phase
+			pGame.setState(GameState.PLANNING_PHASE);
+			broadcastGameInfo(pGame);
+		}
+	};
+
+	private Settings getSettings()
+	{
+		return ((App) getApplication()).getSettings();
 	}
 }
