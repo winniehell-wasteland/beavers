@@ -502,7 +502,7 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
 
-		currentGame = getIntent().getParcelableExtra(GameInfo.parcelName);
+		currentGame = getIntent().getParcelableExtra(GameInfo.PARCEL_NAME);
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
@@ -589,7 +589,7 @@ final TimerHandler gameTimer = new TimerHandler(0.3f, new ITimerCallback() {
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
 			final GameInfo game =
-				pIntent.getParcelableExtra(GameInfo.parcelName);
+				pIntent.getParcelableExtra(GameInfo.PARCEL_NAME);
 
 			// TODO update GameActivity
 		}
