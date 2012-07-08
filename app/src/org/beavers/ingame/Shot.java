@@ -29,18 +29,8 @@ public class Shot implements IMovableObject {
 	public Line targetLine;
 
 	public Shot(final Soldier pSoldier, final GameActivity pActivity){
-		//super(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1], Textures.SHOT_BULLET);
         activity = pActivity;
 		soldier = pSoldier;
-
-		//shot = new Sprite(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1], Textures.SHOT_BULLET.deepCopy());
-
-
-
-			//	new Sprite(0, 0, Textures.MUZZLE_FLASH.deepCopy());
-		//shot.setPosition(pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[0], pSoldier.convertLocalToSceneCoordinates(pSoldier.getWidth()/2+5, pSoldier.getHeight()/2-18)[1]);
-
-
 	}
 
 	@Override
@@ -95,9 +85,8 @@ public class Shot implements IMovableObject {
    TimerHandler shootTimer;
    Sprite currentShot;
 
-   public void fire(final Tile pTarget){
-
-
+   public void fire(final Soldier targetSoldier){
+		final Tile pTarget=targetSoldier.getTile();
 		shootTimer = new TimerHandler(delay,new ITimerCallback() {
 
 			@Override
@@ -120,44 +109,46 @@ public class Shot implements IMovableObject {
 				flash.setPosition(soldier.getWidth()/2,soldier.getHeight()/2-31);
 				soldier.attachChild(flash);
 
-				final float distx=Math.abs(shot.getX() - pTarget.getCenterX());
-				final float disty=Math.abs(shot.getY() - pTarget.getCenterY());
+				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);//GameActivity.getTileCenterX(pTarget));
+					final float disty=Math.abs(shot.getY() - targetSoldier.getCenter()[1]);//GameActivity.getTileCenterY(pTarget));
 
-				final float duration = (float) (Math.sqrt(distx*distx+disty*disty)/SPEED);
 
-				final MoveModifier moveMod =
-					new MoveModifier(duration,
-						shot.getX(),
-						(float) (target.getCenterX()-10+Math.random()*20),
-						shot.getY(),
-						(float) (target.getCenterY()-10+Math.random()*20));
+					final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (targetSoldier.getCenter()[0]-10+Math.random()*20), shot.getY(), (float) (targetSoldier.getCenter()[1]-10+Math.random()*20));
+					moveMod.addModifierListener(new IModifierListener<IEntity>() {
+						Sprite current=currentShot;
+						@Override
+						public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+							// TODO Auto-generated method stub
 
-				moveMod.addModifierListener(new IModifierListener<IEntity>() {
-					Sprite current=currentShot;
-					@Override
-					public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
-						// TODO Auto-generated method stub
+						}
 
-					}
+						@Override
+						public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+							// TODO Auto-generated method stub
+							current.detachSelf();
+							if(targetSoldier.getRotation()>soldier.getRotation()-10 && targetSoldier.getRotation()<soldier.getRotation()+10){
+								targetSoldier.changeHP(-20);
+							}
+							else targetSoldier.changeHP(-10);
+							if(!targetSoldier.isShooting())targetSoldier.fireShot(soldier, activity);
+							if(soldier.isdead())stopShooting();
+							if(targetSoldier.isdead()){
+								stopShooting();
+								soldier.setShooting(false);
+								soldier.resume();
+								if(targetSoldier.getShot()!=null)targetSoldier.getShot().stopShooting();
+							}
+						}
+					});
 
-					@Override
-					public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-						// TODO Auto-generated method stub
-						current.detachSelf();
 
-					}
-				});
+					shot.registerEntityModifier(moveMod);
+					spriteExpire(flash);
 
-				//flash.setPosition(soldier.convertSceneToLocalCoordinates(flash.getX(), flash.getY())[0]-5, soldier.convertSceneToLocalCoordinates(flash.getX(), flash.getY())[1]-13);
-				//soldier.attachChild(flash);
-				shot.registerEntityModifier(moveMod);
-				spriteExpire(flash);
+					delay=(float) (0.1+Math.random()*0.4);
 
-				delay=(float) (0.1+Math.random()*0.4);
-
-				shootTimer.setTimerSeconds(delay);
-				shootTimer.reset();
-
+					shootTimer.setTimerSeconds(delay);
+					shootTimer.reset();
 			}
 		});
 		activity.getEngine().registerUpdateHandler(shootTimer);
@@ -167,6 +158,7 @@ public class Shot implements IMovableObject {
 
 	 activity.getEngine().unregisterUpdateHandler(shootTimer);
 	 shootTimer=null;
+	 soldier.setShooting(false);
  }
 
 	private void spriteExpire(final Sprite flash)

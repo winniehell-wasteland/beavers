@@ -91,9 +91,13 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		hp += pOffset;
 
 		if(hp>100)hp=100;
-		if(hp<0)hp=0;
+		if(hp<0){
+			hp=0;
+			dead=true;
+		}
 
 		return hp;
+
 	}
 
 	/**
@@ -135,10 +139,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	/**
 	 * fire shot to target tile
 	 * @param pShot shot object
-	 * @param pTarget target tile
+	 * @param pTarget target soldier
 	 */
-	public void fireShot(final Tile pTarget, final GameActivity pActivity){
-
+	public void fireShot(final Soldier target, final GameActivity pActivity){
+		final Tile pTarget=target.getTile();
 		final Shot tmpshot = new Shot(this, pActivity);
 		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
 		if(shot!=null){
@@ -155,7 +159,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				shot.fire(pTarget);
+				shot.fire(target);
+				shooting=true;
 			}
 		});
 	}
@@ -231,8 +236,37 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return null;
 	}
 
-	private int hp=100;
 
+
+
+
+
+	public boolean isdead(){
+		return dead;
+	}
+
+
+	public int getAP(){
+		return ap;
+	}
+
+	public int changeAP(final int points){
+		ap+=points;
+		if(ap>20)ap=20;
+		else if(ap<0){
+			ap=0;
+		}
+		return ap;
+
+
+	}
+	public boolean isShooting(){
+		return shooting;
+	}
+
+	public void setShooting(final boolean shoot){
+		shooting=shoot;
+	}
 
 	/**
 	 * add selection mark and draw waypoints
@@ -267,6 +301,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		}
 	}
 
+
+
 	/**
 	 * move to target tile
 	 * @param pTarget target tile
@@ -278,10 +314,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		final float disty =
 			Math.abs(pTarget.getCenterY() - (getY()+getHeight()/2));
 
-		final float duartion = (float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED);
+		final float duration = (float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED);
 
 		final MoveModifier movement =
-			new MoveModifier(duartion,
+			new MoveModifier(duration,
 				getX(), pTarget.getCenterX() - getWidth()/2,
 				getY(), pTarget.getCenterY() - getHeight()/2);
 
@@ -345,6 +381,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	{
 		if(firstWaypoint != lastWaypoint)
 		{
+			changeAP(lastWaypoint.getPath().getLength());
+
 			lastWaypoint.detachSelf();
 			lastWaypoint.getPrevious().setNext(null);
 			lastWaypoint = lastWaypoint.getPrevious();
@@ -356,6 +394,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	/**
 	 * stop moving or turning
 	 */
+	private MoveModifier lastMove;
+	private RotationByModifier lastRotate;
+
 	public void stop()
 	{
 		stopAnimation(0);
@@ -363,11 +404,15 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			@Override
 			public boolean matches(final IModifier<IEntity> pObject) {
-				if((pObject instanceof MoveModifier)
-						|| (pObject instanceof RotationByModifier))
-				{
+				if(pObject instanceof MoveModifier){
+					lastMove=(MoveModifier)pObject;
 					return true;
 				}
+				if(pObject instanceof RotationByModifier){
+					lastRotate=(RotationByModifier)pObject;
+					return true;
+				}
+
 
 				return false;
 			}
@@ -375,6 +420,14 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		});
 	}
 
+	public void resume(){
+		if(lastMove!=null){
+			registerEntityModifier(lastMove);
+		}
+		if(lastRotate!=null){
+			registerEntityModifier(lastRotate);
+		}
+	}
 	/**
 	 * @name speed constants
 	 * @{
@@ -386,6 +439,11 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	/**
 	 * @}
 	 */
+
+	private int ap=20;
+	private int hp=100;
+	private boolean dead=false;
+	private boolean shooting=false;
 
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
@@ -433,7 +491,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			setZIndex(GameActivity.ZINDEX_SOLDIERS);
 
-
 			lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
 			lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
 			//this.attachChild(lineA);
@@ -462,8 +519,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		switch (pTeam) {
 		case 0:
 			return Textures.SOLDIER_TEAM0.deepCopy();
-		default:
-			return null;
+		case 1:
+			return Textures.SOLDIER_TEAM1.deepCopy();
+		default: return null;
 		}
 	}
 }
