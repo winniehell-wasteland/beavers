@@ -5,8 +5,51 @@ import java.util.UUID;
 
 import org.beavers.gameplay.Player;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 public class Settings {
-	public static Player player =
-		new Player(UUID.randomUUID(), "player"+(new Random()).nextInt(1000));
-	public static String defaultMap = "map";
+
+	public Settings(final Context pContext) {
+		settings = pContext.getSharedPreferences("preferences",
+		                                         Context.MODE_PRIVATE);
+	}
+
+	public String getMapName()
+	{
+		return MAP_NAME_DEFAULT;
+	}
+
+	public Player getPlayer() {
+		final String id =
+			settings.getString(PLAYER_ID_KEY, PLAYER_ID_DEFAULT);
+		final String name =
+			settings.getString(PLAYER_NAME_KEY, PLAYER_NAME_DEFAULT);
+
+		return new Player(UUID.fromString(id), name);
+	}
+
+	/**
+	 * @name keys
+	 * @{
+	 */
+	private static String PLAYER_ID_KEY = "player_id";
+	private static String PLAYER_NAME_KEY = "player_name";
+	/**
+	 * @}
+	 */
+
+	/**
+	 * @name defaults
+	 * @{
+	 */
+	private static String MAP_NAME_DEFAULT = "map";
+	private static String PLAYER_ID_DEFAULT = UUID.randomUUID().toString();
+	private static String PLAYER_NAME_DEFAULT =
+		"player"+(new Random()).nextInt(1000);
+	/**
+	 * @}
+	 */
+
+	private final SharedPreferences settings;
 }
