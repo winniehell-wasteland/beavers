@@ -192,6 +192,14 @@ public class GameListActivity extends FragmentActivity
 	}
 
 	@Override
+	protected void onDestroy() {
+		unbindService(client);
+		unbindService(server);
+
+		super.onDestroy();
+	}
+
+	@Override
 	protected void onPause() {
 		super.onPause();
 
