@@ -33,7 +33,6 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
-import de.tubs.ibr.dtn.api.SessionDestroyedException;
 
 /**
  * service for DTN communication
@@ -141,8 +140,7 @@ public class DTNService extends Service {
 				executor.shutdownNow();
 			}
 		} catch (final InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Log.e(TAG, "Interrupted while processing executor queue!", e);
 		}
 
 		dtnClient.terminate();
@@ -255,18 +253,38 @@ public class DTNService extends Service {
 	private final IDTNService.Stub stub = new IDTNService.Stub() {
 
 		@Override
-		public void sendToServer(final Player pServer, final ParcelFileDescriptor pData)
-				throws RemoteException {
-			// TODO Auto-generated method stub
+		public void sendToServer(final Player pServer,
+		                         final ParcelFileDescriptor pData) {
 
+			// send to our server
+			try {
+				server.getService().handleData(pData);
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Server could not handle loopback packet!", e);
+				return;
+			}
+
+			final long length = pData.getStatSize();
+
+			try {
+				dtnClient.getSession().sendFileDescriptor(
+					SERVER_EID, 100, pData, length
+				);
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not send DTN packet!", e);
+			}
 		}
 
 		@Override
-		public void sendToClients(final ParcelFileDescriptor pData)
-				throws RemoteException {
+		public void sendToClients(final ParcelFileDescriptor pData) {
 
 			// send to our client
-			client.getService().handleData(pData);
+			try {
+				client.getService().handleData(pData);
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Client could not handle loopback packet!", e);
+				return;
+			}
 
 			final long length = pData.getStatSize();
 
@@ -285,12 +303,8 @@ public class DTNService extends Service {
 		public void run() {
 			try {
 				while(dtnClient.query());
-			} catch (final SessionDestroyedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (final InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (final Exception e) {
+				Log.e(TAG, "Problem while querying from DTN client!", e);
 			}
 		}
 	};
@@ -346,8 +360,7 @@ public class DTNService extends Service {
 				try {
 					fileDesc.close();
 				} catch (final IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Log.e(TAG, "Could not close file descriptor!", e);
 				}
 
 				fileDesc = null;
