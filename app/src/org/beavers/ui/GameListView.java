@@ -1,12 +1,12 @@
 package org.beavers.ui;
 
+import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.GameList;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,11 +25,9 @@ import android.widget.TextView;
 public abstract class GameListView extends ListView
 	implements OnItemClickListener {
 
-	public GameListView(final Activity pActivity, final GameList pList) {
-		super(pActivity);
-
-		activity = pActivity;
-		list = pList;
+	public GameListView(final Context pContext,
+	                    final ListViewAdapter pAdapter) {
+		super(pContext);
 
 		setPadding(20, 10, 10, 10);
 		setLayoutParams(new LinearLayout.LayoutParams(
@@ -37,7 +35,7 @@ public abstract class GameListView extends ListView
 				LinearLayout.LayoutParams.FILL_PARENT
 				));
 
-		setAdapter(new ListViewAdapter());
+		setAdapter(pAdapter);
 
 		setChoiceMode(CHOICE_MODE_SINGLE);
 		setOnItemClickListener(this);
@@ -55,24 +53,9 @@ public abstract class GameListView extends ListView
 		showContextMenu();
 	}
 
-	private final Activity activity;
-	private final GameList list;
+	public static abstract class ListViewAdapter extends BaseAdapter {
 
-	class ListViewAdapter extends BaseAdapter {
-
-		public ListViewAdapter() {
-			 inflater = activity.getLayoutInflater();
-		}
-
-		@Override
-		public int getCount() {
-			return list.size();
-		}
-
-		@Override
-		public Object getItem(final int position) {
-			return list.get(position);
-		}
+		protected abstract LayoutInflater getLayoutInflater();
 
 		@Override
 		public long getItemId(final int position) {
@@ -82,9 +65,16 @@ public abstract class GameListView extends ListView
 		@Override
 		public View getView(final int position, View convertView,
 				final ViewGroup parent) {
+
+			final Settings settings =
+				((App) parent.getContext().getApplicationContext())
+				.getSettings();
+
 			ViewHolder holder;
 			if (convertView == null) {
-				convertView = inflater.inflate(R.layout.custom_row_view, null);
+				convertView = getLayoutInflater()
+					.inflate(R.layout.custom_row_view, null);
+
 				holder = new ViewHolder();
 				holder.txtName =
 						(TextView) convertView.findViewById(R.id.name);
@@ -98,11 +88,11 @@ public abstract class GameListView extends ListView
 				holder = (ViewHolder) convertView.getTag();
 			}
 
-			final GameInfo item = list.get(position);
+			final GameInfo item = (GameInfo) getItem(position);
 
 			holder.txtName.setText(item.getGame().getName());
 
-			if(item.isServer(Settings.player))
+			if(item.isServer(settings.getPlayer()))
 			{
 				holder.txtServer.setText("");
 			} else {
@@ -110,8 +100,8 @@ public abstract class GameListView extends ListView
 			}
 
 			holder.txtState.setText(
-				activity.getString(R.string.state) + ": "
-				+ item.getState().getName(activity));
+				parent.getContext().getString(R.string.state) + ": "
+				+ item.getState().getName(parent.getContext()));
 
 			return convertView;
 		}
@@ -121,7 +111,5 @@ public abstract class GameListView extends ListView
 			TextView txtServer;
 			TextView txtState;
 		}
-
-		private final LayoutInflater inflater;
 	}
 }

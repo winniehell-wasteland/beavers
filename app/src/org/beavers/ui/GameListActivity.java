@@ -3,8 +3,11 @@
  */
 package org.beavers.ui;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
+import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.Client;
@@ -12,21 +15,24 @@ import org.beavers.communication.Server;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
+import org.beavers.ui.GameListView.ListViewAdapter;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -45,6 +51,15 @@ public class GameListActivity extends FragmentActivity
 	implements OnMenuItemClickListener {
 
 	/**
+	 * @name debug
+	 * @{
+	 */
+	private static final String TAG = GameListActivity.class.getName();
+	/**
+	 * @}
+	 */
+
+	/**
 	 * @name intents
 	 * @{
 	 */
@@ -55,18 +70,6 @@ public class GameListActivity extends FragmentActivity
 	/**
 	 * @}
 	 */
-
-	public GameListActivity()
-	{
-		updateReceiver = new BroadcastReceiver() {
-
-			@Override
-			public void onReceive(final Context context, final Intent intent) {
-				// update game list
-				listView.getAdapter().notifyDataSetChanged();
-			}
-		};
-	}
 
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
@@ -82,7 +85,16 @@ public class GameListActivity extends FragmentActivity
 		case R.id.context_menu_join:
 		{
 			assert listView.getCheckedItemIds().length == 1;
-			Client.joinGame(this, (GameInfo) listView.getItemAtPosition(listView.getCheckedItemPosition()));
+			final GameInfo game = (GameInfo) listView.getItemAtPosition(
+				listView.getCheckedItemPosition()
+			);
+
+			try {
+				client.getService().joinGame(game);
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 			return true;
 		}
@@ -139,15 +151,44 @@ public class GameListActivity extends FragmentActivity
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		final GameInfo agame = new GameInfo(Settings.player, new Game(UUID.randomUUID(), "test game (announced)"), "test");
-		agame.setState(GameState.ANNOUNCED);
-		Client.announcedGames.add(agame);
+		client = new Client.Connection();
+		Intent intent = new Intent(GameListActivity.this, Client.class);
+		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
+		{
+			Log.e(TAG, "Could not bind client!");
+			return;
+		}
 
-		final GameInfo rgame = new GameInfo(Settings.player, new Game(UUID.randomUUID(), "test game (running)"), "test");
-		rgame.setState(GameState.PLANNING_PHASE);
-		Client.runningGames.add(rgame);
+		server = new Server.Connection();
+		intent = new Intent(GameListActivity.this, Server.class);
+		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
+		{
+			Log.e(TAG, "Could not bind server!");
+			return;
+		}
 
-		loadList();
+		(new Timer()).schedule(
+			new TimerTask() {
+				@Override
+				public void run() {
+					runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							loadList();
+						}
+					});
+				}
+			}, 1000);
+
+		updateReceiver = new BroadcastReceiver() {
+
+			@Override
+			public void onReceive(final Context context, final Intent intent) {
+				// update game list
+				listView.getAdapter().notifyDataSetChanged();
+			}
+		};
 	}
 
 	@Override
@@ -173,7 +214,7 @@ public class GameListActivity extends FragmentActivity
 	}
 
 	private GameListView listView;
-	private final BroadcastReceiver updateReceiver;
+	private BroadcastReceiver updateReceiver;
 
 	void showGameStartDialog() {
 	    final FragmentTransaction transaction =
@@ -192,22 +233,85 @@ public class GameListActivity extends FragmentActivity
 
 	private void loadList()
 	{
-		GameList list = null;
+		ListViewAdapter adapter = null;
 
 		if(getIntent().getAction().equals(ANNOUNCED))
 		{
-			list = Client.announcedGames;
-		}
-		else if(getIntent().getAction().equals(RUNNING))
-		{
-			list = Client.runningGames;
+			adapter = new ListViewAdapter() {
+
+				@Override
+				public int getCount() {
+					try {
+						return client.getService().getAnnouncedGamesCount();
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					return 0;
+				}
+
+				@Override
+				public Object getItem(final int position) {
+					try {
+						return client.getService().getAnnouncedGame(position);
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					return null;
+				}
+
+				@Override
+				protected LayoutInflater getLayoutInflater() {
+					return GameListActivity.this.getLayoutInflater();
+				}
+
+			};
 		}
 		else
 		{
-			finish();
+			if(!getIntent().getAction().equals(RUNNING))
+			{
+				setIntent(new Intent(RUNNING));
+			}
+
+			adapter = new ListViewAdapter() {
+
+				@Override
+				public int getCount() {
+					try {
+						return client.getService().getRunningGamesCount();
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					return 0;
+				}
+
+				@Override
+				public Object getItem(final int position) {
+					try {
+						return client.getService().getRunningGame(position);
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					return null;
+				}
+
+				@Override
+				protected LayoutInflater getLayoutInflater() {
+					return GameListActivity.this.getLayoutInflater();
+				}
+
+			};
 		}
 
-		listView = new GameListView(this, list) {
+		listView = new GameListView(this, adapter) {
 			@Override
 			protected void onCreateContextMenu(final ContextMenu menu) {
 				final GameInfo game = (GameInfo) getItemAtPosition(getCheckedItemPosition());
@@ -259,6 +363,9 @@ public class GameListActivity extends FragmentActivity
 			final LayoutInflater inflater = LayoutInflater.from(getActivity());
 	        final View layout = inflater.inflate(R.layout.start_game_dialog, null);
 
+	        final Settings settings = ((App)getActivity().getApplication())
+	        	.getSettings();
+
 	        return new AlertDialog.Builder(getActivity())
 	        .setView(layout)
 			.setTitle(R.string.title_start_game)
@@ -278,13 +385,19 @@ public class GameListActivity extends FragmentActivity
 
 						// create new game
 						final GameInfo game = new GameInfo(
-							Settings.player,
+							settings.getPlayer(),
 							new Game(UUID.randomUUID(),
 								input.getText().toString()),
-							Settings.defaultMap);
+							settings.getMapName());
 
-						// announce to clients
-						Server.initiateGame(getActivity(), game);
+						try {
+							// announce to clients
+							((GameListActivity)getActivity()).server.getService()
+								.initiateGame(game);
+						} catch (final RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 
 						// close dialog before Activity gets destroyed
 						dismiss();
@@ -292,7 +405,7 @@ public class GameListActivity extends FragmentActivity
 						// show game
 						final Intent intent =
 							new Intent(getActivity(), GameActivity.class);
-						intent.putExtra(GameInfo.parcelName, game);
+						intent.putExtra(GameInfo.PARCEL_NAME, game);
 						startActivity(intent);
 					}
 				}
@@ -307,4 +420,7 @@ public class GameListActivity extends FragmentActivity
 			).create();
 		}
 	}
+
+	private Client.Connection client;
+	private Server.Connection server;
 }
