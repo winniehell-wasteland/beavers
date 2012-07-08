@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">App</string>
+    <string name="app_name">Battle Beavers</string>
     <string name="button_cancel">Cancel</string>
     <string name="button_ok">OK</string>
     <string name="context_menu_add_aim">Aim at</string>

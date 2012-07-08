@@ -150,6 +150,8 @@ public class DTNService extends Service {
 	public int onStartCommand(final Intent pIntent, final int pFlags,
 			                  final int pStartId) {
 
+		Log.d(TAG, "onStartCommand()");
+
 		if(pIntent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
         	final int stopId = pStartId;
@@ -202,7 +204,7 @@ public class DTNService extends Service {
 		public ParcelFileDescriptor getFile()
 		{
 			try {
-				final File file = File.createTempFile("outgoing", ".msg",
+				final File file = File.createTempFile("outgoing-", ".msg",
 				                                context.getExternalCacheDir());
 
 				final FileWriter writer = new FileWriter(file);
@@ -227,8 +229,14 @@ public class DTNService extends Service {
 	 */
 	public static class Receiver extends BroadcastReceiver
 	{
+		public Receiver() {
+			Log.d(TAG, "Receiver created...");
+		}
+
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
+			Log.d(TAG, "onReceive()");
+
 			// waken the creature
 			final Intent intent = new Intent(pContext, DTNService.class);
 			intent.setAction(pIntent.getAction());
@@ -343,6 +351,8 @@ public class DTNService extends Service {
 		public void startBlock(final Block block) {
 			if ((block.type == 1) && (file == null))
 			{
+				Log.d(TAG, "startBlock()");
+
 				try {
 					file = File.createTempFile("incoming-", ".msg", getExternalCacheDir());
 					Log.e(TAG, "Writing "+file.getAbsolutePath());
@@ -389,6 +399,11 @@ public class DTNService extends Service {
 							else if(destination.equals(CLIENT_EID))
 							{
 								client.getService().handleData(fileDesc);
+							}
+							else
+							{
+								Log.w(TAG, "Got stuff that we don't want: "
+								      + "destination="+destination);
 							}
 
 							fileDesc.close();

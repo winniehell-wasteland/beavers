@@ -8,6 +8,7 @@
 	<uses-permission android:name="android.permission.WAKE_LOCK"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
+	<uses-permission android:name="de.tubs.ibr.dtn.permission.RECEIVE"/>
 
     <application
         android:debuggable="true"
@@ -22,16 +23,21 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+			<intent-filter >
+                <action android:name="de.tubs.ibr.dtn.intent.DTNAPP" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <activity android:name=".gameplay.GameActivity" android:launchMode="singleInstance"></activity>
+
+		<receiver android:enabled="true" android:name=".communication.DTNService$Receiver">
+		    <intent-filter>
+		       	<action android:name="de.tubs.ibr.dtn.intent.RECEIVE"/>
+		    </intent-filter>
+		</receiver>
         
-        <receiver android:enabled="true" android:name=".communication.DTNConnection$Receiver">
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.intent.RECEIVE"/>
-            </intent-filter>
-        </receiver>
         <service android:exported="false" android:name=".communication.Client"></service>
-        <service android:exported="false" android:name=".communication.DTNService"></service>
+        <service android:exported="true" android:name=".communication.DTNService"></service>
         <service android:exported="false" android:name=".communication.Server"></service>
     </application>
 </manifest>

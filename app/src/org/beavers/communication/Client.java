@@ -166,75 +166,80 @@ public class Client extends Service {
 
 		@Override
 		public boolean handleData(final ParcelFileDescriptor pData) {
+			Log.i(TAG, "Processing "+pData.getStatSize()+" bytes...");
+
 			final JsonParser parser = new JsonParser();
 			final FileReader reader = new FileReader(pData.getFileDescriptor());
 
 			final JsonObject json = (JsonObject) parser.parse(reader);
 
-			if(json.has("game"))
+			if(!json.has("game"))
 			{
-				final Gson gson = CustomGSON.getInstance();
+				Log.e(TAG, "JSON object does not contain game info!");
+				return false;
+			}
 
-				final GameInfo game =
-					gson.fromJson(json.get("game"), GameInfo.class);
-				Log.e(TAG, "game: "+game);
+			final Gson gson = CustomGSON.getInstance();
 
-				switch (game.getState()) {
-				case ABORTED:
+			final GameInfo game =
+				gson.fromJson(json.get("game"), GameInfo.class);
+			Log.e(TAG, "game: "+game);
+
+			switch (game.getState()) {
+			case ABORTED:
+			{
+				if(runningGames.contains(game))
 				{
-					if(runningGames.contains(game))
-					{
-						onReceiveNewServer(runningGames.find(game),
-						                   gson.fromJson(json.get("new_server"),
-						                                 Player.class));
-					}
-
-					return true;
+					onReceiveNewServer(runningGames.find(game),
+					                   gson.fromJson(json.get("new_server"),
+					                                 Player.class));
 				}
-				case ANNOUNCED:
+
+				return true;
+			}
+			case ANNOUNCED:
+			{
+				if(announcedGames.contains(game)) {
+					Log.e(TAG, getString(R.string.error_already_announced,
+						                 game));
+				}
+				else
 				{
-					if(announcedGames.contains(game)) {
-						Log.e(TAG, getString(R.string.error_already_announced,
-							                 game));
-					}
-					else
-					{
-						onReceiveGameInfo(game);
-					}
-
-					return true;
+					onReceiveGameInfo(game);
 				}
-				case EXECUTION_PHASE:
+
+				return true;
+			}
+			case EXECUTION_PHASE:
+			{
+				if(runningGames.contains(game))
 				{
-					if(runningGames.contains(game))
-					{
-						onReceiveOutcome(runningGames.find(game),
-						                 gson.fromJson(json.get("outcome"),
-						                               OutcomeContainer.class));
-					}
-
-					return true;
+					onReceiveOutcome(runningGames.find(game),
+					                 gson.fromJson(json.get("outcome"),
+					                               OutcomeContainer.class));
 				}
-				case PLANNING_PHASE:
+
+				return true;
+			}
+			case PLANNING_PHASE:
+			{
+
+				if(runningGames.contains(game) || announcedGames.contains(game))
 				{
+					final Type type =
+						new TypeToken<HashSet<Player>>() {}.getType();
 
-					if(runningGames.contains(game) || announcedGames.contains(game))
-					{
-						final Type type =
-							new TypeToken<HashSet<Player>>() {}.getType();
+					final HashSet<Player> players =
+						gson.fromJson(json.get("players"), type);
 
-						final HashSet<Player> players =
-							gson.fromJson(json.get("players"), type);
-
-						onReceiveStartPlanningPhase(runningGames.find(game),
-						                            players);
-					}
-
-					return true;
+					onReceiveStartPlanningPhase(runningGames.find(game),
+					                            players);
 				}
-				default:
-					break;
-				}
+
+				return true;
+			}
+			default:
+				break;
 			}
 
 			return false;
