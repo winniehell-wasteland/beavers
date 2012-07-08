@@ -21,6 +21,8 @@ import org.anddev.andengine.util.path.Path;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 
+import android.util.Log;
+
 /**
  * soldier sprite
  *
@@ -91,15 +93,34 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		hp += pOffset;
 
 		if(hp>100)hp=100;
-		if(hp<0){
+		if(hp<=0){
 			hp=0;
-			dead=true;
+			die();
 		}
 
 		return hp;
 
 	}
 
+	public void die(){
+		Log.e(Soldier.class.getName(), "die!!!");
+
+		if(hasParent()){
+			removeListener.onRemoveObject(this);
+			detachSelf();
+			if(isShooting()){
+				setShooting(false);
+				shot.stopShooting();
+			}
+
+			for(final WayPoint waypoint : waypoints)
+			{
+				waypoint.detachSelf();
+			}
+
+			waypoints.clear();
+		}
+	}
 	/**
 	 * turn soldier to face target tile
 	 * @param pTarget target tile
@@ -142,6 +163,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @param pTarget target soldier
 	 */
 	public void fireShot(final Soldier target, final GameActivity pActivity){
+		if(target.getHP()<=0)return;
 		final Tile pTarget=target.getTile();
 		final Shot tmpshot = new Shot(this, pActivity);
 		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
@@ -236,23 +258,17 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return null;
 	}
 
-
-
-
-
-
-	public boolean isdead(){
-		return dead;
-	}
-
-
 	public int getAP(){
 		return ap;
 	}
 
+	public int getmaxAP(){
+		return maxAP;
+	}
+
 	public int changeAP(final int points){
 		ap+=points;
-		if(ap>20)ap=20;
+		if(ap>maxAP)ap=maxAP;
 		else if(ap<0){
 			ap=0;
 		}
@@ -260,6 +276,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 
 	}
+
+	public boolean isDead()
+	{
+		return (getHP() <= 0);
+	}
+
 	public boolean isShooting(){
 		return shooting;
 	}
@@ -370,8 +392,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	@Override
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener) {
-		// TODO Auto-generated method stub
-
+		removeListener = pListener;
 	}
 
 	/**
@@ -381,7 +402,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	{
 		if(firstWaypoint != lastWaypoint)
 		{
-			changeAP(lastWaypoint.getPath().getLength());
+
 
 			lastWaypoint.detachSelf();
 			lastWaypoint.getPrevious().setNext(null);
@@ -440,9 +461,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @}
 	 */
 
-	private int ap=20;
+	private final int maxAP=20;
+	private int ap=maxAP;
 	private int hp=100;
-	private boolean dead=false;
 	private boolean shooting=false;
 
 	/** token to mark the selected soldier */
@@ -452,13 +473,16 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private WayPoint lastWaypoint;
 
 	/** team the soldier belongs to */
-	private int team;
+	private final int team;
 
 	/** waypoints of the soldier */
 	private final ArrayDeque<WayPoint> waypoints;
 
 	private Shot shot;
 	private final Line lineA,lineB;
+
+	private IRemoveObjectListener removeListener;
+
 
 		/**
 		 * automatically center soldier on tile using the texture region
@@ -471,6 +495,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
 			      pTiledTextureRegion);
 
+			team=pTeam;
 			//Selection Circle
 			final TextureRegion selectionTexture =
 				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();

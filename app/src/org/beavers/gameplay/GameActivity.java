@@ -25,6 +25,7 @@ import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
 import org.anddev.andengine.entity.scene.Scene;
 import org.anddev.andengine.entity.scene.Scene.IOnSceneTouchListener;
+import org.anddev.andengine.entity.text.Text;
 import org.anddev.andengine.entity.util.FPSLogger;
 import org.anddev.andengine.input.touch.TouchEvent;
 import org.anddev.andengine.input.touch.detector.HoldDetector;
@@ -32,6 +33,7 @@ import org.anddev.andengine.input.touch.detector.HoldDetector.IHoldDetectorListe
 import org.anddev.andengine.input.touch.detector.ScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
+import org.anddev.andengine.opengl.font.Font;
 import org.anddev.andengine.opengl.texture.ITexture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
@@ -58,6 +60,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
@@ -344,7 +347,22 @@ public class GameActivity extends BaseGameActivity
 			{
 				final WayPoint waypoint =
 					selectedSoldier.addWayPoint(getPathFinder(), tile);
-				addObject(waypoint);
+				if(selectedSoldier.getAP()-(waypoint.getPath().getLength()-1)<0){
+					waypoint.remove();
+					runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							Toast.makeText(GameActivity.this,
+								"No AP left",
+								Toast.LENGTH_SHORT).show();
+						}
+					});
+					}
+				else{
+					addObject(waypoint);
+					selectedSoldier.changeAP(-(waypoint.getPath().getLength()-1));
+				}
 			}
 			else
 			{
@@ -366,7 +384,8 @@ public class GameActivity extends BaseGameActivity
 		{
 			pathFinder = null;
 		}
-
+		camera.setBounds(0, map.getWidth()*64,0, map.getHeight()*64);
+		camera.setBoundsEnabled(true);
 		mainScene.registerUpdateHandler(holdDetector);
 		mainScene.setOnSceneTouchListener(this);
 
@@ -405,10 +424,26 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
 	}
 
+
 	@Override
 	public void onLoadResources() {
+
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		BitmapTextureAtlas textureAtlas;
+
+		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		mfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.WHITE);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		bluefont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.BLUE);
+		getTextureManager().loadTexture(textureAtlas);
+
+		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		redfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.RED);
+		getTextureManager().loadTexture(textureAtlas);
+
+		getFontManager().loadFonts(mfont,bluefont,redfont);
 
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
@@ -470,6 +505,12 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	@Override
 	public void onRemoveObject(final IGameObject pObject) {
 		removeObject(pObject);
+
+		if(pObject instanceof Soldier)
+		{
+			final Soldier soldier = (Soldier) pObject;
+			soldiers.get(soldier.getTeam()).remove(soldier);
+		}
 	}
 
 	@Override
@@ -489,6 +530,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
 		camera.offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
+
 	}
 
 	@Override
@@ -502,7 +544,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	public void removeObject(final IGameObject pObject) {
-		if(gameObjects.get(pObject.getTile()).equals(pObject))
+		if((pObject != null) && pObject.equals(gameObjects.get(pObject.getTile())))
 		{
 			gameObjects.remove(pObject.getTile());
 		}
@@ -591,6 +633,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	/**
 	 * @}
 	 */
+	private Font mfont,bluefont,redfont;
 
 	private Line parallelA,parallelB,lineA,lineB;
 
@@ -629,11 +672,26 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	private void updateHUD(){
-		if(getSelectedSoldier()!=null)health_bar.setWidth(getSelectedSoldier().getHP());
-		//update AP;
+		if(getSelectedSoldier()!=null){
+			health_bar.setWidth(getSelectedSoldier().getHP());
+			apText.detachSelf();
+			apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
+					getSelectedSoldier().getmaxAP());
+			apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
+			hud.attachChild(apText);
+			redText.detachSelf();
+			blueText.detachSelf();
+			redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
+			blueText=new Text(0 ,0, bluefont,""+soldiers.get(0).size() );
+			redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
+			blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
+			hud.attachChild(blueText);
+			hud.attachChild(redText);
+		}
 	}
 
 	private Rectangle health_bar;
+	private Text apText,redText,blueText, separator;
 
 	private void loadHUD(){
 		hud=new HUD();
@@ -643,16 +701,25 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		final Rectangle missing_health = new Rectangle(10,10,100,8);
 		health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
 
-
-		//final Font font= new Font(ITexture, Typeface, 12, false, 50);
-		//final Text apText= new Text(0, 0, f, "test");
+		separator = new Text(0 ,0, mfont,":" );
+		separator.setPosition(getEngine().getCamera().getWidth()/2-2,4);
+		redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
+		blueText=new Text(0 ,0, bluefont,""+soldiers.get(0).size() );
+		redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
+		blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
+		apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
+		getSelectedSoldier().getmaxAP());
+		apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
 		health_bar.setColor(1,0,0);
 		hud_back.setColor(0.2f,0.2f,0.2f);
 		hud_back.setAlpha(0.5f);
 		hud.attachChild(hud_back);
 		hud.attachChild(missing_health);
 		hud.attachChild(health_bar);
-		//hud.attachChild(apText);
+		hud.attachChild(apText);
+		hud.attachChild(blueText);
+		hud.attachChild(redText);
+		hud.attachChild(separator);
 		camera.setHUD(hud);
 
 	}
@@ -670,14 +737,15 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
  */
 	public void checkTargets(final int attacking, final int targets){
 		final Iterator itr=getSoldiers(attacking).iterator();
-		while(itr.hasNext()){  //durchl�uft Liste des ersten Teams
+		while(itr.hasNext()){  //durchläuft Liste des ersten Teams
 			final Soldier s=(Soldier)itr.next();
 
 			final Iterator itr2=getSoldiers(targets).iterator();
-			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schie�t
-				while(itr2.hasNext()){  //durchl�uft Liste des zweiten Teams
+			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schießt
+				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
+
 					final Soldier t=(Soldier)itr2.next();
-					if(!t.isdead() && !s.isdead()){  //beide Soldaten m�ssen noch leben
+					if(!t.isDead() && !s.isDead()){  //beide Soldaten müssen noch leben
 
 						parallelB = new Line(
 								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
@@ -706,13 +774,9 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 						if(parallelA.collidesWith(lineB) && parallelB.collidesWith(lineA)){ //Soldat des zweiten Teams ist im Sichtbereich
 
-								s.fireShot(t, this);
-
+							s.fireShot(t, this);
 						}
-
-
 					}
-
 				}
 			}
 		}

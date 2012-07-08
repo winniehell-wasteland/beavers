@@ -92,13 +92,24 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
 		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
 	}
-
+	
+	public void remove(){
+		soldier.removeLastWayPoint();
+		if(removeListener != null)
+		{
+			removeListener.onRemoveObject(this);
+		}
+	}
+	
+	
+	
 	@Override
 	public boolean onMenuItemClick(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
 			if(next == null)
 			{
+				soldier.changeAP(getPath().getLength()-1);
 				soldier.removeLastWayPoint();
 
 				if(removeListener != null)
