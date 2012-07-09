@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -12,8 +14,6 @@ import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
 
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -72,9 +72,10 @@ public class DTNService extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
+		executor = Executors.newSingleThreadExecutor();
+
 		dtnClient = new CustomDTNClient();
 		dataHandler = new CustomDataHandler();
-		executor = Executors.newSingleThreadExecutor();
 
 		dtnClient.setDataHandler(dataHandler);
 		dtnClient.initialize();
@@ -87,7 +88,9 @@ public class DTNService extends Service {
 		intent = new Intent(DTNService.this, Server.class);
 		bindService(intent, server, BIND_AUTO_CREATE);
 
-		executor.execute(new Runnable() {
+		final Timer timer = new Timer();
+
+		timer.schedule(new TimerTask() {
 
 			@Override
 			public void run() {
@@ -98,22 +101,13 @@ public class DTNService extends Service {
 						return;
 					}
 				} catch (final RemoteException e) {
-					// something bad happened to the binder
+					Log.e(TAG, "Something bad happened to the binder: ", e);
 				}
 
-				final NotificationManager notificationManager =
-					(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-				final Notification notification =
-					new Notification(0,
-					                 "Communication problem with DTN service!",
-					                 System.currentTimeMillis());
-
-				notificationManager.notify(1, notification);
-
+				Log.e(TAG, "Communication problem with DTN service!");
 				stopSelf();
 			}
-		});
+		}, 100);
 	}
 
 	@Override
@@ -310,6 +304,8 @@ public class DTNService extends Service {
 		@Override
 		public void run() {
 			try {
+				Log.d(TAG, "Query task running...");
+
 				while(dtnClient.query());
 			} catch (final Exception e) {
 				Log.e(TAG, "Problem while querying from DTN client!", e);
@@ -325,6 +321,7 @@ public class DTNService extends Service {
 
 		@Override
 		public void startBundle(final Bundle pBundle) {
+			Log.d(TAG, "startBundle()");
 			bundle = pBundle;
 		}
 
@@ -354,7 +351,14 @@ public class DTNService extends Service {
 				Log.d(TAG, "startBlock()");
 
 				try {
-					file = File.createTempFile("incoming-", ".msg", getExternalCacheDir());
+					final File cacheDir = getExternalCacheDir();
+
+					if(!cacheDir.exists())
+					{
+						cacheDir.mkdirs();
+					}
+
+					file = File.createTempFile("incoming-", ".msg", cacheDir);
 					Log.e(TAG, "Writing "+file.getAbsolutePath());
 				} catch (final IOException e) {
 					Log.e(TAG, "Problem with creating file!", e);
@@ -392,11 +396,11 @@ public class DTNService extends Service {
 									ParcelFileDescriptor.MODE_READ_ONLY
 								);
 
-							if(destination.equals(SERVER_EID))
+							if(destination.equals(SERVER_EID.toString()))
 							{
 								server.getService().handleData(fileDesc);
 							}
-							else if(destination.equals(CLIENT_EID))
+							else if(destination.equals(CLIENT_EID.toString()))
 							{
 								client.getService().handleData(fileDesc);
 							}
