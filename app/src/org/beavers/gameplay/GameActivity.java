@@ -748,7 +748,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 				}
 			}
 			
-			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schießt
+			if(!s.isShooting() && !s.getIgnore()){   //Abbruch, falls der Soldat schon schießt
 				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
 					final Soldier t=(Soldier)itr2.next();
 					if(s.getHP()>0 && t.getHP()>0){

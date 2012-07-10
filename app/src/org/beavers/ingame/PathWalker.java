@@ -42,6 +42,8 @@ public class PathWalker implements IModifierListener<IEntity> {
 			{
 				soldier.faceTarget(aim, null);
 			}
+			if(ignoreShots)soldier.ignoreShots(true);
+			else soldier.ignoreShots(false);
 		}
 	}
 
@@ -73,6 +75,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private int stepIndex;
 	private Tile sourceTile, targetTile;
 	private Tile aim;
+	private boolean ignoreShots;
 
 	private void nextWaypoint()
 	{
@@ -87,6 +90,9 @@ public class PathWalker implements IModifierListener<IEntity> {
 			{
 				aim = null;
 			}
+			
+			ignoreShots=waypoint.ignoresShots();
+			
 
 			waypoint.detachChildren();
 			gameActivity.removeObject(waypoint);

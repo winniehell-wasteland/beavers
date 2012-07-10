@@ -3,6 +3,8 @@
     <item android:id="@+id/context_menu_waypoint_remove" android:title="@string/context_menu_waypoint_remove"></item>
     <item android:id="@+id/context_menu_add_aim" android:title="@string/context_menu_add_aim"></item>
     <item android:id="@+id/context_menu_remove_aim" android:title="@string/context_menu_remove_aim"></item>
+    <item android:id="@+id/context_menu_ignore_attacks" android:title="@string/context_menu_ignore_attacks"></item>
+    <item android:id="@+id/context_menu_react_on_attacks" android:title="@string/context_menu_react_on_attacks"></item>
     
 
 </menu>

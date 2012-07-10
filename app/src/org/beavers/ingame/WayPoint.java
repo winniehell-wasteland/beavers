@@ -82,6 +82,10 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	public boolean isWaitingForAim() {
 		return waitForAim;
 	}
+	
+	public boolean ignoresShots(){
+		return ignoreShots;
+	}
 
 	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
@@ -89,6 +93,8 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		pMenu.findItem(R.id.context_menu_waypoint_remove)
 			.setEnabled(next == null)
 			.setVisible(previous != null);
+		pMenu.findItem(R.id.context_menu_ignore_attacks).setVisible(ignoreShots == false);
+		pMenu.findItem(R.id.context_menu_react_on_attacks).setVisible(ignoreShots == true);
 		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
 		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
 	}
@@ -126,6 +132,13 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		case R.id.context_menu_remove_aim:
 			setAim(null);
 
+			return true;
+		
+		case R.id.context_menu_ignore_attacks:
+			ignoreShots= true;
+			return true;
+		case R.id.context_menu_react_on_attacks:
+			ignoreShots= false;
 			return true;
 		default:
 			return false;
@@ -190,6 +203,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	 */
 	private Aim aim;
 	private boolean waitForAim;
+	private boolean ignoreShots=false;
 	/**
 	 * @}
 	 */

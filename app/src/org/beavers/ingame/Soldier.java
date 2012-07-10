@@ -102,6 +102,13 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	}
 	
+	public void ignoreShots(final boolean ignore){
+		ignoreShots=ignore;
+	}
+	
+	public boolean getIgnore(){
+		return ignoreShots;
+	}
 	public void die(){
 		Log.e(Soldier.class.getName(), "die!!!");
 		
@@ -357,7 +364,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 					final IEntity pItem) {
 				Soldier.this.registerEntityModifier(movement);
 				Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
-
+				
 				if(pAim != null)
 				{
 					final float angle =
@@ -465,7 +472,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private int ap=maxAP;
 	private int hp=100;
 	private boolean shooting=false;
-
+	private boolean ignoreShots=false;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
 

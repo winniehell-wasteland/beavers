@@ -148,7 +148,7 @@ public class Shot implements IMovableObject {
 									damage=0;
 								
 									//target soldier defends himself
-									if(!targetSoldier.isShooting() && !targetSoldier.isDead()) {
+									if(!targetSoldier.isShooting() && !targetSoldier.isDead() &&targetSoldier.getIgnore()!=true) {
 										targetSoldier.fireShot(soldier, activity);
 									}
 								}
