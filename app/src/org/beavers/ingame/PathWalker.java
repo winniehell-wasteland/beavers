@@ -88,8 +88,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 				aim = null;
 			}
 
-			waypoint.detachChildren();
-			gameActivity.removeObject(waypoint);
+			waypoint.remove();
 		}
 
 		stepIndex = 1;

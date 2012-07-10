@@ -58,16 +58,8 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		return R.menu.context_waypoint;
 	}
 
-	public WayPoint getNext() {
-		return next;
-	}
-
 	public Path getPath() {
 		return path;
-	}
-
-	public WayPoint getPrevious() {
-		return previous;
 	}
 
 	public Soldier getSoldier() {
@@ -79,6 +71,16 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		return tile;
 	}
 
+	public boolean isFirst()
+	{
+		return soldier.getFirstWaypoint().equals(this);
+	}
+
+	public boolean isLast()
+	{
+		return soldier.getLastWaypoint().equals(this);
+	}
+
 	public boolean isWaitingForAim() {
 		return waitForAim;
 	}
@@ -87,35 +89,31 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
 		pMenu.findItem(R.id.context_menu_waypoint_remove)
-			.setEnabled(next == null)
-			.setVisible(previous != null);
+			.setEnabled(isLast())
+			.setVisible(!isFirst());
 		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
 		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
 	}
 
 	public void remove(){
-		soldier.removeLastWayPoint();
+		detachSelf();
+
 		if(removeListener != null)
 		{
 			removeListener.onRemoveObject(this);
 		}
 	}
 
-
-
 	@Override
 	public boolean onMenuItemClick(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
-			if(next == null)
+			if(isLast())
 			{
 				soldier.changeAP(getPath().getCosts());
 				soldier.removeLastWayPoint();
 
-				if(removeListener != null)
-				{
-					removeListener.onRemoveObject(this);
-				}
+				remove();
 			}
 
 			return true;
@@ -145,18 +143,10 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		}
 	}
 
-	public void setNext(final WayPoint pNext) {
-		next = pNext;
-	}
-
-	public void setPrevious(final WayPoint pPrevious) {
-		previous = pPrevious;
-	}
-
 	@Override
 	protected void onManagedUpdate(final float pSecondsElapsed) {
 		// make first way point invisible
-		if((previous == null) && soldier.getTile().equals(getTile()))
+		if(isFirst() && soldier.getTile().equals(getTile()))
 		{
 			getTextureRegion().setHeight(0);
 			getTextureRegion().setWidth(0);
@@ -173,16 +163,8 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	private final Soldier soldier;
 	private final Tile tile;
 
-	/**
-	 * @name path
-	 * @{
-	 */
+	/** path from previous waypoint	*/
 	private final Path path;
-	private WayPoint next;
-	private WayPoint previous;
-	/**
-	 * @}
-	 */
 
 	/**
 	 * @name aim

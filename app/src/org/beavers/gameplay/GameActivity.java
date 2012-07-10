@@ -34,7 +34,6 @@ import org.anddev.andengine.input.touch.detector.ScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.font.Font;
-import org.anddev.andengine.opengl.texture.ITexture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
@@ -384,7 +383,8 @@ public class GameActivity extends BaseGameActivity
 		{
 			pathFinder = null;
 		}
-		camera.setBounds(0, map.getWidth()*64,0, map.getHeight()*64);
+		camera.setBounds(0, map.getTileColumns() * map.getTileWidth(),
+		                 0, map.getTileRows() * map.getTileHeight());
 		camera.setBoundsEnabled(true);
 		mainScene.registerUpdateHandler(holdDetector);
 		mainScene.setOnSceneTouchListener(this);
@@ -504,7 +504,33 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 	@Override
 	public void onRemoveObject(final IGameObject pObject) {
-		removeObject(pObject);
+		if(pObject == null)
+		{
+			// ignore
+			return;
+		}
+
+		if(pObject.equals(gameObjects.get(pObject.getTile())))
+		{
+			gameObjects.remove(pObject.getTile());
+		}
+
+		if(pObject.equals(contextMenuHandler))
+		{
+			contextMenuHandler = null;
+		}
+
+		if(pObject instanceof Soldier)
+		{
+			final Soldier soldier = (Soldier) pObject;
+			soldiers.get(soldier.getTeam()).remove(soldier);
+
+			if(soldier.equals(selectedSoldier))
+			{
+				updateHUD();
+				selectedSoldier = null;
+			}
+		}
 	}
 
 	@Override
@@ -537,36 +563,6 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		// TODO Auto-generated method stub
 	}
 
-	public void removeObject(final IGameObject pObject) {
-		if(pObject == null)
-		{
-			// ignore
-			return;
-		}
-
-		if(pObject.equals(gameObjects.get(pObject.getTile())))
-		{
-			gameObjects.remove(pObject.getTile());
-		}
-
-		if(pObject.equals(contextMenuHandler))
-		{
-			contextMenuHandler = null;
-		}
-
-		if(pObject instanceof Soldier)
-		{
-			final Soldier soldier = (Soldier) pObject;
-			soldiers.get(soldier.getTeam()).remove(soldier);
-
-			if(soldier.equals(selectedSoldier))
-			{
-				updateHUD();
-				selectedSoldier = null;
-			}
-		}
-	}
-
 	@Override
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
@@ -596,8 +592,6 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 	private final static float CAMERA_SPEED = 1.50f;
 	private static final String TAG = "GameScene";
-	private static final ITexture ITexture = null;
-	private static final Typeface Typeface = null;
 
 	/**
 	 * @name detectors
@@ -764,15 +758,15 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
  * @param targets das angegriffene Team
  */
 	public void checkTargets(final int attacking, final int targets){
-		final Iterator itr=getSoldiers(attacking).iterator();
+		final Iterator<Soldier> itr=getSoldiers(attacking).iterator();
 		while(itr.hasNext()){  //durchläuft Liste des ersten Teams
-			final Soldier s=(Soldier)itr.next();
+			final Soldier s=itr.next();
 
-			final Iterator itr2=getSoldiers(targets).iterator();
+			final Iterator<Soldier> itr2=getSoldiers(targets).iterator();
 			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schießt
 				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
 
-					final Soldier t=(Soldier)itr2.next();
+					final Soldier t=itr2.next();
 					if(!t.isDead() && !s.isDead()){  //beide Soldaten müssen noch leben
 
 						parallelB = new Line(
