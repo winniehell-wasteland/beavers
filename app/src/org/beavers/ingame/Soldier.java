@@ -250,14 +250,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return waypoints;
 	}
 
-	/**
-	 * TODO not yet used
-	 */
-	public Weapon getWeapon()
-	{
-		return null;
-	}
-
 	public float getAP(){
 		return ap;
 	}
