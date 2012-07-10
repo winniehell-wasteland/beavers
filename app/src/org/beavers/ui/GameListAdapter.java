@@ -72,7 +72,7 @@ public abstract class GameListAdapter extends BaseAdapter {
 
 		holder.txtState.setText(
 			app.getString(R.string.state) + ": "
-			+ item.getState().getName(app));
+			+ app.getString(item.getState().getResId()));
 
 		return pConvertView;
 	}

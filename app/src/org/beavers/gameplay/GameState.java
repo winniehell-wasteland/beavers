@@ -2,7 +2,6 @@ package org.beavers.gameplay;
 
 import org.beavers.R;
 
-import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -33,26 +32,27 @@ public enum GameState implements Parcelable {
 		return 0;
 	}
 
-	public String getName(final Context pContext) {
+	public int getResId()
+	{
 		switch (this) {
 		case UNKNOWN:
-			return pContext.getString(R.string.state_unknown);
+			return R.string.state_unknown;
 		case ANNOUNCED:
-			return pContext.getString(R.string.state_announced);
+			return R.string.state_announced;
 		case JOINED:
-			return pContext.getString(R.string.state_joined);
+			return R.string.state_joined;
 		case PLANNING_PHASE:
-			return pContext.getString(R.string.state_planning);
+			return R.string.state_planning;
 		case EXECUTION_PHASE:
-			return pContext.getString(R.string.state_execution);
+			return R.string.state_execution;
 		case ABORTED:
-			return pContext.getString(R.string.state_aborted);
+			return R.string.state_aborted;
 		case WON:
-			return pContext.getString(R.string.state_won);
+			return R.string.state_won;
 		case LOST:
-			return pContext.getString(R.string.state_lost);
+			return R.string.state_lost;
 		default:
-			return null;
+			return 0;
 		}
 	}
 
