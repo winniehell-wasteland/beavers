@@ -152,7 +152,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	@Override
 	public Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
-		return pPathFinder.findPath(this, 0,
+		return pPathFinder.findPath(this, (int) getAP() + 1,
 			lastWaypoint.getTile().getColumn(), lastWaypoint.getTile().getRow(),
 			pTarget.getColumn(), pTarget.getRow());
 	}
@@ -226,9 +226,13 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			{
 				return Integer.MAX_VALUE;
 			}
+			else
+			{
+				return 1.5f;
+			}
 		}
 
-		return 0;
+		return 1;
 	}
 
 	/**
@@ -258,23 +262,24 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return null;
 	}
 
-	public int getAP(){
+	public float getAP(){
 		return ap;
 	}
 
-	public int getmaxAP(){
+	public float getmaxAP(){
 		return maxAP;
 	}
 
-	public int changeAP(final int points){
-		ap+=points;
-		if(ap>maxAP)ap=maxAP;
+	public float changeAP(final float points){
+		ap += points;
+		if(ap>maxAP) {
+			ap=maxAP;
+		}
 		else if(ap<0){
 			ap=0;
 		}
+
 		return ap;
-
-
 	}
 
 	public boolean isDead()
@@ -461,8 +466,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @}
 	 */
 
-	private final int maxAP=20;
-	private int ap=maxAP;
+	private final float maxAP=20;
+	private float ap=maxAP;
 	private int hp=100;
 	private boolean shooting=false;
 
