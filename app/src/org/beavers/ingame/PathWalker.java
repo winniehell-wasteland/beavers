@@ -44,6 +44,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 			}
 			if(ignoreShots)soldier.ignoreShots(true);
 			else soldier.ignoreShots(false);
+			soldier.pause(wait);
 		}
 	}
 
@@ -76,7 +77,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 	private Tile sourceTile, targetTile;
 	private Tile aim;
 	private boolean ignoreShots;
-
+	private int wait=0;
 	private void nextWaypoint()
 	{
 		if(waypoint != null)
@@ -92,7 +93,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 			}
 			
 			ignoreShots=waypoint.ignoresShots();
-			
+			wait=waypoint.getWait();
 
 			waypoint.detachChildren();
 			gameActivity.removeObject(waypoint);

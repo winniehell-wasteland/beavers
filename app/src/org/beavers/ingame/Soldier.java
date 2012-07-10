@@ -2,6 +2,8 @@ package org.beavers.ingame;
 
 import java.util.ArrayDeque;
 
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
@@ -109,6 +111,20 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public boolean getIgnore(){
 		return ignoreShots;
 	}
+	
+	public void pause(final int time){
+		if(time>0){
+			stop();
+			getParent().registerUpdateHandler(new TimerHandler(time, false, new ITimerCallback() {
+				@Override
+				public void onTimePassed(final TimerHandler pTimerHandler)
+				{
+					resume();
+				}
+				}));
+		}
+	}
+	
 	public void die(){
 		Log.e(Soldier.class.getName(), "die!!!");
 		
@@ -371,6 +387,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 						calcViewAngle(pTarget.getCenterX(), pTarget.getCenterY(), pAim);
 					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
 					Soldier.this.registerEntityModifier(rotation);
+					
 				}
 			}
 		});
@@ -428,6 +445,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public void stop()
 	{
 		stopAnimation(0);
+		//BUG
 		unregisterEntityModifiers(new IEntityModifierMatcher() {
 
 			@Override

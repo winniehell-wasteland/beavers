@@ -86,6 +86,10 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	public boolean ignoresShots(){
 		return ignoreShots;
 	}
+	
+	public int getWait(){
+		return wait;
+	}
 
 	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
@@ -139,6 +143,9 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 			return true;
 		case R.id.context_menu_react_on_attacks:
 			ignoreShots= false;
+			return true;
+		case R.id.context_menu_wait:
+			wait=5;
 			return true;
 		default:
 			return false;
@@ -204,6 +211,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	private Aim aim;
 	private boolean waitForAim;
 	private boolean ignoreShots=false;
+	private int wait=0;
 	/**
 	 * @}
 	 */

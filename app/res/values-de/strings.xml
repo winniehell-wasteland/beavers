@@ -30,4 +30,5 @@
     <string name="title_start_game">Spiel starten</string>
     <string name="context_menu_ignore_attacks">Nicht schießen</string>
     <string name="context_menu_react_on_attacks">Schießen</string>
+    <string name="context_menu_wait">Warten</string>
 </resources>
