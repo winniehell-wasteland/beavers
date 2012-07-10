@@ -23,9 +23,14 @@ interface IClient {
 	
 	
 	/**
-	 * @return announced game with given position in container
+	 * @return announced game with given key
 	 */
-	GameInfo getAnnouncedGame(in int pPosition);
+	GameInfo getAnnouncedGame(in String pKey);
+	
+	/**
+	 * @return keys of announced games
+	 */
+	String[] getAnnouncedGames();
 	
 	/**
 	 * @return number of announced games
@@ -33,9 +38,14 @@ interface IClient {
 	int getAnnouncedGamesCount();
 	
 	/**
-	 * @return running game with given position in container
+	 * @return running game with given key
 	 */
-	GameInfo getRunningGame(in int pPosition);
+	GameInfo getRunningGame(in String pKey);
+	
+	/**
+	 * @return keys of running games
+	 */
+	String[] getRunningGames();
 	
 	/**
 	 * @return number of running games

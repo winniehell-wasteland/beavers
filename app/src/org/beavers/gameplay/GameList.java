@@ -43,28 +43,22 @@ public class GameList {
 	/**
 	 * find a game in the list
 	 *
-	 * @param pGame game to find
+	 * @param pKey game to find
 	 * @return game in list (or null)
 	 */
-	public GameInfo find(final GameInfo pGame)
+	public GameInfo find(final GameInfo pKey)
 	{
-		return container.get(pGame.toString());
+		return container.get(pKey.toString());
 	}
 
-	/**
-	 * @param pIndex key index
-	 * @return game with given index
-	 */
-	public GameInfo get(final int pIndex)
+	public GameInfo get(final String pKey) {
+		return container.get(pKey);
+	}
+
+
+	public String[] getKeys()
 	{
-		if(pIndex < container.size())
-		{
-			return container.get(container.keySet().toArray()[pIndex]);
-		}
-		else
-		{
-			return null;
-		}
+		return container.keySet().toArray(new String[0]);
 	}
 
 	/**

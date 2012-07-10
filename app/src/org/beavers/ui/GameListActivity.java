@@ -16,7 +16,6 @@ import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
-import org.beavers.ui.GameListView.ListViewAdapter;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -88,6 +87,8 @@ public class GameListActivity extends FragmentActivity
 			final GameInfo game = (GameInfo) listView.getItemAtPosition(
 				listView.getCheckedItemPosition()
 			);
+
+			Log.d(TAG, "Trying to join "+game+"...");
 
 			try {
 				client.getService().joinGame(game);
@@ -241,11 +242,23 @@ public class GameListActivity extends FragmentActivity
 
 	private void loadList()
 	{
-		ListViewAdapter adapter = null;
+		GameListAdapter adapter = null;
 
 		if(getIntent().getAction().equals(ANNOUNCED))
 		{
-			adapter = new ListViewAdapter() {
+			adapter = new GameListAdapter() {
+
+				@Override
+				protected String[] fetchKeys() {
+					try {
+						return client.getService().getAnnouncedGames();
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					return null;
+				}
 
 				@Override
 				public int getCount() {
@@ -260,9 +273,9 @@ public class GameListActivity extends FragmentActivity
 				}
 
 				@Override
-				public Object getItem(final int position) {
+				protected GameInfo getItem(final String pKey) {
 					try {
-						return client.getService().getAnnouncedGame(position);
+						return client.getService().getAnnouncedGame(pKey);
 					} catch (final RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -285,7 +298,19 @@ public class GameListActivity extends FragmentActivity
 				setIntent(new Intent(RUNNING));
 			}
 
-			adapter = new ListViewAdapter() {
+			adapter = new GameListAdapter() {
+
+				@Override
+				protected String[] fetchKeys() {
+					try {
+						return client.getService().getRunningGames();
+					} catch (final RemoteException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					return null;
+				}
 
 				@Override
 				public int getCount() {
@@ -300,9 +325,9 @@ public class GameListActivity extends FragmentActivity
 				}
 
 				@Override
-				public Object getItem(final int position) {
+				protected GameInfo getItem(final String pKey) {
 					try {
-						return client.getService().getRunningGame(position);
+						return client.getService().getRunningGame(pKey);
 					} catch (final RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
