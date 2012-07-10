@@ -505,12 +505,6 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	@Override
 	public void onRemoveObject(final IGameObject pObject) {
 		removeObject(pObject);
-
-		if(pObject instanceof Soldier)
-		{
-			final Soldier soldier = (Soldier) pObject;
-			soldiers.get(soldier.getTeam()).remove(soldier);
-		}
 	}
 
 	@Override
@@ -544,9 +538,32 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	public void removeObject(final IGameObject pObject) {
-		if((pObject != null) && pObject.equals(gameObjects.get(pObject.getTile())))
+		if(pObject == null)
+		{
+			// ignore
+			return;
+		}
+
+		if(pObject.equals(gameObjects.get(pObject.getTile())))
 		{
 			gameObjects.remove(pObject.getTile());
+		}
+
+		if(pObject.equals(contextMenuHandler))
+		{
+			contextMenuHandler = null;
+		}
+
+		if(pObject instanceof Soldier)
+		{
+			final Soldier soldier = (Soldier) pObject;
+			soldiers.get(soldier.getTeam()).remove(soldier);
+
+			if(soldier.equals(selectedSoldier))
+			{
+				updateHUD();
+				selectedSoldier = null;
+			}
 		}
 	}
 
@@ -672,7 +689,16 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	}
 
 	private void updateHUD(){
-		if(getSelectedSoldier()!=null){
+		if(getSelectedSoldier() == null)
+		{
+			try {
+				camera.setHUD(null);
+			} catch(final NullPointerException e)
+			{
+				// ignore
+			}
+		}
+		else {
 			health_bar.setWidth(getSelectedSoldier().getHP());
 			apText.detachSelf();
 			apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
@@ -687,6 +713,8 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
 			hud.attachChild(blueText);
 			hud.attachChild(redText);
+
+			camera.setHUD(hud);
 		}
 	}
 
@@ -792,7 +820,16 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 			selectedSoldier = pSoldier;
 			selectedSoldier.markSelected();
-			loadHUD();
+
+			if(hud == null)
+			{
+				loadHUD();
+			}
+			else
+			{
+				updateHUD();
+			}
+
 			mainScene.sortChildren();
 		}
 
