@@ -500,10 +500,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			final TextureRegion selectionTexture =
 				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
 			selectionMark = new Sprite(
-				getWidth()/2 - selectionTexture.getWidth()/2,
-				getHeight()/2 - selectionTexture.getHeight()/2 + 5,
+				getWidth()/2 - selectionTexture.getWidth()/2-1,
+				getHeight()/2 - selectionTexture.getHeight()/2-1,
 				selectionTexture);
-
+			
 			waypoints = new ArrayDeque<WayPoint>();
 
 			firstWaypoint = new WayPoint(this, null, pTile);

@@ -80,36 +80,38 @@ public class Shot implements IMovableObject {
 		}
 	}
 
-   Tile target;
+  
    float delay=(float) (0.1+Math.random()*0.4);
    TimerHandler shootTimer;
    Sprite currentShot;
    int damage=0;
+   Soldier target;
 	
    public void fire(final Soldier targetSoldier){
+	   target=targetSoldier;
 		final Tile pTarget=targetSoldier.getTile();
 		shootTimer = new TimerHandler(delay,new ITimerCallback() {
 
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
 				
-				target=pTarget;
+				
 
 				//Bullets
 				final Sprite shot = new Sprite(soldier.convertLocalToSceneCoordinates(soldier.getWidth()/2+5, soldier.getHeight()/2-18)[0], soldier.convertLocalToSceneCoordinates(soldier.getWidth()/2+5, soldier.getHeight()/2-18)[1], Textures.SHOT_BULLET.deepCopy());
 				currentShot=shot;
-				final float[] s=soldier.convertLocalToSceneCoordinates(soldier.getWidth()/2+3, soldier.getHeight()/2-32);
+				final float[] s=soldier.convertLocalToSceneCoordinates(soldier.getWidth()/2+6, soldier.getHeight()/2-32);
 				shot.setPosition(s[0]-shot.getWidth()/2,s[1]-shot.getHeight()/2);
 				shot.setRotationCenter(shot.getWidth()/2, shot.getHeight()/2);
 				shot.setRotation(soldier.getRotation()-270);
 				activity.getMainScene().attachChild(shot);
 				shot.setAlpha(0.5f);
-
+				/*
 				//muzzleflash
 				final Sprite flash= new Sprite(0, 0, Textures.MUZZLE_FLASH.deepCopy());
 				flash.setPosition(soldier.getWidth()/2,soldier.getHeight()/2-31);
 				soldier.attachChild(flash);
-				
+				*/
 			
 				
 				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);
@@ -141,12 +143,14 @@ public class Shot implements IMovableObject {
 							damage+=baseDamage;
 							
 							if(!targetSoldier.isDead()){
-								targetSoldier.changeHP(-damage);
-								damage=0;
+								if(findPath(activity.getPathFinder(),targetSoldier.getTile())!=null){
+									targetSoldier.changeHP(-damage);
+									damage=0;
 								
-								//target soldier defends himself
-								if(!targetSoldier.isShooting() && !targetSoldier.isDead()) {
-									targetSoldier.fireShot(soldier, activity);
+									//target soldier defends himself
+									if(!targetSoldier.isShooting() && !targetSoldier.isDead()) {
+										targetSoldier.fireShot(soldier, activity);
+									}
 								}
 							}
 
@@ -159,7 +163,7 @@ public class Shot implements IMovableObject {
 					});
 					
 					shot.registerEntityModifier(moveMod);
-					spriteExpire(flash);
+					//spriteExpire(flash);
 					
 					delay=(float) (0.1+Math.random()*0.4);
 					shootTimer.setTimerSeconds(delay);
@@ -169,6 +173,10 @@ public class Shot implements IMovableObject {
 		activity.getEngine().registerUpdateHandler(shootTimer);
 		
 	}
+   
+ public Soldier getTarget(){
+	 return target;
+ }
    
  public void stopShooting(){
 

@@ -454,7 +454,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		getTextureManager().loadTexture(textureAtlas);
 
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
+		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96blue.png", 0, 0, 3, 2);
 		getTextureManager().loadTexture(textureAtlas);
 		
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -465,8 +465,8 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
 
-		textureAtlas = new BitmapTextureAtlas(32,2,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
+		textureAtlas = new BitmapTextureAtlas(32,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "arrow.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
 
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -740,6 +740,14 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			final Soldier s=(Soldier)itr.next();
 
 			final Iterator itr2=soldiers.get(targets).iterator();
+			if(s.isShooting())
+			{
+				if(s.getShot().findPath(getPathFinder(), s.getShot().getTarget().getTile()) == null)
+				{
+					s.getShot().stopShooting();
+				}
+			}
+			
 			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schieﬂt
 				while(itr2.hasNext()){  //durchl‰uft Liste des zweiten Teams
 					final Soldier t=(Soldier)itr2.next();
