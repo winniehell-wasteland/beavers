@@ -15,6 +15,10 @@ public class Settings {
 		                                         Context.MODE_PRIVATE);
 	}
 
+	public int getDTNLifetime() {
+		return DTN_LIFETIME_DEFAULT;
+	}
+
 	public String getMapName()
 	{
 		return MAP_NAME_DEFAULT;
@@ -43,6 +47,7 @@ public class Settings {
 	 * @name defaults
 	 * @{
 	 */
+	private static int DTN_LIFETIME_DEFAULT = 100;
 	private static String MAP_NAME_DEFAULT = "map";
 	private static String PLAYER_ID_DEFAULT = UUID.randomUUID().toString();
 	private static String PLAYER_NAME_DEFAULT =

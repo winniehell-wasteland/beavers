@@ -145,8 +145,13 @@ public class Client extends Service {
 		}
 
 		@Override
-		public GameInfo getAnnouncedGame(final int pPosition) {
-			return announcedGames.get(pPosition);
+		public GameInfo getAnnouncedGame(final String pKey) {
+			return announcedGames.get(pKey);
+		};
+
+		@Override
+		public String[] getAnnouncedGames() {
+			return announcedGames.getKeys();
 		};
 
 		@Override
@@ -155,8 +160,13 @@ public class Client extends Service {
 		};
 
 		@Override
-		public GameInfo getRunningGame(final int pPosition) {
-			return runningGames.get(pPosition);
+		public GameInfo getRunningGame(final String pKey) {
+			return runningGames.get(pKey);
+		};
+
+		@Override
+		public String[] getRunningGames() {
+			return runningGames.getKeys();
 		};
 
 		@Override
@@ -266,9 +276,12 @@ public class Client extends Service {
 			final Message message =
 				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
 
+			final ParcelFileDescriptor file = message.getFile();
+			Log.d(TAG, "Should be sending "+message.getLength());
+
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              message.getFile());
+				                              file);//message.getFile());
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -355,6 +368,8 @@ public class Client extends Service {
 		 * @param pGame changed game
 		 */
 		private void broadcastGameInfo(final GameInfo pGame) {
+			Log.d(TAG, "Broadcasting new game info...");
+
 			final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
 
 			update_intent.putExtra(GameInfo.PARCEL_NAME, pGame);
