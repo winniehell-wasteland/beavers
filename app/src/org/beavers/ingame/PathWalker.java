@@ -1,5 +1,7 @@
 package org.beavers.ingame;
 
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.MoveModifier;
 import org.anddev.andengine.util.modifier.IModifier;
@@ -33,21 +35,25 @@ public class PathWalker implements IModifierListener<IEntity> {
 			gameActivity.moveObject(soldier, sourceTile, targetTile);
 
 			nextTile();
-
-			if(targetTile != null)
-			{
-				soldier.move(targetTile, aim, this);
+			if(pauseTimer==null){
+				soldierContinue();
 			}
-			else if(aim != null)
-			{
-				soldier.faceTarget(aim, null);
-			}
-			if(ignoreShots)soldier.ignoreShots(true);
-			else soldier.ignoreShots(false);
-			soldier.pause(wait);
+			
 		}
 	}
-
+	
+	public void soldierContinue()
+	{
+		if(targetTile != null)
+		{
+			soldier.move(targetTile, aim, this);
+		}
+		else if(aim != null)
+		{
+			soldier.faceTarget(aim, null);
+		}
+	}
+	
 	public void start()
 	{
 		waypoint = soldier.getFirstWaypoint();
@@ -70,14 +76,12 @@ public class PathWalker implements IModifierListener<IEntity> {
 
 	private final GameActivity gameActivity;
 	private final Soldier soldier;
-
+	private TimerHandler pauseTimer;
 	private WayPoint waypoint;
 
 	private int stepIndex;
 	private Tile sourceTile, targetTile;
 	private Tile aim;
-	private boolean ignoreShots;
-	private int wait=0;
 	private void nextWaypoint()
 	{
 		if(waypoint != null)
@@ -92,9 +96,21 @@ public class PathWalker implements IModifierListener<IEntity> {
 				aim = null;
 			}
 			
-			ignoreShots=waypoint.ignoresShots();
-			wait=waypoint.getWait();
+			soldier.ignoreShots(waypoint.ignoresShots());
 
+			final int wait=waypoint.getWait();
+			if(wait>0){
+				pauseTimer = new TimerHandler(wait, false, new ITimerCallback() {
+					@Override
+					public void onTimePassed(final TimerHandler pTimerHandler)
+					{
+						pauseTimer = null;
+						soldierContinue();
+					}
+				});
+				soldier.registerUpdateHandler(pauseTimer);
+			}
+			
 			waypoint.detachChildren();
 			gameActivity.removeObject(waypoint);
 		}
