@@ -360,7 +360,7 @@ public class GameActivity extends BaseGameActivity
 					}
 				else{
 					addObject(waypoint);
-					selectedSoldier.changeAP(-waypoint.getPath().getCost());
+					selectedSoldier.changeAP(-waypoint.getPath().getCost()/10);
 				}
 			}
 			else

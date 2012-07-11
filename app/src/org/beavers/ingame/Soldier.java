@@ -147,7 +147,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	@Override
 	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
-		return pPathFinder.findPath(this, (int) getAP() + 1,
+		return pPathFinder.findPath(this, (int) getAP() * 10,
 		                            getLastWaypoint().getTile().getColumn(),
 		                            getLastWaypoint().getTile().getRow(),
 		                            pTarget.getColumn(), pTarget.getRow());
@@ -224,11 +224,11 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			}
 			else
 			{
-				return 1.5f;
+				return 15;
 			}
 		}
 
-		return 1;
+		return 10;
 	}
 
 	/**
