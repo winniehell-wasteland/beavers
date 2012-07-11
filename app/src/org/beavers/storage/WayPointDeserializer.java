@@ -2,7 +2,7 @@ package org.beavers.storage;
 
 import java.lang.reflect.Type;
 
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
 
@@ -40,7 +40,7 @@ class WayPointDeserializer implements JsonDeserializer<WayPoint> {
 
     	final WayPoint waypoint = new WayPoint(
         	SoldierDeserializer.currentSoldier,
-        	(Path) pContext.deserialize(object.get("path"), Path.class),
+        	(WeightedPath) pContext.deserialize(object.get("path"), WeightedPath.class),
         	(Tile) pContext.deserialize(object.get("tile"), Tile.class));
 
     	if(object.has("aim") && !object.get("aim").isJsonNull())

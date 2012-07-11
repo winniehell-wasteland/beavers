@@ -346,8 +346,8 @@ public class GameActivity extends BaseGameActivity
 			{
 				final WayPoint waypoint =
 					selectedSoldier.addWayPoint(getPathFinder(), tile);
-				if(selectedSoldier.getAP()-(waypoint.getPath().getLength()-1)<0){
-					waypoint.remove();
+				if(waypoint == null){
+
 					runOnUiThread(new Runnable() {
 
 						@Override
@@ -360,7 +360,7 @@ public class GameActivity extends BaseGameActivity
 					}
 				else{
 					addObject(waypoint);
-					selectedSoldier.changeAP(-waypoint.getPath().getCosts());
+					selectedSoldier.changeAP(-waypoint.getPath().getCost());
 				}
 			}
 			else
@@ -489,7 +489,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
 			final Gson gson = CustomGSON.getInstance();
-			Log.e(TAG, gson.toJson(selectedSoldier));
+			//Log.e(TAG, gson.toJson(selectedSoldier));
 
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();

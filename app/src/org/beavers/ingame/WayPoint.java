@@ -3,7 +3,7 @@ package org.beavers.ingame;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
@@ -27,7 +27,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	 * @param pPath path from previous waypoint
 	 * @param pTile position of waypoint
 	 */
-	public WayPoint(final Soldier pSoldier, final Path pPath, final Tile pTile) {
+	public WayPoint(final Soldier pSoldier, final WeightedPath pPath, final Tile pTile) {
 		super(pTile.getX(), pTile.getY(),
 			pTile.getTileWidth(), pTile.getTileHeight(),
 			Textures.WAYPOINT.deepCopy());
@@ -58,7 +58,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		return R.menu.context_waypoint;
 	}
 
-	public Path getPath() {
+	public WeightedPath getPath() {
 		return path;
 	}
 
@@ -110,7 +110,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		case R.id.context_menu_waypoint_remove:
 			if(isLast())
 			{
-				soldier.changeAP(getPath().getCosts());
+				soldier.changeAP(getPath().getCost());
 				soldier.removeLastWayPoint();
 
 				remove();
@@ -164,7 +164,7 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 	private final Tile tile;
 
 	/** path from previous waypoint	*/
-	private final Path path;
+	private final WeightedPath path;
 
 	/**
 	 * @name aim

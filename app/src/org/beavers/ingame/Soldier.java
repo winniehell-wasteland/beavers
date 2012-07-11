@@ -17,7 +17,6 @@ import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
-import org.anddev.andengine.util.path.Path;
 import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
@@ -62,7 +61,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public WayPoint addWayPoint(final IWeightedPathFinder<IMovableObject> pPathFinder,
 	                            final Tile pTile)
 	{
-		final Path path = findPath(pPathFinder, pTile);
+		final WeightedPath path = findPath(pPathFinder, pTile);
 
 		// there is no path
 		if(path == null)
