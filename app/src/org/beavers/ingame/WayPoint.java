@@ -8,7 +8,7 @@ import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.storage.CustomGSON;
-import org.beavers.ui.ContextMenuHandler;
+import org.beavers.ui.IContextMenuHandler;
 
 import android.util.Log;
 import android.view.ContextMenu;
@@ -19,7 +19,7 @@ import android.view.MenuItem;
  * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject {
+public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject {
 
 	/**
 	 * default constructor
@@ -111,10 +111,8 @@ public class WayPoint extends Sprite implements ContextMenuHandler, IGameObject 
 		}
 	}
 	
-	
-	
 	@Override
-	public boolean onMenuItemClick(final MenuItem pItem) {
+	public boolean onMenuItemClick(final GameActivity pActivity, final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
 			if(next == null)

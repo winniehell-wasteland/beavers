@@ -54,7 +54,7 @@ import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
 import org.beavers.storage.CustomGSON;
-import org.beavers.ui.ContextMenuHandler;
+import org.beavers.ui.IContextMenuHandler;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -70,6 +70,7 @@ import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
@@ -242,7 +243,14 @@ public class GameActivity extends BaseGameActivity
 
 			for(int i = 0; i < pMenu.size(); ++i)
 			{
-				pMenu.getItem(i).setOnMenuItemClickListener(contextMenuHandler);
+				pMenu.getItem(i).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+					@Override
+					public boolean onMenuItemClick(final MenuItem pItem) {
+						return contextMenuHandler.onMenuItemClick(GameActivity.this, pItem);
+					}
+					
+				});
 			}
 
 			contextMenuHandler.onMenuCreated(pMenu);
@@ -628,7 +636,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	 * @name active entities
 	 * @{
 	 */
-	private ContextMenuHandler contextMenuHandler;
+	private IContextMenuHandler contextMenuHandler;
 	private Soldier selectedSoldier;
 	/**
 	 * @}
