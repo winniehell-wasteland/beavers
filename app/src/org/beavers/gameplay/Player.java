@@ -10,46 +10,21 @@ import android.os.Parcelable;
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public final class Player implements Parcelable {
+public final class Player extends UniqueID {
 	public Player(final UUID pID, final String pName) {
-		id = pID;
-		name = pName;
-	}
-
-	@Override
-	public int describeContents() {
-		return 0;
+		super(pID, pName);
 	}
 
 	@Override
 	public boolean equals(final Object other) {
 		if(other instanceof Player)
 		{
-			return id.equals(((Player)other).id);
+			return super.equals(other);
 		}
 		else
 		{
 			return false;
 		}
-	}
-
-	public UUID getId() {
-		return id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	@Override
-	public String toString() {
-		return id.toString();
-	}
-
-	@Override
-	public void writeToParcel(final Parcel pOut, final int pFlags) {
-		pOut.writeString(id.toString());
-		pOut.writeString(name);
 	}
 
 	public static final Parcelable.Creator<Player> CREATOR =
@@ -65,12 +40,8 @@ public final class Player implements Parcelable {
 			}
 	};
 
-	private final UUID id;
-	private final String name;
-
 	private Player(final Parcel pParcel)
 	{
-		id = UUID.fromString(pParcel.readString());
-		name = pParcel.readString();
+		super(pParcel);
 	}
 }

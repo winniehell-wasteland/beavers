@@ -1,10 +1,12 @@
 package org.beavers.communication;
 
+import java.io.FileReader;
 import java.util.HashSet;
 
+import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
-import org.beavers.communication.CustomDTNDataHandler.Message;
+import org.beavers.communication.DTNService.Message;
 import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
@@ -13,319 +15,378 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
 
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-
-import de.tubs.ibr.dtn.api.GroupEndpoint;
+import com.google.gson.JsonParser;
 
 /**
  * server for game communication
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public enum Server {
-	; // prevent instantiation
+public class Server extends Service {
 
 	/**
 	 * @name debug
 	 * @{
 	 */
-	private static final String TAG = Server.class.getName();
+	private static final String TAG = Server.class.getSimpleName();
 	/**
 	 * @}
 	 */
 
+	@Override
+	public IBinder onBind(final Intent pIntent) {
+		Log.d(TAG, "onBind()");
+		return stub;
+	}
+
+	@Override
+	public void onCreate() {
+		Log.d(TAG, "onCreate()");
+		super.onCreate();
+
+		client = new Client.Connection();
+		bindService(new Intent(Server.this, Client.class), client,
+		            Service.BIND_AUTO_CREATE);
+
+		dtn = new DTNService.Connection();
+		bindService(new Intent(Server.this, DTNService.class), dtn,
+		            Service.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	public void onDestroy() {
+		unbindService(client);
+		unbindService(dtn);
+
+		super.onDestroy();
+	}
+
+	public static class Connection implements ServiceConnection
+	{
+		public IServer getService() {
+			return service;
+		}
+
+		@Override
+		public void onServiceConnected(final ComponentName pName,
+		                               final IBinder pService) {
+			service = IServer.Stub.asInterface(pService);
+		}
+
+		@Override
+		public void onServiceDisconnected(final ComponentName pName) {
+			service = null;
+		}
+
+		private IServer service;
+	}
+
 	/**
-	 * @name DTN
+	 * @name service connections
 	 * @{
 	 */
-	public static final GroupEndpoint GROUP_EID =
-			new GroupEndpoint("dtn://beavergame.dtn/server");
+	private Client.Connection client;
+	private DTNService.Connection dtn;
 	/**
 	 * @}
 	 */
 
-	/**
-	 * game container
-	 */
-	public static GameList hostedGames = new GameList();
+	/** implementation of the {@link IServer} interface */
+	private final IServer.Stub stub = new IServer.Stub() {
 
-	/**
-	 * become server of an existing game
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 *
-	 */
-	public static void acquireGame(final Context pContext,
-	                               final GameInfo pGame) {
-		if(hostedGames.contains(pGame))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_game_exists,
-					pGame.toString()));
-			return;
-		}
-
-		hostedGames.add(pGame);
-	}
-
-	/**
-	 * player tries to join game
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 * @param pPlayer player
-	 *
-	 */
-	public static synchronized void addPlayer(final Context pContext,
-	                                          GameInfo pGame,
-	                                          final Player pPlayer)
-	{
-		Log.d(TAG, "Somebody joins "+pGame.toString());
-
-		if(!hostedGames.contains(pGame))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_not_hosted,
-			                              pGame.toString()));
-			return;
-		}
-
-		pGame = hostedGames.find(pGame);
-
-		// TODO allow more than 2 players
-		final int MAX_PLAYERS = 2;
-
-		final HashSet<Player> gamePlayers = players.get(pGame);
-
-		if(gamePlayers.size() < MAX_PLAYERS)
-		{
-			gamePlayers.add(pPlayer);
-
-			if(gamePlayers.size() == MAX_PLAYERS)
+		@Override
+		public void acquireGame(final GameInfo pGame) {
+			if(hostedGames.contains(pGame))
 			{
-				startPlanningPhase(pContext, pGame);
-			}
-		}
-	}
-
-	/**
-	 * receive a DTN message
-	 *
-	 * @param pContext activity context
-	 * @param pJSON payload in JSON format
-	 */
-	public static void handlePayload(final Context pContext,
-			final JsonObject pJSON) {
-		if(pJSON.has("game") && pJSON.has("player"))
-		{
-			final Gson gson = CustomGSON.getInstance();
-
-			GameInfo game = gson.fromJson(pJSON.get("game"), GameInfo.class);
-
-			if(!game.isServer(Settings.player))
-			{
+				Log.e(TAG, getString(R.string.error_game_exists, pGame));
 				return;
 			}
 
-			if(!hostedGames.contains(game))
+			hostedGames.add(pGame);
+		}
+
+		@Override
+		public synchronized void addPlayer(GameInfo pGame, final Player pPlayer)
+		{
+			Log.d(TAG, "Somebody joins "+pGame.toString());
+
+			if(!hostedGames.contains(pGame))
 			{
-				Log.e(TAG, pContext.getString(R.string.error_not_hosted,
-						game.toString()));
+				Log.e(TAG, getString(R.string.error_not_hosted, pGame));
 				return;
 			}
 
-			game = hostedGames.find(game);
+			pGame = hostedGames.find(pGame);
 
-			final Player player =
-				gson.fromJson(pJSON.get("player"), Player.class);
+			// TODO allow more than 2 players
+			final int MAX_PLAYERS = 2;
 
-			switch (game.getState()) {
-			case JOINED:
+			final HashSet<Player> gamePlayers = playerMap.get(pGame);
+
+			if(gamePlayers.size() < MAX_PLAYERS)
 			{
-				addPlayer(pContext, game, player);
+				gamePlayers.add(pPlayer);
 
-				break;
+				if(gamePlayers.size() == MAX_PLAYERS)
+				{
+					startPlanningPhase(pGame);
+				}
 			}
-			case PLANNING_PHASE:
+		}
+
+		@Override
+		public boolean handleData(final ParcelFileDescriptor pData) {
+			final JsonParser parser = new JsonParser();
+			final FileReader reader = new FileReader(pData.getFileDescriptor());
+
+			final JsonObject json = (JsonObject) parser.parse(reader);
+
+			if(json.has("game") && json.has("player"))
 			{
-				onReceiveDecisions(pContext, game, player,
-				                   gson.fromJson(pJSON.get("decisions"),
-				                		         DecisionContainer.class));
+				final Gson gson = CustomGSON.getInstance();
 
-				break;
+				GameInfo game = gson.fromJson(json.get("game"), GameInfo.class);
+
+				if(!game.isServer(getSettings().getPlayer()))
+				{
+					return false;
+				}
+
+				if(!hostedGames.contains(game))
+				{
+					Log.e(TAG, getString(R.string.error_not_hosted, game));
+					return false;
+				}
+
+				game = hostedGames.find(game);
+
+				final Player player =
+					gson.fromJson(json.get("player"), Player.class);
+
+				switch (game.getState()) {
+				case JOINED:
+				{
+					addPlayer(game, player);
+
+					return true;
+				}
+				case PLANNING_PHASE:
+				{
+					onReceiveDecisions(game, player,
+					                   gson.fromJson(json.get("decisions"),
+					                		         DecisionContainer.class));
+
+					return true;
+				}
+				case ABORTED:
+				{
+					onPlayerAborts(game, player);
+
+					return true;
+				}
+				default:
+					return false;
+				}
 			}
-			case ABORTED:
+
+			return false;
+		}
+
+		@Override
+		public void initiateGame(final GameInfo pGame)
+		{
+			if(hostedGames.contains(pGame))
 			{
-				onPlayerAborts(pContext, game, player);
-
-				break;
+				Log.e(TAG, getString(R.string.error_game_exists, pGame));
+				return;
 			}
-			default:
-				break;
+
+			pGame.setState(GameState.ANNOUNCED);
+			hostedGames.add(pGame);
+
+			final Message message = new Message(Server.this, pGame);
+
+			try {
+				dtn.getService().sendToClients(message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-	}
 
-	/**
-	 * level select, inform possible clients
-	 *
-	 * @param pContext activity context
-	 * @param pGame new game
-	 */
-	public static void initiateGame(final Context pContext,
-			final GameInfo pGame)
-	{
-		if(hostedGames.contains(pGame))
+		@Override
+		public void distributeOutcome(final GameInfo pGame,
+		                              final OutcomeContainer pOutcome)
 		{
-			Log.e(TAG, pContext.getString(R.string.error_game_exists,
-					pGame.toString()));
-			return;
+			final Message message =
+				new OutcomeMessage(Server.this, pGame, pOutcome);
+
+			try {
+				dtn.getService().sendToClients(message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
-		pGame.setState(GameState.ANNOUNCED);
-		hostedGames.add(pGame);
-
-		final Message message = new Message(pGame);
-		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
-	}
-
-	/**
-	 * distribute outcome to clients
-	 */
-	public static void distributeOutcome(final Context pContext,
-	                                     final GameInfo pGame,
-	                                     final OutcomeContainer pOutcome)
-	{
-		final Message message = new OutcomeMessage(pGame, pOutcome);
-		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
-	}
-
-	/**
-	 * player quits game
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 * @param pPlayer player
-	 */
-	public static void onPlayerAborts(final Context pContext,
-			final GameInfo pGame, final Player pPlayer)
-	{
-		if(pGame.getServer().equals(pPlayer))
+		/**
+		 * player quits game
+		 *
+		 * @param pGame game
+		 * @param pPlayer player
+		 */
+		public void onPlayerAborts(final GameInfo pGame, final Player pPlayer)
 		{
-			// TODO find new server
-			final Player newServer = null;
-			announceNewServer(pContext, pGame, newServer);
+			if(pGame.getServer().equals(pPlayer))
+			{
+				// TODO find new server
+				final Player newServer = null;
+				announceNewServer(pGame, newServer);
+			}
 		}
-	}
 
-	private static PlayerMap players = new PlayerMap();
-
-	/**
-	 * @name messages
-	 * @{
-	 */
-	static class NewServerMessage extends Message
-	{
-		Player new_server;
-
-		NewServerMessage(final GameInfo pGame, final Player pServer) {
-			super(pGame);
-			new_server = pServer;
-		}
-	}
-
-	static class OutcomeMessage extends Message
-	{
-		OutcomeContainer outcome;
-
-		OutcomeMessage(final GameInfo pGame, final OutcomeContainer pOutcome) {
-			super(pGame);
-			outcome = pOutcome;
-		}
-	}
-
-	static class PlanningPhaseMessage extends Message
-	{
-		HashSet<Player> players;
-
-		PlanningPhaseMessage(final GameInfo pGame) {
-			super(pGame);
-			players = Server.players.get(pGame);
-		}
-	}
-	/**
-	 * @}
-	 */
-
-	/**
-	 * server has quit, inform clients about new server
-	 *
-	 * @param pContext activity context
-	 * @param pGame old game info
-	 * @param pServer new server
-	 */
-	private static void announceNewServer(final Context pContext,
-	                                      final GameInfo pGame,
-	                                      final Player pServer)
-	{
-		final Message message = new NewServerMessage(pGame, pServer);
-		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
-	}
-
-	/**
-	 * get decisions from player
-	 *
-	 * @param pContext activity context
-	 * @param game
-	 * @param player
-	 * @param decisions
-	 */
-	private static void onReceiveDecisions(final Context pContext,
-			GameInfo pGame, final Player pPlayer,
-			final DecisionContainer pDecisions)
-	{
-		if(!hostedGames.contains(pGame))
+		/**
+		 * @name messages
+		 * @{
+		 */
+		@SuppressWarnings("unused")
+		class NewServerMessage extends Message
 		{
-			Log.e(TAG, pContext.getString(R.string.error_not_hosted,
-					pGame.toString()));
-			return;
+			public NewServerMessage(final Context pContext,
+			                        final GameInfo pGame,
+			                        final Player pServer) {
+				super(pContext, pGame);
+				new_server = pServer;
+			}
+
+			private final Player new_server;
 		}
 
-		pGame = hostedGames.find(pGame);
-
-		if(!pGame.isInState(GameState.PLANNING_PHASE))
+		@SuppressWarnings("unused")
+		class OutcomeMessage extends Message
 		{
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
-			return;
+			public OutcomeMessage(final Context pContext, final GameInfo pGame,
+			                      final OutcomeContainer pOutcome) {
+				super(pContext, pGame);
+				outcome = pOutcome;
+			}
+
+			private final OutcomeContainer outcome;
 		}
 
-		// TODO handle decisions
-		distributeOutcome(pContext, pGame, new OutcomeContainer());
-	}
+		@SuppressWarnings("unused")
+		class PlanningPhaseMessage extends Message
+		{
+			public PlanningPhaseMessage(final Context pContext,
+			                            final GameInfo pGame) {
+				super(pContext, pGame);
+				players = playerMap.get(pGame);
+			}
 
-	/**
-	 * inform clients about planning phase
-	 *
-	 * @param pContext activity context
-	 * @param pGame game
-	 */
-	private static void startPlanningPhase(final Context pContext,
-			final GameInfo pGame)
+			private final HashSet<Player> players;
+		}
+		/**
+		 * @}
+		 */
+
+		/** game container */
+		private final GameList hostedGames = new GameList();
+
+		private final PlayerMap playerMap = new PlayerMap();
+
+		/**
+		 * server has quit, inform clients about new server
+		 *
+		 * @param pGame old game info
+		 * @param pServer new server
+		 */
+		private void announceNewServer(final GameInfo pGame,
+		                               final Player pServer)
+		{
+			final Message message =
+				new NewServerMessage(Server.this, pGame, pServer);
+
+			try {
+				dtn.getService().sendToClients(message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		/**
+		 * get decisions from player
+		 *
+		 * @param game
+		 * @param player
+		 * @param decisions
+		 */
+		private void onReceiveDecisions(GameInfo pGame, final Player pPlayer,
+		                                final DecisionContainer pDecisions)
+		{
+			if(!hostedGames.contains(pGame))
+			{
+				Log.e(TAG, getString(R.string.error_not_hosted,
+						pGame.toString()));
+				return;
+			}
+
+			pGame = hostedGames.find(pGame);
+
+			if(!pGame.isInState(GameState.PLANNING_PHASE))
+			{
+				Log.e(TAG, getString(R.string.error_wrong_state,
+						pGame.toString(), pGame.getState().toString()));
+				return;
+			}
+
+			// TODO handle decisions
+			distributeOutcome(pGame, new OutcomeContainer());
+		}
+
+		/**
+		 * inform clients about planning phase
+		 *
+		 * @param pContext activity context
+		 * @param pGame game
+		 */
+		private void startPlanningPhase(final GameInfo pGame)
+		{
+			if(!pGame.isInState(GameState.ANNOUNCED))
+			{
+				Log.e(TAG, getString(R.string.error_wrong_state,
+						pGame.toString(), pGame.getState().toString()));
+				return;
+			}
+
+			pGame.setState(GameState.PLANNING_PHASE);
+
+			final Message message =
+				new PlanningPhaseMessage(Server.this, pGame);
+
+			try {
+				dtn.getService().sendToClients(message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	};
+
+	private Settings getSettings()
 	{
-		if(!pGame.isInState(GameState.ANNOUNCED))
-		{
-			Log.e(TAG, pContext.getString(R.string.error_wrong_state,
-					pGame.toString(), pGame.getState().toString()));
-			return;
-		}
-
-		pGame.setState(GameState.PLANNING_PHASE);
-
-		final Message message = new PlanningPhaseMessage(pGame);
-		CustomDTNDataHandler.sendToClients(pContext, message.toJsonObject());
+		return ((App) getApplication()).getSettings();
 	}
 }

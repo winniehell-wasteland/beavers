@@ -15,9 +15,9 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 
@@ -58,10 +58,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
 	 */
-	public WayPoint addWayPoint(final IPathFinder<IMovableObject> pPathFinder,
+	public WayPoint addWayPoint(final IWeightedPathFinder<IMovableObject> pPathFinder,
 	                            final Tile pTile)
 	{
-		final Path path = findPath(pPathFinder, pTile);
+		final WeightedPath path = findPath(pPathFinder, pTile);
 
 		// there is no path
 		if(path == null)
@@ -75,11 +75,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	public WayPoint addWayPoint(final WayPoint waypoint) {
 		waypoints.addLast(waypoint);
-
-		lastWaypoint.setNext(waypoint);
-		waypoint.setPrevious(lastWaypoint);
-
-		lastWaypoint = waypoint;
 
 		return waypoint;
 	}
@@ -112,7 +107,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	
 	public void die(){
 		Log.e(Soldier.class.getName(), "die!!!");
-		
+
 		if(hasParent()){
 			removeListener.onRemoveObject(this);
 			detachSelf();
@@ -120,12 +115,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				setShooting(false);
 				shot.stopShooting();
 			}
-			
+
 			for(final WayPoint waypoint : waypoints)
 			{
 				waypoint.detachSelf();
 			}
-			
+
 			waypoints.clear();
 		}
 	}
@@ -159,10 +154,11 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @return a path from last waypoint to the target position (or null if there is none)
 	 */
 	@Override
-	public Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
-		return pPathFinder.findPath(this, 0,
-			lastWaypoint.getTile().getColumn(), lastWaypoint.getTile().getRow(),
-			pTarget.getColumn(), pTarget.getRow());
+	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
+		return pPathFinder.findPath(this, (int) getAP() * 10,
+		                            getLastWaypoint().getTile().getColumn(),
+		                            getLastWaypoint().getTile().getRow(),
+		                            pTarget.getColumn(), pTarget.getRow());
 	}
 
 	/**
@@ -200,7 +196,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	public WayPoint getFirstWaypoint()
 	{
-		return firstWaypoint;
+		return waypoints.getFirst();
 	}
 
 	/**
@@ -213,7 +209,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @return last way point assigned to this soldier
 	 */
 	public WayPoint getLastWaypoint() {
-		return lastWaypoint;
+		return waypoints.getLast();
 	}
 
 	/**
@@ -234,9 +230,13 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			{
 				return Integer.MAX_VALUE;
 			}
+			else
+			{
+				return 15;
+			}
 		}
 
-		return 0;
+		return 10;
 	}
 
 	/**
@@ -258,42 +258,35 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return waypoints;
 	}
 
-	/**
-	 * TODO not yet used
-	 */
-	public Weapon getWeapon()
-	{
-		return null;
-	}
-	
-	public int getAP(){
+	public float getAP(){
 		return ap;
 	}
-	
-	public int getmaxAP(){
+
+	public float getmaxAP(){
 		return maxAP;
 	}
-	
-	public int changeAP(final int points){
-		ap+=points;
-		if(ap>maxAP)ap=maxAP;
+
+	public float changeAP(final float points){
+		ap += points;
+		if(ap>maxAP) {
+			ap=maxAP;
+		}
 		else if(ap<0){
 			ap=0;
 		}
+
 		return ap;
-		
-		
 	}
-	
+
 	public boolean isDead()
 	{
 		return (getHP() <= 0);
 	}
-	
+
 	public boolean isShooting(){
 		return shooting;
 	}
-	
+
 	public void setShooting(final boolean shoot){
 		shooting=shoot;
 	}
@@ -307,12 +300,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		assert getParent() instanceof Scene;
 		final Scene scene = (Scene) getParent();
 
-		WayPoint waypoint = firstWaypoint;
-
-		while(waypoint != null)
+		for(final WayPoint waypoint : waypoints)
 		{
 			scene.attachChild(waypoint);
-			waypoint = waypoint.getNext();
 		}
 	}
 
@@ -322,15 +312,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public void markDeselected(){
 		detachChild(selectionMark);
 
-		WayPoint waypoint = firstWaypoint;
-
-		while(waypoint != null)
+		for(final WayPoint waypoint : waypoints)
 		{
 			waypoint.detachSelf();
-			waypoint = waypoint.getNext();
 		}
 	}
-	
+
 
 
 	/**
@@ -344,10 +331,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		final float disty =
 			Math.abs(pTarget.getCenterY() - (getY()+getHeight()/2));
 
-		final float duartion = (float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED);
+		final float duration = (float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED);
 
 		final MoveModifier movement =
-			new MoveModifier(duartion,
+			new MoveModifier(duration,
 				getX(), pTarget.getCenterX() - getWidth()/2,
 				getY(), pTarget.getCenterY() - getHeight()/2);
 
@@ -380,18 +367,15 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	/**
 	 * remove first waypoint
+	 * (does not remove it from {@link GameActivity})
 	 * @return new first waypoint
 	 */
 	public WayPoint popWayPoint() {
-		if(firstWaypoint != lastWaypoint)
+		if(!getFirstWaypoint().equals(getLastWaypoint()))
 		{
-			firstWaypoint.getNext().setPrevious(null);
-			firstWaypoint.detachSelf();
-			firstWaypoint = firstWaypoint.getNext();
-
 			waypoints.removeFirst();
 
-			return firstWaypoint;
+			return getFirstWaypoint();
 		}
 		else
 		{
@@ -405,18 +389,13 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	}
 
 	/**
-	 * remove last waypoint
+	 * remove last waypoint from list
+	 * (does not remove it from {@link GameActivity})
 	 */
 	public void removeLastWayPoint()
 	{
-		if(firstWaypoint != lastWaypoint)
+		if(!getFirstWaypoint().equals(getLastWaypoint()))
 		{
-			
-
-			lastWaypoint.detachSelf();
-			lastWaypoint.getPrevious().setNext(null);
-			lastWaypoint = lastWaypoint.getPrevious();
-
 			waypoints.removeLast();
 		}
 	}
@@ -426,7 +405,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	private MoveModifier lastMove;
 	private RotationByModifier lastRotate;
-	
+
 	public void stop()
 	{
 		stopAnimation(0);
@@ -444,7 +423,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 					lastRotate=(RotationByModifier)pObject;
 					return true;
 				}
-				
+
 
 				return false;
 			}
@@ -471,17 +450,14 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	/**
 	 * @}
 	 */
-		
-	private final int maxAP=20;
-	private int ap=maxAP;
+
+	private final float maxAP=20;
+	private float ap=maxAP;
 	private int hp=100;
 	private boolean shooting=false;
 	private boolean ignoreShots=false;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
-
-	private WayPoint firstWaypoint;
-	private WayPoint lastWaypoint;
 
 	/** team the soldier belongs to */
 	private final int team;
@@ -491,7 +467,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	private Shot shot;
 	private final Line lineA,lineB;
-	
+
 	private IRemoveObjectListener removeListener;
 
 
@@ -505,7 +481,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			super(pTile.getCenterX() - pTiledTextureRegion.getTileWidth()/2,
 			      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
 			      pTiledTextureRegion);
-			
+
 			team=pTeam;
 			//Selection Circle
 			final TextureRegion selectionTexture =
@@ -516,17 +492,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				selectionTexture);
 			
 			waypoints = new ArrayDeque<WayPoint>();
-
-			firstWaypoint = new WayPoint(this, null, pTile);
-			lastWaypoint = firstWaypoint;
-
-			waypoints.add(firstWaypoint);
+			waypoints.add(new WayPoint(this, null, pTile));
 
 			stopAnimation(0);
 			setRotationCenter(getWidth()/2, getHeight()/2);
 
 			setZIndex(GameActivity.ZINDEX_SOLDIERS);
-
 
 			lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
 			lineB= new Line(getWidth()/2,getHeight()/2,160,-400);

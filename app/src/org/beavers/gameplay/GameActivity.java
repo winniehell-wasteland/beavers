@@ -34,14 +34,13 @@ import org.anddev.andengine.input.touch.detector.ScrollDetector;
 import org.anddev.andengine.input.touch.detector.ScrollDetector.IScrollDetectorListener;
 import org.anddev.andengine.input.touch.detector.SurfaceScrollDetector;
 import org.anddev.andengine.opengl.font.Font;
-import org.anddev.andengine.opengl.texture.ITexture;
 import org.anddev.andengine.opengl.texture.TextureOptions;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.R;
 import org.beavers.Textures;
@@ -154,7 +153,7 @@ public class GameActivity extends BaseGameActivity
 		return map;
 	}
 
-	public IPathFinder<IMovableObject> getPathFinder() {
+	public IWeightedPathFinder<IMovableObject> getPathFinder() {
 		return pathFinder;
 	}
 
@@ -355,8 +354,8 @@ public class GameActivity extends BaseGameActivity
 			{
 				final WayPoint waypoint =
 					selectedSoldier.addWayPoint(getPathFinder(), tile);
-				if(selectedSoldier.getAP()-(waypoint.getPath().getLength()-1)<0){
-					waypoint.remove();
+				if(waypoint == null){
+
 					runOnUiThread(new Runnable() {
 
 						@Override
@@ -369,7 +368,7 @@ public class GameActivity extends BaseGameActivity
 					}
 				else{
 					addObject(waypoint);
-					selectedSoldier.changeAP(-(waypoint.getPath().getLength()-1));
+					selectedSoldier.changeAP(-waypoint.getPath().getCost()/10);
 				}
 			}
 			else
@@ -392,14 +391,15 @@ public class GameActivity extends BaseGameActivity
 		{
 			pathFinder = null;
 		}
-		camera.setBounds(0, map.getWidth()*64,0, map.getHeight()*64);
+		camera.setBounds(0, map.getTileColumns() * map.getTileWidth(),
+		                 0, map.getTileRows() * map.getTileHeight());
 		camera.setBoundsEnabled(true);
 		mainScene.registerUpdateHandler(holdDetector);
 		mainScene.setOnSceneTouchListener(this);
 
-		
+
 final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
-			
+
 
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
@@ -427,32 +427,32 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
         }
 
 		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
-		
+
 		return new Engine(new EngineOptions(true, orientation,
 				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
 	}
-	
-	
+
+
 	@Override
 	public void onLoadResources() {
-	
+
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		BitmapTextureAtlas textureAtlas;
-		
+
 		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		mfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.WHITE);
 		getTextureManager().loadTexture(textureAtlas);
-		
+
 		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		bluefont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.BLUE);
 		getTextureManager().loadTexture(textureAtlas);
-		
+
 		textureAtlas = new BitmapTextureAtlas(256, 256, TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		redfont =new Font(textureAtlas,Typeface.create(Typeface.DEFAULT,Typeface.BOLD),16,true,Color.RED);
 		getTextureManager().loadTexture(textureAtlas);
-		
+
 		getFontManager().loadFonts(mfont,bluefont,redfont);
-		
+
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.AIM = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "aimpoint.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
@@ -464,11 +464,11 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96blue.png", 0, 0, 3, 2);
 		getTextureManager().loadTexture(textureAtlas);
-		
+
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.SOLDIER_TEAM1 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96red.png", 0, 0, 3, 2);
 		getTextureManager().loadTexture(textureAtlas);
-		
+
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
 		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
@@ -497,7 +497,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
 			final Gson gson = CustomGSON.getInstance();
-			Log.e(TAG, gson.toJson(selectedSoldier));
+			//Log.e(TAG, gson.toJson(selectedSoldier));
 
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();
@@ -512,12 +512,32 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 	@Override
 	public void onRemoveObject(final IGameObject pObject) {
-		removeObject(pObject);
-		
+		if(pObject == null)
+		{
+			// ignore
+			return;
+		}
+
+		if(pObject.equals(gameObjects.get(pObject.getTile())))
+		{
+			gameObjects.remove(pObject.getTile());
+		}
+
+		if(pObject.equals(contextMenuHandler))
+		{
+			contextMenuHandler = null;
+		}
+
 		if(pObject instanceof Soldier)
 		{
 			final Soldier soldier = (Soldier) pObject;
 			soldiers.get(soldier.getTeam()).remove(soldier);
+
+			if(soldier.equals(selectedSoldier))
+			{
+				updateHUD();
+				selectedSoldier = null;
+			}
 		}
 	}
 
@@ -538,7 +558,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
 		camera.offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
-		
+
 	}
 
 	@Override
@@ -551,18 +571,11 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		// TODO Auto-generated method stub
 	}
 
-	public void removeObject(final IGameObject pObject) {
-		if((pObject != null) && pObject.equals(gameObjects.get(pObject.getTile())))
-		{
-			gameObjects.remove(pObject.getTile());
-		}
-	}
-
 	@Override
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
 
-		currentGame = getIntent().getParcelableExtra(GameInfo.parcelName);
+		currentGame = getIntent().getParcelableExtra(GameInfo.PARCEL_NAME);
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
@@ -587,8 +600,6 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 	private final static float CAMERA_SPEED = 1.50f;
 	private static final String TAG = "GameScene";
-	private static final ITexture ITexture = null;
-	private static final Typeface Typeface = null;
 
 	/**
 	 * @name detectors
@@ -652,7 +663,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
 			final GameInfo game =
-				pIntent.getParcelableExtra(GameInfo.parcelName);
+				pIntent.getParcelableExtra(GameInfo.PARCEL_NAME);
 
 			// TODO update GameActivity
 		}
@@ -678,9 +689,18 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		mainScene.attachChild(collisionLayer);
 		mainScene.attachChild(floorLayer);
 	}
-	
+
 	private void updateHUD(){
-		if(getSelectedSoldier()!=null){
+		if(getSelectedSoldier() == null)
+		{
+			try {
+				camera.setHUD(null);
+			} catch(final NullPointerException e)
+			{
+				// ignore
+			}
+		}
+		else {
 			health_bar.setWidth(getSelectedSoldier().getHP());
 			apText.detachSelf();
 			apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
@@ -695,19 +715,22 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
 			hud.attachChild(blueText);
 			hud.attachChild(redText);
+
+			camera.setHUD(hud);
 		}
 	}
-	
+
 	private Rectangle health_bar;
 	private Text apText,redText,blueText, separator;
-	
+
 	private void loadHUD(){
 		hud=new HUD();
 		hud.setPosition(0, 0);
-        
+
 		final Rectangle hud_back = new Rectangle(0,0, camera.getWidth(),30);
 		final Rectangle missing_health = new Rectangle(10,10,100,8);
 		health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
+
 		separator = new Text(0 ,0, mfont,":" );
 		separator.setPosition(getEngine().getCamera().getWidth()/2-2,4);
 		redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
@@ -738,16 +761,17 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		addObject(new Soldier(1, new Tile(8, 9)));
 	}
 /**
- * 
+ *
  * @param attacking das angreifende Team
  * @param targets das angegriffene Team
  */
 	public void checkTargets(final int attacking, final int targets){
-		final Iterator itr=soldiers.get(attacking).iterator();
-		while(itr.hasNext()){  //durchl‰uft Liste des ersten Teams
-			final Soldier s=(Soldier)itr.next();
+		final Iterator<Soldier> itr=getSoldiers(attacking).iterator();
+		while(itr.hasNext()){  //durchl√§uft Liste des ersten Teams
+			final Soldier s=itr.next();
 
-			final Iterator itr2=soldiers.get(targets).iterator();
+			final Iterator<Soldier> itr2=getSoldiers(targets).iterator();
+			
 			if(s.isShooting())
 			{
 				if(s.getShot().findPath(getPathFinder(), s.getShot().getTarget().getTile()) == null)
@@ -756,30 +780,30 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 				}
 			}
 			
-			if(!s.isShooting() && !s.getIgnore()){   //Abbruch, falls der Soldat schon schieﬂt
-				while(itr2.hasNext()){  //durchl‰uft Liste des zweiten Teams
-					final Soldier t=(Soldier)itr2.next();
-					if(s.getHP()>0 && t.getHP()>0){
-						
+			if(!s.isShooting() && !s.getIgnore()){   //Abbruch, falls der Soldat schon schie√üt
+				while(itr2.hasNext()){  //durchl√§uft Liste des zweiten Teams
+
+					final Soldier t=itr2.next();
+					if(!t.isDead() && !s.isDead()){  //beide Soldaten m√ºssen noch leben
 						parallelB = new Line(
 								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
 								t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]),
 								t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
 								t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1])
 								);
-						
+
 						parallelA = new Line(
 								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
 								t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1]),
 								t.getCenter()[0]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0]),
 								t.getCenter()[1]+(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[1])
 								);
-						
+
 						lineB=new Line(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0],
 								s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1],
 								s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0],
 								s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]);
-						
+
 						lineA=new Line(s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[0],
 								s.convertLocalToSceneCoordinates(s.getLineA().getX1(),s.getLineA().getY1())[1],
 								s.convertLocalToSceneCoordinates(s.getLineA().getX2(),s.getLineA().getY2())[0],
@@ -806,11 +830,20 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 			selectedSoldier = pSoldier;
 			selectedSoldier.markSelected();
-			loadHUD();
+
+			if(hud == null)
+			{
+				loadHUD();
+			}
+			else
+			{
+				updateHUD();
+			}
+
 			mainScene.sortChildren();
 		}
 
 	}
-	
-	
+
+
 }

@@ -3,7 +3,7 @@ package org.beavers.ingame;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
@@ -27,7 +27,7 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 	 * @param pPath path from previous waypoint
 	 * @param pTile position of waypoint
 	 */
-	public WayPoint(final Soldier pSoldier, final Path pPath, final Tile pTile) {
+	public WayPoint(final Soldier pSoldier, final WeightedPath pPath, final Tile pTile) {
 		super(pTile.getX(), pTile.getY(),
 			pTile.getTileWidth(), pTile.getTileHeight(),
 			Textures.WAYPOINT.deepCopy());
@@ -58,16 +58,8 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 		return R.menu.context_waypoint;
 	}
 
-	public WayPoint getNext() {
-		return next;
-	}
-
-	public Path getPath() {
+	public WeightedPath getPath() {
 		return path;
-	}
-
-	public WayPoint getPrevious() {
-		return previous;
 	}
 
 	public Soldier getSoldier() {
@@ -77,6 +69,16 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 	@Override
 	public Tile getTile() {
 		return tile;
+	}
+
+	public boolean isFirst()
+	{
+		return soldier.getFirstWaypoint().equals(this);
+	}
+
+	public boolean isLast()
+	{
+		return soldier.getLastWaypoint().equals(this);
 	}
 
 	public boolean isWaitingForAim() {
@@ -95,35 +97,34 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
 		pMenu.findItem(R.id.context_menu_waypoint_remove)
-			.setEnabled(next == null)
-			.setVisible(previous != null);
+			.setEnabled(isLast())
+			.setVisible(!isFirst());
 		pMenu.findItem(R.id.context_menu_ignore_attacks).setVisible(ignoreShots == false);
 		pMenu.findItem(R.id.context_menu_react_on_attacks).setVisible(ignoreShots == true);
 		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
 		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
+		pMenu.findItem(R.id.context_menu_wait).setVisible(!isLast());
 	}
-	
+
 	public void remove(){
-		soldier.removeLastWayPoint();
+		detachSelf();
+
 		if(removeListener != null)
 		{
 			removeListener.onRemoveObject(this);
 		}
 	}
-	
+
 	@Override
 	public boolean onMenuItemClick(final GameActivity pActivity, final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
-			if(next == null)
+			if(isLast())
 			{
-				soldier.changeAP(getPath().getLength()-1);
+				soldier.changeAP(getPath().getCost()/10);
 				soldier.removeLastWayPoint();
 
-				if(removeListener != null)
-				{
-					removeListener.onRemoveObject(this);
-				}
+				remove();
 			}
 
 			return true;
@@ -163,18 +164,10 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 		}
 	}
 
-	public void setNext(final WayPoint pNext) {
-		next = pNext;
-	}
-
-	public void setPrevious(final WayPoint pPrevious) {
-		previous = pPrevious;
-	}
-
 	@Override
 	protected void onManagedUpdate(final float pSecondsElapsed) {
 		// make first way point invisible
-		if((previous == null) && soldier.getTile().equals(getTile()))
+		if(isFirst() && soldier.getTile().equals(getTile()))
 		{
 			getTextureRegion().setHeight(0);
 			getTextureRegion().setWidth(0);
@@ -191,16 +184,8 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 	private final Soldier soldier;
 	private final Tile tile;
 
-	/**
-	 * @name path
-	 * @{
-	 */
-	private final Path path;
-	private WayPoint next;
-	private WayPoint previous;
-	/**
-	 * @}
-	 */
+	/** path from previous waypoint	*/
+	private final WeightedPath path;
 
 	/**
 	 * @name aim

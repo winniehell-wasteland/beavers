@@ -10,23 +10,13 @@ import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 
 public class Shot implements IMovableObject {
-
-
-	private static final int SPEED = 350;
-
-	private final Soldier soldier;
-	private final GameActivity activity;
-
-	private final int baseDamage=10;
-
-	public Line targetLine;
 
 	public Shot(final Soldier pSoldier, final GameActivity pActivity){
         activity = pActivity;
@@ -34,7 +24,7 @@ public class Shot implements IMovableObject {
 	}
 
 	@Override
-	public synchronized Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
+	public synchronized WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
 
 		final int distance = Math.max(
 			Math.abs(soldier.getTile().getColumn() - pTarget.getColumn()),
@@ -79,13 +69,6 @@ public class Shot implements IMovableObject {
 			return Integer.MAX_VALUE;
 		}
 	}
-
-  
-   float delay=(float) (0.1+Math.random()*0.4);
-   TimerHandler shootTimer;
-   Sprite currentShot;
-   int damage=0;
-   Soldier target;
 	
    public void fire(final Soldier targetSoldier){
 	   target=targetSoldier;
@@ -94,8 +77,6 @@ public class Shot implements IMovableObject {
 
 			@Override
 			public void onTimePassed(final TimerHandler pTimerHandler) {
-				
-				
 
 				//Bullets
 				final Sprite shot = new Sprite(soldier.convertLocalToSceneCoordinates(soldier.getWidth()/2+5, soldier.getHeight()/2-18)[0], soldier.convertLocalToSceneCoordinates(soldier.getWidth()/2+5, soldier.getHeight()/2-18)[1], Textures.SHOT_BULLET.deepCopy());
@@ -113,11 +94,10 @@ public class Shot implements IMovableObject {
 				soldier.attachChild(flash);
 				*/
 			
-				
 				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);
 				final float disty=Math.abs(shot.getY() - targetSoldier.getCenter()[1]);
 				final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (targetSoldier.getCenter()[0]-10+Math.random()*20), shot.getY(), (float) (targetSoldier.getCenter()[1]-10+Math.random()*20));
-					
+
 				moveMod.addModifierListener(new IModifierListener<IEntity>() {
 						Sprite current=currentShot;
 						@Override
@@ -141,7 +121,7 @@ public class Shot implements IMovableObject {
 								damage+=5;
 							}
 							damage+=baseDamage;
-							
+
 							if(!targetSoldier.isDead()){
 								if(findPath(activity.getPathFinder(),targetSoldier.getTile())!=null){
 									targetSoldier.changeHP(-damage);
@@ -161,29 +141,46 @@ public class Shot implements IMovableObject {
 							}
 						}
 					});
-					
+
 					shot.registerEntityModifier(moveMod);
 					//spriteExpire(flash);
 					
 					delay=(float) (0.1+Math.random()*0.4);
+					
 					shootTimer.setTimerSeconds(delay);
 					shootTimer.reset();
 			}
 		});
 		activity.getEngine().registerUpdateHandler(shootTimer);
-		
-	}
-   
- public Soldier getTarget(){
-	 return target;
- }
-   
- public void stopShooting(){
 
-	 activity.getEngine().unregisterUpdateHandler(shootTimer);
-	 shootTimer=null;
-	 soldier.setShooting(false);
- }
+	}
+
+	public Soldier getTarget(){
+		 return target;
+	}
+	 
+	public void stopShooting(){
+	
+		 activity.getEngine().unregisterUpdateHandler(shootTimer);
+		 shootTimer=null;
+		 soldier.setShooting(false);
+	}
+
+	private static final int SPEED = 350;
+
+	private final Soldier soldier;
+	private final GameActivity activity;
+
+	private final int baseDamage=10;
+
+	public Line targetLine;
+
+	private float delay=(float) (0.1+Math.random()*0.4);
+	private TimerHandler shootTimer;
+	
+	private Sprite currentShot;
+	private int damage=0;
+	private Soldier target;
 
 	private void spriteExpire(final Sprite flash)
     {

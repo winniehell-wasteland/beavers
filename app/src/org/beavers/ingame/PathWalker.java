@@ -110,9 +110,8 @@ public class PathWalker implements IModifierListener<IEntity> {
 				});
 				soldier.registerUpdateHandler(pauseTimer);
 			}
-			
-			waypoint.detachChildren();
-			gameActivity.removeObject(waypoint);
+
+			waypoint.remove();
 		}
 
 		stepIndex = 1;
