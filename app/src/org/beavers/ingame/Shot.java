@@ -10,9 +10,9 @@ import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 
@@ -34,7 +34,7 @@ public class Shot implements IMovableObject {
 	}
 
 	@Override
-	public synchronized Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
+	public synchronized WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
 
 		final int distance = Math.max(
 			Math.abs(soldier.getTile().getColumn() - pTarget.getColumn()),

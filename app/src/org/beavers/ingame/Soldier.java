@@ -15,9 +15,10 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 
@@ -58,7 +59,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
 	 */
-	public WayPoint addWayPoint(final IPathFinder<IMovableObject> pPathFinder,
+	public WayPoint addWayPoint(final IWeightedPathFinder<IMovableObject> pPathFinder,
 	                            final Tile pTile)
 	{
 		final Path path = findPath(pPathFinder, pTile);
@@ -146,7 +147,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @return a path from last waypoint to the target position (or null if there is none)
 	 */
 	@Override
-	public Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
+	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
 		return pPathFinder.findPath(this, (int) getAP() + 1,
 		                            getLastWaypoint().getTile().getColumn(),
 		                            getLastWaypoint().getTile().getRow(),

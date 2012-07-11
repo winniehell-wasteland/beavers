@@ -39,8 +39,8 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.R;
 import org.beavers.Textures;
@@ -152,7 +152,7 @@ public class GameActivity extends BaseGameActivity
 		return map;
 	}
 
-	public IPathFinder<IMovableObject> getPathFinder() {
+	public IWeightedPathFinder<IMovableObject> getPathFinder() {
 		return pathFinder;
 	}
 
