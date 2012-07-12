@@ -36,4 +36,7 @@
     <string name="state_unknown">Unknown</string>
     <string name="state_won">Won</string>
     <string name="title_start_game">Start game</string>
+    <string name="context_menu_ignore_attacks">Disable shooting</string>
+    <string name="context_menu_react_on_attacks">Enable shooting</string>
+    <string name="context_menu_wait">Wait</string>
 </resources>

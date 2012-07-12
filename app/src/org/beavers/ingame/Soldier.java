@@ -15,9 +15,10 @@ import org.anddev.andengine.opengl.texture.region.TiledTextureRegion;
 import org.anddev.andengine.util.modifier.IModifier;
 import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
-import org.anddev.andengine.util.path.Path;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
+import org.anddev.andengine.util.path.NegativeStepCostException;
+import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 
@@ -58,10 +59,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
 	 */
-	public WayPoint addWayPoint(final IPathFinder<IMovableObject> pPathFinder,
+	public WayPoint addWayPoint(final IWeightedPathFinder<IMovableObject> pPathFinder,
 	                            final Tile pTile)
 	{
-		final Path path = findPath(pPathFinder, pTile);
+		final WeightedPath path = findPath(pPathFinder, pTile);
 
 		// there is no path
 		if(path == null)
@@ -95,6 +96,14 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 		return hp;
 
+	}
+
+	public void ignoreShots(final boolean ignore){
+		ignoreShots=ignore;
+	}
+
+	public boolean getIgnore(){
+		return ignoreShots;
 	}
 
 	public void die(){
@@ -146,11 +155,16 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @return a path from last waypoint to the target position (or null if there is none)
 	 */
 	@Override
-	public Path findPath(final IPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
-		return pPathFinder.findPath(this, (int) getAP() + 1,
-		                            getLastWaypoint().getTile().getColumn(),
-		                            getLastWaypoint().getTile().getRow(),
-		                            pTarget.getColumn(), pTarget.getRow());
+	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
+		try {
+			return pPathFinder.findPath(this, (int) getAP() * 10,
+			                            getLastWaypoint().getTile().getColumn(),
+			                            getLastWaypoint().getTile().getRow(),
+			                            pTarget.getColumn(), pTarget.getRow());
+		} catch (final NegativeStepCostException e) {
+			// should not happen
+			return null;
+		}
 	}
 
 	/**
@@ -224,11 +238,11 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			}
 			else
 			{
-				return 1.5f;
+				return 15;
 			}
 		}
 
-		return 1;
+		return 10;
 	}
 
 	/**
@@ -351,6 +365,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 						calcViewAngle(pTarget.getCenterX(), pTarget.getCenterY(), pAim);
 					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
 					Soldier.this.registerEntityModifier(rotation);
+
 				}
 			}
 		});
@@ -400,10 +415,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public void stop()
 	{
 		stopAnimation(0);
+		//BUG
 		unregisterEntityModifiers(new IEntityModifierMatcher() {
 
 			@Override
 			public boolean matches(final IModifier<IEntity> pObject) {
+				if(pObject.isFinished())return false;
 				if(pObject instanceof MoveModifier){
 					lastMove=(MoveModifier)pObject;
 					return true;
@@ -444,7 +461,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private float ap=maxAP;
 	private int hp=100;
 	private boolean shooting=false;
-
+	private boolean ignoreShots=false;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
 
@@ -476,8 +493,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			final TextureRegion selectionTexture =
 				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
 			selectionMark = new Sprite(
-				getWidth()/2 - selectionTexture.getWidth()/2,
-				getHeight()/2 - selectionTexture.getHeight()/2 + 5,
+				getWidth()/2 - selectionTexture.getWidth()/2-1,
+				getHeight()/2 - selectionTexture.getHeight()/2-1,
 				selectionTexture);
 
 			waypoints = new ArrayDeque<WayPoint>();

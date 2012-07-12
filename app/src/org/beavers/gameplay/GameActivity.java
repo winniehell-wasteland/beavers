@@ -36,8 +36,8 @@ import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.anddev.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.anddev.andengine.ui.activity.BaseGameActivity;
 import org.anddev.andengine.util.Debug;
-import org.anddev.andengine.util.path.IPathFinder;
 import org.anddev.andengine.util.path.ITiledMap;
+import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
 import org.beavers.R;
 import org.beavers.Textures;
@@ -52,7 +52,7 @@ import org.beavers.ingame.WayPoint;
 import org.beavers.storage.CustomGSON;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
-import org.beavers.ui.ContextMenuHandler;
+import org.beavers.ui.IContextMenuHandler;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -68,6 +68,7 @@ import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
@@ -120,7 +121,7 @@ public class GameActivity extends BaseGameActivity
 		return map;
 	}
 
-	public IPathFinder<IMovableObject> getPathFinder() {
+	public IWeightedPathFinder<IMovableObject> getPathFinder() {
 		return pathFinder;
 	}
 
@@ -182,7 +183,14 @@ public class GameActivity extends BaseGameActivity
 
 			for(int i = 0; i < pMenu.size(); ++i)
 			{
-				pMenu.getItem(i).setOnMenuItemClickListener(contextMenuHandler);
+				pMenu.getItem(i).setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+					@Override
+					public boolean onMenuItemClick(final MenuItem pItem) {
+						return contextMenuHandler.onMenuItemClick(GameActivity.this, pItem);
+					}
+
+				});
 			}
 
 			contextMenuHandler.onMenuCreated(pMenu);
@@ -234,40 +242,46 @@ public class GameActivity extends BaseGameActivity
 			// there is an something on the tile
 			if(storage.isTileOccupied(tile))
 			{
-				if(storage.hasSoldierOnTile(tile))
-				{
-					final Soldier soldier = storage.getSoldierByTile(tile);
+				try {
+					if(storage.hasSoldierOnTile(tile))
+					{
+						final Soldier soldier = storage.getSoldierByTile(tile);
 
-					if(soldier.equals(selectedSoldier))
-					{
-						contextMenuHandler = soldier.getFirstWaypoint();
+						if(soldier.equals(selectedSoldier))
+						{
+							contextMenuHandler = soldier.getFirstWaypoint();
+						}
+						else
+						{
+							selectSoldier(soldier);
+						}
 					}
-					else
+					else if(storage.hasWaypointOnTile(tile))
 					{
-						selectSoldier(soldier);
-					}
-				}
-				else if(storage.hasWaypointOnTile(tile))
-				{
-					final WayPoint waypoint = storage.getWaypointByTile(tile);
+						final WayPoint waypoint =
+							storage.getWaypointByTile(tile);
 
-					if(!waypoint.getSoldier().equals(selectedSoldier))
-					{
-						selectSoldier(waypoint.getSoldier());
-						runOnUiThread(new Runnable() {
+						if(!waypoint.getSoldier().equals(selectedSoldier))
+						{
+							selectSoldier(waypoint.getSoldier());
+							runOnUiThread(new Runnable() {
 
-							@Override
-							public void run() {
-								Toast.makeText(GameActivity.this,
-									"Selected soldier by waypoint...",
-									Toast.LENGTH_SHORT).show();
-							}
-						});
+								@Override
+								public void run() {
+									Toast.makeText(GameActivity.this,
+										"Selected soldier by waypoint...",
+										Toast.LENGTH_SHORT).show();
+								}
+							});
+						}
+						else
+						{
+							contextMenuHandler = waypoint;
+						}
 					}
-					else
-					{
-						contextMenuHandler = waypoint;
-					}
+				} catch (final UnexpectedTileContentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 
 				if(contextMenuHandler != null)
@@ -285,8 +299,8 @@ public class GameActivity extends BaseGameActivity
 			{
 				final WayPoint waypoint =
 					selectedSoldier.addWayPoint(getPathFinder(), tile);
-				if(selectedSoldier.getAP()-(waypoint.getPath().getLength()-1)<0){
-					waypoint.remove();
+				if(waypoint == null){
+
 					runOnUiThread(new Runnable() {
 
 						@Override
@@ -298,10 +312,15 @@ public class GameActivity extends BaseGameActivity
 					});
 					}
 				else{
-					storage.addWaypoint(waypoint);
+					try {
+						storage.addWaypoint(waypoint);
+					} catch (final UnexpectedTileContentException e) {
+						Log.e(TAG, "Could not add waypoint to storage!", e);
+					}
+
 					mainScene.attachChild(waypoint);
 
-					selectedSoldier.changeAP(-waypoint.getPath().getCosts());
+					selectedSoldier.changeAP(-waypoint.getPath().getCost()/10);
 				}
 			}
 			else
@@ -378,7 +397,7 @@ public class GameActivity extends BaseGameActivity
 		getTextureManager().loadTexture(textureAtlas);
 
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96anim.png", 0, 0, 3, 2);
+		Textures.SOLDIER_TEAM0 = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(textureAtlas, this, "96x96blue.png", 0, 0, 3, 2);
 		getTextureManager().loadTexture(textureAtlas);
 
 		textureAtlas = new BitmapTextureAtlas(128,128,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -389,8 +408,8 @@ public class GameActivity extends BaseGameActivity
 		Textures.SOLDIER_SELECTION_CIRCLE = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "circle.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
 
-		textureAtlas = new BitmapTextureAtlas(32,2,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
-		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "bullet.png", 0, 0);
+		textureAtlas = new BitmapTextureAtlas(32,4,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
+		Textures.SHOT_BULLET = BitmapTextureAtlasTextureRegionFactory.createFromAsset(textureAtlas, this, "arrow.png", 0, 0);
 		getTextureManager().loadTexture(textureAtlas);
 
 		textureAtlas = new BitmapTextureAtlas(64,64,TextureOptions.BILINEAR_PREMULTIPLYALPHA);
@@ -431,7 +450,7 @@ public class GameActivity extends BaseGameActivity
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
 			final Gson gson = CustomGSON.getInstance();
-			Log.e(TAG, gson.toJson(selectedSoldier));
+			//Log.e(TAG, gson.toJson(selectedSoldier));
 
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();
@@ -592,7 +611,7 @@ public class GameActivity extends BaseGameActivity
 	 * @name active entities
 	 * @{
 	 */
-	private ContextMenuHandler contextMenuHandler;
+	private IContextMenuHandler contextMenuHandler;
 	private Soldier selectedSoldier;
 	/**
 	 * @}
@@ -712,13 +731,21 @@ public class GameActivity extends BaseGameActivity
 		while(itr.hasNext()){  //durchläuft Liste des ersten Teams
 			final Soldier s=itr.next();
 
-			final Iterator<Soldier> itr2 = storage.getSoldiersByTeam(targets).iterator();
-			if(!s.isShooting()){   //Abbruch, falls der Soldat schon schießt
+			final Iterator<Soldier> itr2= storage.getSoldiersByTeam(targets).iterator();
+
+			if(s.isShooting())
+			{
+				if(s.getShot().findPath(getPathFinder(), s.getShot().getTarget().getTile()) == null)
+				{
+					s.getShot().stopShooting();
+				}
+			}
+
+			if(!s.isShooting() && !s.getIgnore()){   //Abbruch, falls der Soldat schon schießt
 				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
 
 					final Soldier t=itr2.next();
 					if(!t.isDead() && !s.isDead()){  //beide Soldaten müssen noch leben
-
 						parallelB = new Line(
 								t.getCenter()[0]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[0]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[0]),
 								t.getCenter()[1]-(s.convertLocalToSceneCoordinates(s.getLineB().getX1(),s.getLineB().getY1())[1]-s.convertLocalToSceneCoordinates(s.getLineB().getX2(),s.getLineB().getY2())[1]),
