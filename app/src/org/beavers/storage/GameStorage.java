@@ -1,8 +1,11 @@
 package org.beavers.storage;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,9 +23,21 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+/**
+ * used to load a game state from file (and save it)
+ *
+ * @author <a href="https://github.com/winniehell/">winniehell</a>
+ */
 public class GameStorage {
 
+	/**
+	 * default constructor
+	 * @param pContext
+	 * @param pGame
+	 * @throws UnexpectedTileContentException
+	 */
 	public GameStorage(final Context pContext, final GameInfo pGame)
 	       throws UnexpectedTileContentException {
 		context = pContext;
@@ -44,6 +59,11 @@ public class GameStorage {
 		}
 	}
 
+	/**
+	 * add waypoint to container
+	 * @param pWaypoint a waypoint
+	 * @throws UnexpectedTileContentException
+	 */
 	public void addWaypoint(final WayPoint pWaypoint)
 	            throws UnexpectedTileContentException {
 
@@ -138,9 +158,58 @@ public class GameStorage {
 		gameObjects.remove(waypoint);
 	}
 
-	public void saveToFile() {
-		// TODO Auto-generated method stub
+	public boolean saveToFile() {
+		final Gson gson = CustomGSON.getInstance();
+		FileOutputStream file = null;
 
+		try {
+			file = context.openFileOutput(getFileName(), Context.MODE_PRIVATE);
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not open file!", e);
+			return false;
+		}
+
+		final JsonWriter writer =
+			new JsonWriter(new OutputStreamWriter(file,
+			                                      Charset.defaultCharset()));
+
+		try {
+			writer.beginObject();
+
+			writer.name("state");
+			writer.value(game.getState().name());
+
+			writer.name("map");
+			writer.value(game.getMapName());
+
+			writer.name("soldiers");
+			writer.beginArray();
+
+			for(final HashSet<Soldier> team : teams)
+			{
+				for(final Soldier soldier : team)
+				{
+					gson.toJson(soldier, Soldier.class, writer);
+				}
+			}
+
+			writer.endArray();
+
+			writer.endObject();
+
+		} catch (final IOException e) {
+			Log.e(TAG, "Could not write file!", e);
+			return false;
+		} finally {
+			try {
+				writer.close();
+			} catch (final IOException e) {
+				Log.e(TAG, "Could not close writer!", e);
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
@@ -173,61 +242,6 @@ public class GameStorage {
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> teams;
 
-	private int getTeamCount() {
-		return 2;
-	}
-
-	private void loadDefaults() throws UnexpectedTileContentException {
-		// load teams
-		addSoldier(new Soldier(0, new Tile(0, 0)));
-		addSoldier(new Soldier(0, new Tile(2, 0)));
-		addSoldier(new Soldier(1, new Tile(6, 9)));
-		addSoldier(new Soldier(1, new Tile(8, 9)));
-	}
-
-	private boolean loadFromFile() {
-		final Gson gson = CustomGSON.getInstance();
-		InputStream file = null;
-
-		try {
-			file = context.openFileInput(
-				"game-" + game.toString().replace('/', '_')
-			);
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not open file!", e);
-			return false;
-		}
-
-		try {
-			final JsonReader reader = new JsonReader(new InputStreamReader(file, "UTF-8"));
-
-			reader.beginObject();
-
-			assertSection(reader, "state");
-			game.setState(GameState.valueOf(reader.nextString()));
-
-			assertSection(reader, "map");
-			game.setMapName(reader.nextString());
-
-			assertSection(reader, "teams");
-
-			reader.beginArray();
-			while (reader.hasNext()) {
-				addSoldier((Soldier) gson.fromJson(reader, Soldier.class));
-			}
-			reader.endArray();
-
-			reader.endObject();
-
-			reader.close();
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not read JSON from file!", e);
-			return false;
-		}
-
-		return true;
-	}
-
 	private void addSoldier(final Soldier pSoldier)
 	             throws UnexpectedTileContentException {
 
@@ -247,5 +261,62 @@ public class GameStorage {
 			pReader.close();
 			throw new Exception("Expected " + pSection + "!");
 		}
+	}
+
+	private String getFileName() {
+		return "game-" + game.toString().replace('/', '_');
+	}
+
+	private int getTeamCount() {
+		return 2;
+	}
+
+	private void loadDefaults() throws UnexpectedTileContentException {
+		// load teams
+		addSoldier(new Soldier(0, new Tile(0, 0)));
+		addSoldier(new Soldier(0, new Tile(2, 0)));
+		addSoldier(new Soldier(1, new Tile(6, 9)));
+		addSoldier(new Soldier(1, new Tile(8, 9)));
+	}
+
+	private boolean loadFromFile() {
+		final Gson gson = CustomGSON.getInstance();
+		InputStream file = null;
+
+		try {
+			file = context.openFileInput(getFileName());
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not open file!", e);
+			return false;
+		}
+
+		try {
+			final JsonReader reader = new JsonReader(new InputStreamReader(file, Charset.defaultCharset()));
+
+			reader.beginObject();
+
+			assertSection(reader, "state");
+			game.setState(GameState.valueOf(reader.nextString()));
+
+			assertSection(reader, "map");
+			game.setMapName(reader.nextString());
+
+			assertSection(reader, "soldiers");
+
+			reader.beginArray();
+			while (reader.hasNext()) {
+				addSoldier((Soldier) gson.fromJson(reader, Soldier.class));
+			}
+			reader.endArray();
+
+			reader.endObject();
+
+			reader.close();
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not read JSON from file!", e);
+			return false;
+		}
+
+		return true;
 	}
 }
