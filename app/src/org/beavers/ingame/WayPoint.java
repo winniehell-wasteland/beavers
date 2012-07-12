@@ -8,7 +8,6 @@ import org.beavers.R;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.storage.CustomGSON;
-import org.beavers.ui.IContextMenuHandler;
 
 import android.util.Log;
 import android.view.ContextMenu;
@@ -19,7 +18,7 @@ import android.view.MenuItem;
  * @author <a href="https://github.com/wintermadnezz/">wintermadnezz</a>
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject {
+public class WayPoint extends Sprite implements IGameObject {
 
 	/**
 	 * default constructor
@@ -53,7 +52,6 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 		return aim;
 	}
 
-	@Override
 	public int getMenuID() {
 		return R.menu.context_waypoint;
 	}
@@ -84,16 +82,15 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 	public boolean isWaitingForAim() {
 		return waitForAim;
 	}
-	
+
 	public boolean ignoresShots(){
 		return ignoreShots;
 	}
-	
+
 	public int getWait(){
 		return wait;
 	}
 
-	@Override
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
 		pMenu.findItem(R.id.context_menu_waypoint_remove)
@@ -115,7 +112,6 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 		}
 	}
 
-	@Override
 	public boolean onMenuItemClick(final GameActivity pActivity, final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
@@ -136,7 +132,7 @@ public class WayPoint extends Sprite implements IContextMenuHandler, IGameObject
 			setAim(null);
 
 			return true;
-		
+
 		case R.id.context_menu_ignore_attacks:
 			ignoreShots= true;
 			return true;

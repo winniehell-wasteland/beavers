@@ -52,7 +52,6 @@ import org.beavers.ingame.WayPoint;
 import org.beavers.storage.CustomGSON;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
-import org.beavers.ui.IContextMenuHandler;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -176,10 +175,10 @@ public class GameActivity extends BaseGameActivity
 	public void onCreateContextMenu(final ContextMenu pMenu, final View pView,
 			final ContextMenuInfo pInfo) {
 
-		if(contextMenuHandler != null)
+		if(selectedWaypoint != null)
 		{
 	        final MenuInflater inflater = getMenuInflater();
-	        inflater.inflate(contextMenuHandler.getMenuID(), pMenu);
+	        inflater.inflate(selectedWaypoint.getMenuID(), pMenu);
 
 			for(int i = 0; i < pMenu.size(); ++i)
 			{
@@ -187,13 +186,13 @@ public class GameActivity extends BaseGameActivity
 
 					@Override
 					public boolean onMenuItemClick(final MenuItem pItem) {
-						return contextMenuHandler.onMenuItemClick(GameActivity.this, pItem);
+						return selectedWaypoint.onMenuItemClick(GameActivity.this, pItem);
 					}
 
 				});
 			}
 
-			contextMenuHandler.onMenuCreated(pMenu);
+			selectedWaypoint.onMenuCreated(pMenu);
 		}
 	}
 
@@ -221,9 +220,9 @@ public class GameActivity extends BaseGameActivity
 			Log.d(TAG, "Hold on tile ("+tile.getColumn()+","+tile.getRow()+")");
 
 			// create new Aim if necessary
-			if(contextMenuHandler instanceof WayPoint)
+			if(selectedWaypoint instanceof WayPoint)
 			{
-				final WayPoint selectedWayPoint = (WayPoint) contextMenuHandler;
+				final WayPoint selectedWayPoint = selectedWaypoint;
 
 				if(selectedWayPoint.isWaitingForAim())
 				{
@@ -237,7 +236,7 @@ public class GameActivity extends BaseGameActivity
 				}
 			}
 
-			contextMenuHandler = null;
+			selectedWaypoint = null;
 
 			// there is an something on the tile
 			if(storage.isTileOccupied(tile))
@@ -249,7 +248,7 @@ public class GameActivity extends BaseGameActivity
 
 						if(soldier.equals(selectedSoldier))
 						{
-							contextMenuHandler = soldier.getFirstWaypoint();
+							selectedWaypoint = soldier.getFirstWaypoint();
 						}
 						else
 						{
@@ -276,7 +275,7 @@ public class GameActivity extends BaseGameActivity
 						}
 						else
 						{
-							contextMenuHandler = waypoint;
+							selectedWaypoint = waypoint;
 						}
 					}
 				} catch (final UnexpectedTileContentException e) {
@@ -284,7 +283,7 @@ public class GameActivity extends BaseGameActivity
 					e.printStackTrace();
 				}
 
-				if(contextMenuHandler != null)
+				if(selectedWaypoint != null)
 				{
 					runOnUiThread(new Runnable() {
 						@Override
@@ -497,9 +496,9 @@ public class GameActivity extends BaseGameActivity
 				Log.e(TAG, "Could not remove waypoint from game storage!", e);
 			}
 
-			if(waypoint.equals(contextMenuHandler))
+			if(waypoint.equals(selectedWaypoint))
 			{
-				contextMenuHandler = null;
+				selectedWaypoint = null;
 			}
 		}
 	}
@@ -611,8 +610,8 @@ public class GameActivity extends BaseGameActivity
 	 * @name active entities
 	 * @{
 	 */
-	private IContextMenuHandler contextMenuHandler;
 	private Soldier selectedSoldier;
+	private WayPoint selectedWaypoint;
 	/**
 	 * @}
 	 */
