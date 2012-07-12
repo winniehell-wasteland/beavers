@@ -70,6 +70,14 @@ public class GameListActivity extends FragmentActivity
 	 * @}
 	 */
 
+	public GameListActivity()
+	{
+		super();
+
+		client = new Client.Connection();
+		server = new Server.Connection();
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
 	    final MenuInflater inflater = getMenuInflater();
@@ -152,19 +160,17 @@ public class GameListActivity extends FragmentActivity
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		client = new Client.Connection();
 		Intent intent = new Intent(GameListActivity.this, Client.class);
 		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, "Could not bind client!");
+			Log.e(TAG, getString(R.string.error_binding_client_failed));
 			return;
 		}
 
-		server = new Server.Connection();
 		intent = new Intent(GameListActivity.this, Server.class);
 		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, "Could not bind server!");
+			Log.e(TAG, getString(R.string.error_binding_server_failed));
 			return;
 		}
 
@@ -455,6 +461,6 @@ public class GameListActivity extends FragmentActivity
 		}
 	}
 
-	private Client.Connection client;
-	private Server.Connection server;
+	private final Client.Connection client;
+	private final Server.Connection server;
 }

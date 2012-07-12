@@ -7,12 +7,12 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
-import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
+import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
 
 import android.app.Service;
@@ -26,6 +26,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
@@ -186,9 +187,17 @@ public class Server extends Service {
 				}
 				case PLANNING_PHASE:
 				{
-					onReceiveDecisions(game, player,
-					                   gson.fromJson(json.get("decisions"),
-					                		         DecisionContainer.class));
+					if(!json.has(Soldier.JSON_TAG_COLLECTION))
+					{
+						Log.e(TAG,
+						      getString(R.string.error_incomplete_decisions,
+						                game, player));
+					}
+
+					final JsonElement soldiers =
+						json.get(Soldier.JSON_TAG_COLLECTION);
+
+					onReceiveDecisions(game, player, soldiers.getAsString());
 
 					return true;
 				}
@@ -336,7 +345,7 @@ public class Server extends Service {
 		 * @param decisions
 		 */
 		private void onReceiveDecisions(GameInfo pGame, final Player pPlayer,
-		                                final DecisionContainer pDecisions)
+		                                final String pSoldiers)
 		{
 			if(!hostedGames.contains(pGame))
 			{

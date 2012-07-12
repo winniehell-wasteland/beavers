@@ -160,12 +160,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	@Override
 	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
 		try {
-			return pPathFinder.findPath(this, (int) getAP() * 10,
+			return pPathFinder.findPath(this, (int) (getAP() * 10),
 			                            getLastWaypoint().getTile().getColumn(),
 			                            getLastWaypoint().getTile().getRow(),
 			                            pTarget.getColumn(), pTarget.getRow());
 		} catch (final NegativeStepCostException e) {
-			// should not happen
+			Log.e(getClass().getName(),"This should not happen!");
 			return null;
 		}
 	}

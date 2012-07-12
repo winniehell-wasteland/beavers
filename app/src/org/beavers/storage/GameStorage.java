@@ -97,6 +97,10 @@ public class GameStorage {
 		}
 	}
 
+	public int getTeamCount() {
+		return 2;
+	}
+
 	public WayPoint getWaypointByTile(final Tile pTile)
 	       throws UnexpectedTileContentException{
 
@@ -265,10 +269,6 @@ public class GameStorage {
 
 	private String getFileName() {
 		return "game-" + game.toString().replace('/', '_');
-	}
-
-	private int getTeamCount() {
-		return 2;
 	}
 
 	private void loadDefaults() throws UnexpectedTileContentException {

@@ -8,12 +8,12 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
-import org.beavers.gameplay.DecisionContainer;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
+import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
 
 import android.app.Service;
@@ -278,8 +278,7 @@ public class Client extends Service {
 		}
 
 		@Override
-		public void sendDecisions(GameInfo pGame,
-		                          final DecisionContainer pDecisions) {
+		public void sendDecisions(GameInfo pGame, final String pSoldiers) {
 			if (!runningGames.contains(pGame)) {
 				Log.e(TAG, getString(R.string.error_not_running, pGame));
 				return;
@@ -295,7 +294,7 @@ public class Client extends Service {
 
 			final Message message =
 				new DecissionMessage(Client.this, getSettings().getPlayer(),
-				                     pGame, pDecisions);
+				                     pGame, pSoldiers);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
@@ -328,14 +327,14 @@ public class Client extends Service {
 		{
 			public DecissionMessage(final Context pContext,
 									final Player pPlayer, final GameInfo pGame,
-			                        final DecisionContainer pDecisions) {
+			                        final String pSoldiers) {
 				super(pContext, pPlayer, pGame);
 
-				decisions = pDecisions;
+				soldiers = pSoldiers;
 			}
 
-			@SerializedName(DecisionContainer.JSON_TAG)
-			private final DecisionContainer decisions;
+			@SerializedName(Soldier.JSON_TAG_COLLECTION)
+			private final String soldiers;
 		}
 		/**
 		 * @}

@@ -140,7 +140,7 @@ public final class GameInfo implements Parcelable {
     @SerializedName(JSON_TAG_SERVER)
 	private final Player server;
 	/** state of the game */
-    @SerializedName(Game.JSON_TAG)
+    @SerializedName(GameState.JSON_TAG)
 	private GameState state;
 
     private GameInfo(final Parcel in) {

@@ -1,5 +1,6 @@
 package org.beavers.gameplay;
 
+import java.util.HashSet;
 import java.util.Iterator;
 
 import org.anddev.andengine.engine.Engine;
@@ -39,9 +40,12 @@ import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
+import org.beavers.App;
 import org.beavers.R;
+import org.beavers.Settings;
 import org.beavers.Textures;
 import org.beavers.communication.Client;
+import org.beavers.communication.Server;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IMovableObject;
 import org.beavers.ingame.IRemoveObjectListener;
@@ -53,6 +57,7 @@ import org.beavers.storage.CustomGSON;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
 
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -60,6 +65,7 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -101,11 +107,14 @@ public class GameActivity extends BaseGameActivity
 
 	/**
 	 * default constructor
-	 * @param pApp
 	 */
 	public GameActivity()
 	{
 		super();
+
+		// initialize communication services
+		client = new Client.Connection();
+		server = new Server.Connection();
 
 		// initialize detectors
 		scrollDetector = new SurfaceScrollDetector(10.0f, this);
@@ -166,9 +175,8 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		final TMXTile tile = collisionLayer.getTMXTile(pTileColumn, pTileRow);
-		//return tile!=null;
 
-		return ((tile == null) || (tile.getGlobalTileID()!=0)); // (tile.getTMXTileProperties(map) != null));
+		return ((tile == null) || (tile.getGlobalTileID()!=0));
 	}
 
 	@Override
@@ -423,14 +431,13 @@ public class GameActivity extends BaseGameActivity
 
 		loadMap(currentGame.getMapName());
 
-		if(map != null)
+		if(map == null)
 		{
-			pathFinder = new AStarPathFinder<IMovableObject>(this, 1600, true);
+			Log.e(TAG, "Map not initialized!");
+			finish();
 		}
-		else
-		{
-			pathFinder = null;
-		}
+
+		pathFinder = new AStarPathFinder<IMovableObject>(this, getTileColumns()*getTileRows(), true);
 
 		camera.setBounds(0, map.getTileColumns() * map.getTileWidth(),
 		                 0, map.getTileRows() * map.getTileHeight());
@@ -440,6 +447,24 @@ public class GameActivity extends BaseGameActivity
 		mainScene.setOnSceneTouchListener(this);
 
         mRenderSurfaceView.setOnCreateContextMenuListener(this);
+
+		// initialize storage
+		try {
+			storage = new GameStorage(this, currentGame);
+			storage.setRemoveObjectListener(this);
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not create game storage!", e);
+			finish();
+		}
+
+		// show soldiers on mainScene
+		for(int team = 0; team < storage.getTeamCount(); ++team)
+		{
+			for(final Soldier soldier : storage.getSoldiersByTeam(team))
+			{
+				mainScene.attachChild(soldier);
+			}
+		}
 
 		return mainScene;
 	}
@@ -454,7 +479,23 @@ public class GameActivity extends BaseGameActivity
 			final PathWalker walker = new PathWalker(this, selectedSoldier);
 			walker.start();
 
-			//Client.sendDecisions(this, currentGame, new DecisionContainer());
+			final HashSet<Soldier> mySoldiers =  storage.getSoldiersByTeam(
+				currentGame.getTeam(getSettings().getPlayer())
+			);
+
+			try {
+				client.getService().sendDecisions(currentGame,
+				                                  gson.toJson(mySoldiers));
+			} catch (final RemoteException e) {
+				Log.e(TAG, getString(R.string.error_sending_decisions_failed), e);
+				return true;
+			}
+
+			// deselect soldier
+			selectSoldier(null);
+
+			// disable user interaction
+			holdDetector.setEnabled(false);
 
 			return true;
 		default:
@@ -537,19 +578,25 @@ public class GameActivity extends BaseGameActivity
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
 
+		Intent intent = new Intent(GameActivity.this, Client.class);
+		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
+		{
+			Log.e(TAG, getString(R.string.error_binding_client_failed));
+			return;
+		}
+
+		intent = new Intent(GameActivity.this, Server.class);
+		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
+		{
+			Log.e(TAG, getString(R.string.error_binding_server_failed));
+			return;
+		}
+
 		currentGame = getIntent().getParcelableExtra(GameInfo.PARCEL_NAME);
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
 		{
-			finish();
-		}
-
-		try {
-			storage = new GameStorage(this, currentGame);
-			storage.setRemoveObjectListener(this);
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not create game storage!", e);
 			finish();
 		}
 	}
@@ -568,8 +615,33 @@ public class GameActivity extends BaseGameActivity
 		registerReceiver(updateReceiver, new IntentFilter(Client.GAME_STATE_CHANGED_INTENT));
 	}
 
+	/**
+	 * @name constants
+	 * @{
+	 */
 	private final static float CAMERA_SPEED = 1.50f;
+	/**
+	 * @}
+	 */
+
+	/**
+	 * @name debug
+	 * @{
+	 */
 	private static final String TAG = "GameScene";
+	/**
+	 * @}
+	 */
+
+	/**
+	 * @name communication
+	 * @{
+	 */
+	private final Client.Connection client;
+	private final Server.Connection server;
+	/**
+	 * @}
+	 */
 
 	/**
 	 * @name detectors
@@ -631,6 +703,19 @@ public class GameActivity extends BaseGameActivity
 			// TODO update GameActivity
 		}
 	};
+
+	/** @return application settings */
+	private Settings getSettings()
+	{
+		if(getApplication() instanceof App)
+		{
+			return ((App) getApplication()).getSettings();
+		}
+		else
+		{
+			return null;
+		}
+	}
 
 	private void loadMap(final String pMapName)
 	{
@@ -789,7 +874,11 @@ public class GameActivity extends BaseGameActivity
 			}
 
 			selectedSoldier = pSoldier;
-			selectedSoldier.markSelected();
+
+			if(selectedSoldier != null)
+			{
+				selectedSoldier.markSelected();
+			}
 
 			updateHUD();
 		}

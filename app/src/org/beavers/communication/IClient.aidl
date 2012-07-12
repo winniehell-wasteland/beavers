@@ -4,7 +4,6 @@ import android.os.ParcelFileDescriptor;
 
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.Player;
-import org.beavers.gameplay.DecisionContainer;
 
 /**
  * client service interface
@@ -74,5 +73,5 @@ interface IClient {
 	 * @param pGame running game
 	 * @param decisions
 	 */
-	void sendDecisions(in GameInfo pGame, in DecisionContainer pDecisions);
+	void sendDecisions(in GameInfo pGame, in String pSoldiers);
 }
