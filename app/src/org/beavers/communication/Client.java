@@ -196,17 +196,6 @@ public class Client extends Service {
 			Log.e(TAG, "game: "+game);
 
 			switch (game.getState()) {
-			case ABORTED:
-			{
-				if(runningGames.contains(game))
-				{
-					onReceiveNewServer(runningGames.find(game),
-					                   gson.fromJson(json.get("new_server"),
-					                                 Player.class));
-				}
-
-				return true;
-			}
 			case ANNOUNCED:
 			{
 				if(announcedGames.contains(game)) {
@@ -391,36 +380,6 @@ public class Client extends Service {
 				// auto join own game
 				joinGame(pGame);
 			}
-		}
-
-		/**
-		 * server has quit, inform clients about new server
-		 *
-		 * @param pGame game
-		 * @param pNewServer new server
-		 */
-		private void onReceiveNewServer(final GameInfo pGame,
-		                                final Player pNewServer) {
-			if (!pGame.isInState(GameState.PLANNING_PHASE)
-					&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
-				Log.e(TAG, getString(R.string.error_wrong_state,
-						pGame.toString(), pGame.getState().toString()));
-				return;
-			}
-
-			pGame.setServer(pNewServer);
-
-			// we become server
-			if (getSettings().getPlayer().equals(pNewServer)) {
-				try {
-					server.getService().acquireGame(pGame);
-				} catch (final RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-
-			broadcastGameInfo(pGame);
 		}
 
 		/**

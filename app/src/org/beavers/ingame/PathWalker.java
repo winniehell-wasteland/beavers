@@ -30,7 +30,7 @@ public class PathWalker implements IModifierListener<IEntity> {
 		if(pModifier instanceof MoveModifier)
 		{
 			soldier.stopAnimation(0);
-			gameActivity.moveObject(soldier, sourceTile, targetTile);
+			gameActivity.getStorage().moveSoldier(soldier, sourceTile, targetTile);
 
 			nextTile();
 

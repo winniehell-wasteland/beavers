@@ -420,8 +420,9 @@ public class GameListActivity extends FragmentActivity
 						final GameInfo game = new GameInfo(
 							settings.getPlayer(),
 							new Game(UUID.randomUUID(),
-								input.getText().toString()),
-							settings.getMapName());
+							         input.getText().toString()));
+
+						game.setMapName(settings.getMapName());
 
 						try {
 							// announce to clients

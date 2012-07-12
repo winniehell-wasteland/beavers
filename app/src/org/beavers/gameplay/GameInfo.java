@@ -18,11 +18,10 @@ public final class GameInfo implements Parcelable {
 	 * @param pServer server of the game
 	 * @param pGame unique game ID on server
 	 */
-	public GameInfo(final Player pServer, final Game pID,
-			final String pMap) {
+	public GameInfo(final Player pServer, final Game pID) {
 		game = pID;
-		map = pMap;
 		server = pServer;
+
 		state = GameState.UNKNOWN;
 	}
 
@@ -49,12 +48,6 @@ public final class GameInfo implements Parcelable {
 		return game;
 	}
 
-	// TODO move to Client?
-	public int getInitialActionPoints()
-	{
-		return -1;
-	}
-
 	/** @return name of the map played */
 	public String getMapName()
 	{
@@ -71,6 +64,12 @@ public final class GameInfo implements Parcelable {
 		return state;
 	}
 
+	/** @return team for player */
+	public int getTeam(final Player pPlayer)
+	{
+		return isServer(pPlayer)?0:1;
+	}
+
 	/** @return true if game is in given state */
 	public boolean isInState(final GameState pState) {
 		return getState().equals(pState);
@@ -81,12 +80,9 @@ public final class GameInfo implements Parcelable {
 		return getServer().equals(pPlayer);
 	}
 
-	/**
-	 * changes the server
-	 * @param pServer new server
-	 */
-	public void setServer(final Player pServer) {
-		server = pServer;
+	/** set the map */
+	public void setMapName(final String pMap) {
+		map = pMap;
 	}
 
 	/**
@@ -126,9 +122,9 @@ public final class GameInfo implements Parcelable {
 	/** unique game on server */
 	private final Game game;
 	/** map name */
-	private final String map;
+	private String map;
 	/** server of the game */
-	private Player server;
+	private final Player server;
 	/** state of the game */
 	private GameState state;
 

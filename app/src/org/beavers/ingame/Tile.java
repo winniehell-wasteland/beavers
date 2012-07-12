@@ -137,7 +137,7 @@ public class Tile {
 
 	@Override
 	public int hashCode() {
-		return 101*((column << 16) | row);
+		return ((column << 16) | row);
 	}
 
 	/**
