@@ -3,6 +3,8 @@ package org.beavers.gameplay;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * class to uniquely identify a game and store its state
  *
@@ -12,6 +14,15 @@ public final class GameInfo implements Parcelable {
 
 	/** name for parcel in intent extras */
 	public static final String PARCEL_NAME = GameInfo.class.getName();
+
+	/** tag for JSON files */
+	public static final String JSON_TAG = "gameinfo";
+
+	/** {@link #JSON_TAG} for map name */
+	public static final String JSON_TAG_MAP = "map";
+
+	/** {@link #JSON_TAG} for game server */
+	public static final String JSON_TAG_SERVER = "server";
 
 	/**
 	 * default constructor
@@ -120,12 +131,16 @@ public final class GameInfo implements Parcelable {
     };
 
 	/** unique game on server */
+    @SerializedName(Game.JSON_TAG)
 	private final Game game;
 	/** map name */
+    @SerializedName(JSON_TAG_MAP)
 	private String map;
 	/** server of the game */
+    @SerializedName(JSON_TAG_SERVER)
 	private final Player server;
 	/** state of the game */
+    @SerializedName(Game.JSON_TAG)
 	private GameState state;
 
     private GameInfo(final Parcel in) {

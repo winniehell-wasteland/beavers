@@ -5,6 +5,9 @@ import android.os.Parcelable;
 
 public class OutcomeContainer implements Parcelable {
 
+	/** tag for JSON files */
+	public static final String JSON_TAG = "outcome";
+
 	public OutcomeContainer() {
 		// TODO Auto-generated constructor stub
 	}

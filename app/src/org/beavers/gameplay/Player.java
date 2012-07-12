@@ -11,6 +11,12 @@ import android.os.Parcelable;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public final class Player extends UniqueID {
+	/** tag for JSON files */
+	public static final String JSON_TAG = "player";
+
+	/** {@link #JSON_TAG} for a collection */
+	public static final String JSON_TAG_COLLECTION = "players";
+
 	public Player(final UUID pID, final String pName) {
 		super(pID, pName);
 	}

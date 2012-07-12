@@ -28,6 +28,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * server for game communication
@@ -153,11 +154,12 @@ public class Server extends Service {
 
 			final JsonObject json = (JsonObject) parser.parse(reader);
 
-			if(json.has("game") && json.has("player"))
+			if(json.has(GameInfo.JSON_TAG) && json.has(Player.JSON_TAG))
 			{
 				final Gson gson = CustomGSON.getInstance();
 
-				GameInfo game = gson.fromJson(json.get("game"), GameInfo.class);
+				GameInfo game =
+					gson.fromJson(json.get(GameInfo.JSON_TAG), GameInfo.class);
 
 				if(!game.isServer(getSettings().getPlayer()))
 				{
@@ -173,7 +175,7 @@ public class Server extends Service {
 				game = hostedGames.find(game);
 
 				final Player player =
-					gson.fromJson(json.get("player"), Player.class);
+					gson.fromJson(json.get(Player.JSON_TAG), Player.class);
 
 				switch (game.getState()) {
 				case JOINED:
@@ -274,7 +276,6 @@ public class Server extends Service {
 			private final Player new_server;
 		}
 
-		@SuppressWarnings("unused")
 		class OutcomeMessage extends Message
 		{
 			public OutcomeMessage(final Context pContext, final GameInfo pGame,
@@ -283,10 +284,10 @@ public class Server extends Service {
 				outcome = pOutcome;
 			}
 
+			@SerializedName(OutcomeContainer.JSON_TAG)
 			private final OutcomeContainer outcome;
 		}
 
-		@SuppressWarnings("unused")
 		class PlanningPhaseMessage extends Message
 		{
 			public PlanningPhaseMessage(final Context pContext,
@@ -295,6 +296,7 @@ public class Server extends Service {
 				players = playerMap.get(pGame);
 			}
 
+			@SerializedName(Player.JSON_TAG_COLLECTION)
 			private final HashSet<Player> players;
 		}
 		/**

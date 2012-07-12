@@ -30,6 +30,9 @@ import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.RemoteException;
 import android.util.Log;
+
+import com.google.gson.annotations.SerializedName;
+
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
@@ -194,13 +197,12 @@ public class DTNService extends Service {
 		private IDTNService service;
 	}
 
-	@SuppressWarnings("unused")
 	public static class Message
 	{
 		public Message(final Context pContext, final GameInfo pGame)
 		{
 			context = pContext;
-			game = pGame;
+			gameinfo = pGame;
 		}
 
 		public ParcelFileDescriptor getFile()
@@ -218,8 +220,6 @@ public class DTNService extends Service {
 
 				Log.d(TAG, "File content: "+CustomGSON.getInstance().toJson(this));
 
-				length = file.length();
-
 				return ParcelFileDescriptor.open(
 					file, ParcelFileDescriptor.MODE_READ_ONLY
 				);
@@ -229,14 +229,10 @@ public class DTNService extends Service {
 			}
 		}
 
-		public long getLength()
-		{
-			return length;
-		}
-
 		private transient final Context context;
-		private final GameInfo game;
-		private transient long length;
+
+		@SerializedName(GameInfo.JSON_TAG)
+		private final GameInfo gameinfo;
 	}
 
 	/**

@@ -176,13 +176,13 @@ public class GameStorage {
 		try {
 			writer.beginObject();
 
-			writer.name("state");
+			writer.name(GameState.JSON_TAG);
 			writer.value(game.getState().name());
 
-			writer.name("map");
+			writer.name(GameInfo.JSON_TAG_MAP);
 			writer.value(game.getMapName());
 
-			writer.name("soldiers");
+			writer.name(Soldier.JSON_TAG_COLLECTION);
 			writer.beginArray();
 
 			for(final HashSet<Soldier> team : teams)
@@ -295,13 +295,13 @@ public class GameStorage {
 
 			reader.beginObject();
 
-			assertSection(reader, "state");
+			assertSection(reader, GameState.JSON_TAG);
 			game.setState(GameState.valueOf(reader.nextString()));
 
-			assertSection(reader, "map");
+			assertSection(reader, GameInfo.JSON_TAG_MAP);
 			game.setMapName(reader.nextString());
 
-			assertSection(reader, "soldiers");
+			assertSection(reader, Soldier.JSON_TAG_COLLECTION);
 
 			reader.beginArray();
 			while (reader.hasNext()) {

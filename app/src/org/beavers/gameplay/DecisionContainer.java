@@ -4,6 +4,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class DecisionContainer implements Parcelable {
+	/** tag for JSON files */
+	public static final String JSON_TAG = "decisions";
+
 	public DecisionContainer() {
 		// TODO Auto-generated constructor stub
 	}

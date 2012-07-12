@@ -32,6 +32,9 @@ import android.util.Log;
  */
 public class Soldier extends AnimatedSprite implements IGameObject, IMovableObject {
 
+	/** tag for collection in JSON files */
+	public static final String JSON_TAG_COLLECTION = "soldiers";
+
 	/**
 	 * default constructor
 	 * @param pTeam team this soldier is in

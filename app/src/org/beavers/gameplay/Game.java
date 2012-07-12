@@ -11,6 +11,9 @@ import android.os.Parcelable;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public final class Game extends UniqueID {
+	/** tag for JSON files */
+	public static final String JSON_TAG = "game";
+
 	public Game(final UUID pID, final String pName) {
 		super(pID, pName);
 	}

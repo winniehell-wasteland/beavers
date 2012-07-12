@@ -29,6 +29,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
 /**
@@ -183,7 +184,7 @@ public class Client extends Service {
 
 			final JsonObject json = (JsonObject) parser.parse(reader);
 
-			if(!json.has("game"))
+			if(!json.has(GameInfo.JSON_TAG))
 			{
 				Log.e(TAG, "JSON object does not contain game info!");
 				return false;
@@ -192,7 +193,7 @@ public class Client extends Service {
 			final Gson gson = CustomGSON.getInstance();
 
 			final GameInfo game =
-				gson.fromJson(json.get("game"), GameInfo.class);
+				gson.fromJson(json.get(GameInfo.JSON_TAG), GameInfo.class);
 			Log.e(TAG, "game: "+game);
 
 			switch (game.getState()) {
@@ -266,7 +267,6 @@ public class Client extends Service {
 				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
 
 			final ParcelFileDescriptor file = message.getFile();
-			Log.d(TAG, "Should be sending "+message.getLength());
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
@@ -311,7 +311,6 @@ public class Client extends Service {
 		 * @{
 		 */
 
-		@SuppressWarnings("unused")
 		class ClientMessage extends Message
 		{
 			public ClientMessage(final Context pContext, final Player pPlayer,
@@ -321,10 +320,10 @@ public class Client extends Service {
 				player = pPlayer;
 			}
 
+			@SerializedName(Player.JSON_TAG)
 			private final Player player;
 		}
 
-		@SuppressWarnings("unused")
 		class DecissionMessage extends ClientMessage
 		{
 			public DecissionMessage(final Context pContext,
@@ -335,6 +334,7 @@ public class Client extends Service {
 				decisions = pDecisions;
 			}
 
+			@SerializedName(DecisionContainer.JSON_TAG)
 			private final DecisionContainer decisions;
 		}
 		/**
