@@ -2,6 +2,8 @@ package org.beavers.gameplay;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.SmoothCamera;
@@ -473,17 +475,28 @@ public class GameActivity extends BaseGameActivity
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
-			final Gson gson = CustomGSON.getInstance();
-			//Log.e(TAG, gson.toJson(selectedSoldier));
 
-			final PathWalker walker = new PathWalker(this, selectedSoldier);
-			walker.start();
+			final ExecutorService executor = Executors.newCachedThreadPool();
+
+			for(int team = 0; team < storage.getTeamCount(); ++team) {
+				for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
+					executor.execute(new Runnable() {
+
+						@Override
+						public void run() {
+							final PathWalker walker = new PathWalker(GameActivity.this, soldier);
+							walker.start();
+						}
+					});
+				}
+			}
 
 			final HashSet<Soldier> mySoldiers =  storage.getSoldiersByTeam(
 				currentGame.getTeam(getSettings().getPlayer())
 			);
 
 			try {
+				final Gson gson = CustomGSON.getInstance();
 				client.getService().sendDecisions(currentGame,
 				                                  gson.toJson(mySoldiers));
 			} catch (final RemoteException e) {
@@ -496,6 +509,11 @@ public class GameActivity extends BaseGameActivity
 
 			// disable user interaction
 			holdDetector.setEnabled(false);
+
+			return true;
+		case R.id.menu_reset_hold_detector:
+
+			holdDetector.setEnabled(true);
 
 			return true;
 		default:
