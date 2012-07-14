@@ -3,6 +3,9 @@ package org.beavers.communication;
 import java.io.FileReader;
 import java.lang.reflect.Type;
 import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.beavers.App;
 import org.beavers.R;
@@ -63,7 +66,7 @@ public class Client extends Service {
 	@Override
 	public IBinder onBind(final Intent pIntent) {
 		Log.d(TAG, "onBind()");
-		return stub;
+		return implementation;
 	}
 
 	@Override
@@ -71,21 +74,61 @@ public class Client extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		dtn = new DTNService.Connection();
-		Intent intent = new Intent(Client.this, DTNService.class);
-		bindService(intent, dtn, Service.BIND_AUTO_CREATE);
+		implementation.loadGameList();
 
-		server = new Server.Connection();
-		intent = new Intent(Client.this, Server.class);
-		bindService(intent, server, Service.BIND_AUTO_CREATE);
+		dtn = new DTNService.Connection();
+		final Intent intent = new Intent(Client.this, DTNService.class);
+		bindService(intent, dtn, Service.BIND_AUTO_CREATE);
 	}
 
 	@Override
 	public void onDestroy() {
+		Log.d(TAG, "onDestroy()");
+
 		unbindService(dtn);
-		unbindService(server);
+
+		try {
+			// stop executor
+			executor.shutdown();
+
+			// ... and wait until all jobs are done
+			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+				executor.shutdownNow();
+			}
+		} catch (final InterruptedException e) {
+			Log.e(TAG, "Interrupted while processing executor queue!", e);
+		}
+
+		implementation.saveGameList();
 
 		super.onDestroy();
+	}
+
+	@Override
+	public int onStartCommand(final Intent pIntent, final int pFlags, final int pStartId) {
+
+		Log.d(TAG, "onStartCommand()");
+
+		if(pIntent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
+		{
+        	final int stopId = pStartId;
+        	final ParcelFileDescriptor data =
+        		(ParcelFileDescriptor) pIntent.getParcelableExtra("data");
+
+			executor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					implementation.handleData(data);
+				}
+			});
+
+			stopSelfResult(stopId);
+
+        	return START_STICKY;
+		}
+
+        return START_NOT_STICKY;
 	}
 
 	/**
@@ -101,39 +144,23 @@ public class Client extends Service {
 		public void onServiceConnected(final ComponentName pName,
 		                               final IBinder pService) {
 			service = IClient.Stub.asInterface(pService);
-
-			try {
-				service.loadGameList();
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Could not load game list!", e);
-			}
 		}
 
 		@Override
 		public void onServiceDisconnected(final ComponentName pName) {
-			try {
-				service.saveGameList();
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Could not save game list!", e);
-			}
-
 			service = null;
 		}
 
 		private IClient service;
 	}
 
-	/**
-	 * @name service connections
-	 * @{
-	 */
-	private Server.Connection server;
+	/** communication service connection */
 	private DTNService.Connection dtn;
-	/**
-	 * @}
-	 */
 
-	private final IClient.Stub stub = new IClient.Stub() {
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private final Implementation implementation = new Implementation();
+
+	private class Implementation extends IClient.Stub {
 
 		@Override
 		public void abortGame(GameInfo pGame) {
@@ -189,7 +216,12 @@ public class Client extends Service {
 			return runningGames.size();
 		};
 
-		@Override
+		/**
+		 * receive a DTN message
+		 *
+		 * @param pData file descriptor of payload file
+		 * @return true if handled
+		 */
 		public boolean handleData(final ParcelFileDescriptor pData) {
 			Log.i(TAG, "Processing "+pData.getStatSize()+" bytes...");
 
@@ -309,6 +341,7 @@ public class Client extends Service {
 				synchronized (runningGames) {
 					runningGames.clear();
 
+					CustomGSON.assertElement(reader, "games");
 					reader.beginArray();
 					while (reader.hasNext()) {
 						final GameInfo game =
@@ -343,6 +376,7 @@ public class Client extends Service {
 
 				synchronized (runningGames) {
 
+					writer.name("games");
 					writer.beginArray();
 					for(final GameInfo game : runningGames) {
 						gson.toJson(game, GameInfo.class, writer);

@@ -83,21 +83,11 @@ public class DTNService extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		executor = Executors.newSingleThreadExecutor();
-
 		dtnClient = new CustomDTNClient();
 		dataHandler = new CustomDataHandler();
 
 		dtnClient.setDataHandler(dataHandler);
 		dtnClient.initialize();
-
-		client = new Client.Connection();
-		Intent intent = new Intent(DTNService.this, Client.class);
-		bindService(intent, client, BIND_AUTO_CREATE);
-
-		server = new Server.Connection();
-		intent = new Intent(DTNService.this, Server.class);
-		bindService(intent, server, BIND_AUTO_CREATE);
 
 		final Timer timer = new Timer();
 
@@ -123,18 +113,9 @@ public class DTNService extends Service {
 
 	@Override
 	public void onDestroy() {
+		Log.d(TAG, "onDestroy()");
 
 		dtnClient.unregister();
-
-		if(client != null)
-		{
-			unbindService(client);
-		}
-
-		if(server != null)
-		{
-			unbindService(server);
-		}
 
 		try {
 			// stop executor
@@ -159,17 +140,15 @@ public class DTNService extends Service {
 
 		if(pIntent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
-        	final int stopId = pStartId;
-
 			executor.execute(new Runnable() {
 
 				@Override
 				public void run() {
 					queryTask.run();
-
-					stopSelfResult(stopId);
 				}
 			});
+
+			stopSelfResult(pStartId);
 
         	return START_STICKY;
 		}
@@ -255,19 +234,9 @@ public class DTNService extends Service {
 		}
 	}
 
-	/**
-	 * @name higher level services
-	 * @{
-	 */
-	private Client.Connection client;
-	private Server.Connection server;
-	/**
-	 * @}
-	 */
-
 	private CustomDTNClient dtnClient;
 	private CustomDataHandler dataHandler;
-	private ExecutorService executor;
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
 	private final IDTNService.Stub stub = new IDTNService.Stub() {
 
@@ -276,12 +245,7 @@ public class DTNService extends Service {
 		                         final ParcelFileDescriptor pData) {
 
 			// send to our server
-			try {
-				server.getService().handleData(pData);
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Server could not handle loopback packet!", e);
-				return;
-			}
+			notifyServer(pData);
 
 			Log.d(TAG, "Sending to server...");
 			try {
@@ -295,12 +259,7 @@ public class DTNService extends Service {
 		public void sendToClients(final ParcelFileDescriptor pData) {
 
 			// send to our client
-			try {
-				client.getService().handleData(pData);
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Client could not handle loopback packet!", e);
-				return;
-			}
+			notifyClient(pData);
 
 			Log.d(TAG, "Sending to client...");
 			try {
@@ -409,7 +368,7 @@ public class DTNService extends Service {
 					@Override
 					public void run() {
 						try {
-							final ParcelFileDescriptor fileDesc =
+							final ParcelFileDescriptor data =
 								ParcelFileDescriptor.open(
 									input,
 									ParcelFileDescriptor.MODE_READ_ONLY
@@ -417,11 +376,11 @@ public class DTNService extends Service {
 
 							if(destination.equals(SERVER_EID.toString()))
 							{
-								server.getService().handleData(fileDesc);
+								notifyServer(data);
 							}
 							else if(destination.equals(CLIENT_EID.toString()))
 							{
-								client.getService().handleData(fileDesc);
+								notifyClient(data);
 							}
 							else
 							{
@@ -429,7 +388,7 @@ public class DTNService extends Service {
 								      + "destination="+destination);
 							}
 
-							fileDesc.close();
+							data.close();
 							input.delete();
 						} catch (final Exception e) {
 							Log.e(TAG,
@@ -564,5 +523,23 @@ public class DTNService extends Service {
 		{
 			return null;
 		}
+	}
+
+	private void notifyClient(final ParcelFileDescriptor pData) {
+		final Intent intent = new Intent(DTNService.this, Client.class);
+
+		intent.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+		intent.putExtra("data", pData);
+
+		startService(intent);
+	}
+
+	private void notifyServer(final ParcelFileDescriptor pData) {
+		final Intent intent = new Intent(DTNService.this, Server.class);
+
+		intent.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+		intent.putExtra("data", pData);
+
+		startService(intent);
 	}
 }

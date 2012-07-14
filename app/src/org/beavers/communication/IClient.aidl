@@ -52,14 +52,6 @@ interface IClient {
 	int getRunningGamesCount();
 
 	/**
-	 * receive a DTN message
-	 *
-	 * @param pData file descriptor of payload file
-	 * @return true if handled
-	 */
-	boolean handleData(in ParcelFileDescriptor pData);
-
-	/**
 	 * join a game
 	 *
 	 * @param pGame announced game

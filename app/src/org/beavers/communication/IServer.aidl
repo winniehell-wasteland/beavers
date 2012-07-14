@@ -36,14 +36,6 @@ interface IServer {
 	void distributeOutcome(in GameInfo pGame, in OutcomeContainer pOutcome);
 	
 	/**
-	 * receive a DTN message
-	 *
-	 * @param pData file descriptor of payload file
-	 * @return true if handled
-	 */
-	boolean handleData(in ParcelFileDescriptor pData);
-	
-	/**
 	 * level select, inform possible clients
 	 *
 	 * @param pGame new game

@@ -24,6 +24,10 @@ public class Settings {
 		return MAP_NAME_DEFAULT;
 	}
 
+	public int getMaxPlayers() {
+		return MAX_PLAYERS_DEFAULT;
+	}
+
 	public Player getPlayer() {
 		final String id =
 			settings.getString(PLAYER_ID_KEY, PLAYER_ID_DEFAULT);
@@ -49,6 +53,7 @@ public class Settings {
 	 */
 	private static int DTN_LIFETIME_DEFAULT = 100;
 	private static String MAP_NAME_DEFAULT = "map";
+	private static int MAX_PLAYERS_DEFAULT = 2;
 	private static String PLAYER_ID_DEFAULT = UUID.randomUUID().toString();
 	private static String PLAYER_NAME_DEFAULT =
 		"player"+(new Random()).nextInt(1000);
