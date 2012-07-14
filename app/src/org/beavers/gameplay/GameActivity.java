@@ -476,21 +476,6 @@ public class GameActivity extends BaseGameActivity
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
 
-			final ExecutorService executor = Executors.newCachedThreadPool();
-
-			for(int team = 0; team < storage.getTeamCount(); ++team) {
-				for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
-					executor.execute(new Runnable() {
-
-						@Override
-						public void run() {
-							final PathWalker walker = new PathWalker(GameActivity.this, soldier);
-							walker.start();
-						}
-					});
-				}
-			}
-
 			final HashSet<Soldier> mySoldiers =  storage.getSoldiersByTeam(
 				currentGame.getTeam(getSettings().getPlayer())
 			);
@@ -509,6 +494,26 @@ public class GameActivity extends BaseGameActivity
 
 			// disable user interaction
 			holdDetector.setEnabled(false);
+
+			final ExecutorService executor = Executors.newCachedThreadPool();
+
+			for(int team = 0; team < storage.getTeamCount(); ++team) {
+				for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
+					for(final WayPoint waypoint : soldier.getWaypoints())
+					{
+						mainScene.attachChild(waypoint);
+					}
+
+					executor.execute(new Runnable() {
+
+						@Override
+						public void run() {
+							final PathWalker walker = new PathWalker(GameActivity.this, soldier);
+							walker.start();
+						}
+					});
+				}
+			}
 
 			return true;
 		case R.id.menu_reset_hold_detector:
