@@ -32,6 +32,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * client service for game communication
@@ -295,7 +296,7 @@ public class Client extends Service {
 
 			final Gson gson = CustomGSON.getInstance();
 			final JsonReader reader = CustomGSON.getReader(Client.this,
-					                                       getListFileName());
+			                                               getListFileName());
 
 			// file does not exist
 			if(reader == null) {
@@ -321,15 +322,41 @@ public class Client extends Service {
 
 				reader.close();
 			} catch (final Exception e) {
-				Log.e(TAG, "Could not read JSON from file!", e);
+				Log.e(TAG, "Could not read JSON file!", e);
 				return;
 			}
 		}
 
 		@Override
-		public void saveGameList() throws RemoteException {
-			// TODO Auto-generated method stub
+		public void saveGameList() {
 
+			final Gson gson = CustomGSON.getInstance();
+			final JsonWriter writer = CustomGSON.getWriter(Client.this,
+			                                               getListFileName());
+
+			if(writer == null) {
+				return;
+			}
+
+			try {
+				writer.beginObject();
+
+				synchronized (runningGames) {
+
+					writer.beginArray();
+					for(final GameInfo game : runningGames) {
+						gson.toJson(game, GameInfo.class, writer);
+					}
+					writer.endArray();
+				}
+
+				writer.endObject();
+
+				writer.close();
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not write JSON file!", e);
+				return;
+			}
 		}
 
 		@Override

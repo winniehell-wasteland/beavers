@@ -2,6 +2,7 @@ package org.beavers.gameplay;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Map;
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class GameList {
+public class GameList  implements Iterable<GameInfo> {
 
 	/**
 	 * default constructor
@@ -63,6 +64,11 @@ public class GameList {
 	public String[] getKeys()
 	{
 		return container.keySet().toArray(new String[0]);
+	}
+
+	@Override
+	public Iterator<GameInfo> iterator() {
+		return container.values().iterator();
 	}
 
 	/**
