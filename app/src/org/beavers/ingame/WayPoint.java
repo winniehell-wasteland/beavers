@@ -1,5 +1,7 @@
 package org.beavers.ingame;
 
+import java.util.LinkedList;
+
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.sprite.Sprite;
 import org.anddev.andengine.util.path.Direction;
@@ -33,10 +35,15 @@ public class WayPoint extends Sprite implements IGameObject {
 
 		soldier = pSoldier;
 		tile = pTile;
-
 		path = pPath;
 
+		pathLines = new LinkedList<Line>();
+
+		aim = null;
 		waitForAim = false;
+
+		ignoreShots = false;
+		wait = 0;
 
 		if(path != null)
 		{
@@ -112,6 +119,12 @@ public class WayPoint extends Sprite implements IGameObject {
 		}
 	}
 
+	@Override
+	public void onAttached() {
+		super.onAttached();
+		getParent().sortChildren();
+	}
+
 	public boolean onMenuItemClick(final GameActivity pActivity, final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.context_menu_waypoint_remove:
@@ -163,10 +176,35 @@ public class WayPoint extends Sprite implements IGameObject {
 	@Override
 	protected void onManagedUpdate(final float pSecondsElapsed) {
 		// make first way point invisible
-		if(isFirst() && soldier.getTile().equals(getTile()))
+		if(isFirst())
 		{
-			getTextureRegion().setHeight(0);
-			getTextureRegion().setWidth(0);
+			final float[] scenter = soldier.getCenter();
+
+			if((getTile().getCenterX() == scenter[0])
+			   && (getTile().getCenterY() == scenter[1])
+			   && (getTextureRegion().getHeight() > 0)) {
+
+				getTextureRegion().setHeight(0);
+				getTextureRegion().setWidth(0);
+			}
+
+			// shrink path line when soldier moves over it
+			if(!pathLines.isEmpty())
+			{
+				convertSceneToLocalCoordinates(scenter, scenter);
+				final Line line = pathLines.getFirst();
+
+				if((line.getX2() != scenter[0]) || (line.getY2() != scenter[1]))
+				{
+					line.setPosition(line.getX1(), line.getY1(),
+					                 scenter[0], scenter[1]);
+
+					if((Math.abs(line.getWidth()) <= 1)
+					   && (Math.abs(line.getHeight()) <= 1)) {
+						pathLines.removeFirst().detachSelf();
+					}
+				}
+			}
 		}
 
 		super.onManagedUpdate(pSecondsElapsed);
@@ -182,6 +220,7 @@ public class WayPoint extends Sprite implements IGameObject {
 
 	/** path from previous waypoint	*/
 	private final WeightedPath path;
+	private final LinkedList<Line> pathLines;
 
 	/**
 	 * @name aim
@@ -189,30 +228,34 @@ public class WayPoint extends Sprite implements IGameObject {
 	 */
 	private Aim aim;
 	private boolean waitForAim;
-	private boolean ignoreShots=false;
-	private int wait=0;
 	/**
 	 * @}
 	 */
 
+	private boolean ignoreShots;
+	private int wait;
+
 	private IRemoveObjectListener removeListener;
 
 	private void drawPath() {
-		Line line = new Line(0, 0,
-			getTile().getTileWidth()/2, getTile().getTileHeight()/2, 0);
+		final int TILE_HEIGHT = getTile().getTileHeight();
+		final int TILE_WIDTH = getTile().getTileWidth();
+
+		Line line = new Line(0, 0, TILE_WIDTH/2, TILE_HEIGHT/2, 0);
 
 		for(int i = getPath().getLength() - 1; i > 0; --i)
 		{
 			final Direction dir = getPath().getDirectionToPreviousStep(i);
 
 			line = new Line(line.getX2(), line.getY2(),
-					line.getX2() + dir.getDeltaX()*getTile().getTileWidth(),
-					line.getY2() + dir.getDeltaY()*getTile().getTileHeight(),
+					line.getX2() + dir.getDeltaX()*TILE_WIDTH,
+					line.getY2() + dir.getDeltaY()*TILE_HEIGHT,
 					2 + Math.abs(dir.getDeltaX()) + Math.abs(dir.getDeltaY()));
 
 			line.setColor(0.0f, 1.0f, 0.0f, 0.5f);
 			line.setZIndex(GameActivity.ZINDEX_WAYPOINTS);
 
+			pathLines.addFirst(line);
 			attachChild(line);
 		}
 	}
