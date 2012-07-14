@@ -2,8 +2,6 @@ package org.beavers.storage;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -278,18 +276,14 @@ public class GameStorage {
 
 	private boolean loadFromFile() {
 		final Gson gson = CustomGSON.getInstance();
-		InputStream file = null;
+		final JsonReader reader = CustomGSON.getReader(context, getFileName());
 
-		try {
-			file = context.openFileInput(getFileName());
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not open file! " + e);
+		// file does not exist
+		if(reader == null) {
 			return false;
 		}
 
 		try {
-			final JsonReader reader = new JsonReader(new InputStreamReader(file, Charset.defaultCharset()));
-
 			reader.beginObject();
 
 			CustomGSON.assertElement(reader, GameState.JSON_TAG);

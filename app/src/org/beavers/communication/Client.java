@@ -1,10 +1,7 @@
 package org.beavers.communication;
 
 import java.io.FileReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.nio.charset.Charset;
 import java.util.HashSet;
 
 import org.beavers.App;
@@ -297,18 +294,15 @@ public class Client extends Service {
 		public void loadGameList() {
 
 			final Gson gson = CustomGSON.getInstance();
-			InputStream file = null;
+			final JsonReader reader = CustomGSON.getReader(Client.this,
+					                                       getListFileName());
 
-			try {
-				file = openFileInput(getListFileName());
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not open file! " + e);
+			// file does not exist
+			if(reader == null) {
 				return;
 			}
 
 			try {
-				final JsonReader reader = new JsonReader(new InputStreamReader(file, Charset.defaultCharset()));
-
 				reader.beginObject();
 
 				synchronized (runningGames) {
