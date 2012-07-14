@@ -58,7 +58,6 @@ interface IClient {
 	 * @return true if handled
 	 */
 	boolean handleData(in ParcelFileDescriptor pData);
-	
 
 	/**
 	 * join a game
@@ -66,6 +65,16 @@ interface IClient {
 	 * @param pGame announced game
 	 */
 	void joinGame(in GameInfo pGame);
+	
+	/**
+	 * load the running games from file
+	 */
+	 void loadGameList();
+	
+	/**
+	 * save the running games to file
+	 */
+	 void saveGameList();
 	
 	/**
 	 * send decisions to server

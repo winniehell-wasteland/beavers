@@ -1,7 +1,10 @@
 package org.beavers.communication;
 
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 
 import org.beavers.App;
@@ -31,6 +34,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
 
 /**
  * client service for game communication
@@ -99,10 +103,22 @@ public class Client extends Service {
 		public void onServiceConnected(final ComponentName pName,
 		                               final IBinder pService) {
 			service = IClient.Stub.asInterface(pService);
+
+			try {
+				service.loadGameList();
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Could not load game list!", e);
+			}
 		}
 
 		@Override
 		public void onServiceDisconnected(final ComponentName pName) {
+			try {
+				service.saveGameList();
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Could not save game list!", e);
+			}
+
 			service = null;
 		}
 
@@ -278,6 +294,51 @@ public class Client extends Service {
 		}
 
 		@Override
+		public void loadGameList() {
+
+			final Gson gson = CustomGSON.getInstance();
+			InputStream file = null;
+
+			try {
+				file = openFileInput(getListFileName());
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not open file! " + e);
+				return;
+			}
+
+			try {
+				final JsonReader reader = new JsonReader(new InputStreamReader(file, Charset.defaultCharset()));
+
+				reader.beginObject();
+
+				synchronized (runningGames) {
+					runningGames.clear();
+
+					reader.beginArray();
+					while (reader.hasNext()) {
+						final GameInfo game =
+							(GameInfo) gson.fromJson(reader, GameInfo.class);
+						runningGames.add(game);
+					}
+					reader.endArray();
+				}
+
+				reader.endObject();
+
+				reader.close();
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not read JSON from file!", e);
+				return;
+			}
+		}
+
+		@Override
+		public void saveGameList() throws RemoteException {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
 		public void sendDecisions(GameInfo pGame, final String pSoldiers) {
 			if (!runningGames.contains(pGame)) {
 				Log.e(TAG, getString(R.string.error_not_running, pGame));
@@ -363,6 +424,10 @@ public class Client extends Service {
 			update_intent.putExtra(GameInfo.PARCEL_NAME, pGame);
 
 			sendBroadcast(update_intent);
+		}
+
+		private String getListFileName() {
+			return "running_games.json";
 		}
 
 		/**

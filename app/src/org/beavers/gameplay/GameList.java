@@ -31,6 +31,10 @@ public class GameList {
 		return container.get(pGame.toString());
 	}
 
+	public void clear() {
+		container.clear();
+	}
+
 	/**
 	 * @param pGame game to find
 	 * @return true if game is in list
