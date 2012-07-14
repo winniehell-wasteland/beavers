@@ -8,8 +8,8 @@ import java.util.HashSet;
 
 import org.beavers.App;
 import org.beavers.Settings;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.GameState;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IRemoveObjectListener;
 import org.beavers.ingame.Soldier;
@@ -39,16 +39,18 @@ public class GameStorage {
 	 * @param pGame
 	 * @throws UnexpectedTileContentException
 	 */
-	public GameStorage(final Context pContext, final GameInfo pGame)
+	public GameStorage(final Context pContext, final Game pGame)
 	       throws Exception {
 		this(pContext, pGame, null);
 	}
 
-	public GameStorage(final Context pContext, final GameInfo pGame,
+	public GameStorage(final Context pContext, final Game pGame,
 	                   final String pMapName)
 	       throws Exception{
 		context = pContext;
 		game = pGame;
+
+		info = null;
 
 		// initialize game object containers
 		gameObjects = new HashMap<Tile, IGameObject>();
@@ -59,13 +61,8 @@ public class GameStorage {
 			teams.add(new HashSet<Soldier>());
 		}
 
-		if(pMapName == null) {
-			map = loadFromFile();
-		}
-		else {
-			map = pMapName;
-			loadDefaults();
-		}
+		loadFromFile();
+		loadDefaults();
 	}
 
 	/**
@@ -83,12 +80,6 @@ public class GameStorage {
 
 		gameObjects.put(pWaypoint.getTile(), pWaypoint);
 		pWaypoint.setRemoveObjectListener(removeListener);
-	}
-
-	/** @return name of the map played */
-	public String getMapName()
-	{
-		return map;
 	}
 
 	public Soldier getSoldierByTile(final Tile pTile)
@@ -182,11 +173,8 @@ public class GameStorage {
 		try {
 			writer.beginObject();
 
-			writer.name(GameState.JSON_TAG);
-			writer.value(game.getState().name());
-
-			writer.name(JSON_TAG_MAP);
-			writer.value(map);
+			writer.name(GameInfo.JSON_TAG);
+			gson.toJson(info, GameInfo.class, writer);
 
 			writer.name(Soldier.JSON_TAG_COLLECTION);
 			writer.beginArray();
@@ -248,10 +236,9 @@ public class GameStorage {
 	private static final String JSON_TAG_MAP = "map";
 
 	private final Context context;
-	private final GameInfo game;
+	private final Game game;
 
-	/** map name */
-	private final String map;
+	private GameInfo info = null;
 
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> teams;

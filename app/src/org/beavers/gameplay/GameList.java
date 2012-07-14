@@ -10,7 +10,7 @@ import java.util.Map;
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class GameList  implements Iterable<GameInfo> {
+public class GameList  implements Iterable<Game> {
 
 	/**
 	 * default constructor
@@ -18,7 +18,7 @@ public class GameList  implements Iterable<GameInfo> {
 	public GameList()
 	{
 		container = Collections.synchronizedMap(
-			new HashMap<String, GameInfo>()
+			new HashMap<String, Game>()
 		);
 	}
 
@@ -26,7 +26,7 @@ public class GameList  implements Iterable<GameInfo> {
 	 * insert new game into list
 	 * @param pGame new game
 	 */
-	public GameInfo add(final GameInfo pGame)
+	public Game add(final Game pGame)
 	{
 		container.put(pGame.toString(), pGame);
 		return container.get(pGame.toString());
@@ -40,7 +40,7 @@ public class GameList  implements Iterable<GameInfo> {
 	 * @param pGame game to find
 	 * @return true if game is in list
 	 */
-	public boolean contains(final GameInfo pGame)
+	public boolean contains(final Game pGame)
 	{
 		return container.containsKey(pGame.toString());
 	}
@@ -51,12 +51,12 @@ public class GameList  implements Iterable<GameInfo> {
 	 * @param pKey game to find
 	 * @return game in list (or null)
 	 */
-	public GameInfo find(final GameInfo pKey)
+	public Game find(final Game pKey)
 	{
 		return container.get(pKey.toString());
 	}
 
-	public GameInfo get(final String pKey) {
+	public Game get(final String pKey) {
 		return container.get(pKey);
 	}
 
@@ -67,7 +67,7 @@ public class GameList  implements Iterable<GameInfo> {
 	}
 
 	@Override
-	public Iterator<GameInfo> iterator() {
+	public Iterator<Game> iterator() {
 		return container.values().iterator();
 	}
 
@@ -75,7 +75,7 @@ public class GameList  implements Iterable<GameInfo> {
 	 * delete a game from the list
 	 * @param pGame game to delete
 	 */
-	public void remove(final GameInfo pGame) {
+	public void remove(final Game pGame) {
 		container.remove(pGame.toString());
 	}
 
@@ -88,5 +88,5 @@ public class GameList  implements Iterable<GameInfo> {
 	}
 
 	/** underlying container */
-	private final Map<String, GameInfo> container;
+	private final Map<String, Game> container;
 }

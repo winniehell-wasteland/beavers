@@ -1,3 +1,3 @@
 package org.beavers.gameplay;
 
-parcelable GameInfo;
+parcelable Game;

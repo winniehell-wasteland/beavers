@@ -2,7 +2,7 @@ package org.beavers.communication;
 
 import android.os.ParcelFileDescriptor;
 
-import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.Player;
 
 /**
@@ -18,13 +18,13 @@ interface IClient {
 	 *
 	 * @param pGame game
 	 */
-	void abortGame(in GameInfo pGame);
+	void abortGame(in Game pGame);
 	
 	
 	/**
 	 * @return announced game with given key
 	 */
-	GameInfo getAnnouncedGame(in String pKey);
+	Game getAnnouncedGame(in String pKey);
 	
 	/**
 	 * @return keys of announced games
@@ -39,7 +39,7 @@ interface IClient {
 	/**
 	 * @return running game with given key
 	 */
-	GameInfo getRunningGame(in String pKey);
+	Game getRunningGame(in String pKey);
 	
 	/**
 	 * @return keys of running games
@@ -56,7 +56,7 @@ interface IClient {
 	 *
 	 * @param pGame announced game
 	 */
-	void joinGame(in GameInfo pGame);
+	void joinGame(in Game pGame);
 	
 	/**
 	 * load the running games from file
@@ -74,5 +74,5 @@ interface IClient {
 	 * @param pGame running game
 	 * @param decisions
 	 */
-	void sendDecisions(in GameInfo pGame, in String pSoldiers);
+	void sendDecisions(in Game pGame, in String pSoldiers);
 }

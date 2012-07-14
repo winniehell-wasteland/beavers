@@ -92,7 +92,7 @@ public class GameListActivity extends FragmentActivity
 		case R.id.context_menu_join:
 		{
 			assert listView.getCheckedItemIds().length == 1;
-			final GameInfo game = (GameInfo) listView.getItemAtPosition(
+			final Game game = (Game) listView.getItemAtPosition(
 				listView.getCheckedItemPosition()
 			);
 
@@ -279,7 +279,7 @@ public class GameListActivity extends FragmentActivity
 				}
 
 				@Override
-				protected GameInfo getItem(final String pKey) {
+				protected Game getItem(final String pKey) {
 					try {
 						return client.getService().getAnnouncedGame(pKey);
 					} catch (final RemoteException e) {
@@ -331,7 +331,7 @@ public class GameListActivity extends FragmentActivity
 				}
 
 				@Override
-				protected GameInfo getItem(final String pKey) {
+				protected Game getItem(final String pKey) {
 					try {
 						return client.getService().getRunningGame(pKey);
 					} catch (final RemoteException e) {
@@ -423,10 +423,9 @@ public class GameListActivity extends FragmentActivity
 						}
 
 						// create new game
-						final GameInfo game = new GameInfo(
-							settings.getPlayer(),
-							new Game(UUID.randomUUID(),
-							         input.getText().toString()));
+						final Game game = new Game(settings.getPlayer(),
+						                           UUID.randomUUID(),
+						                           input.getText().toString());
 
 						try {
 							// announce to clients
@@ -443,7 +442,7 @@ public class GameListActivity extends FragmentActivity
 						// show game
 						final Intent intent =
 							new Intent(getActivity(), GameActivity.class);
-						intent.putExtra(GameInfo.PARCEL_NAME, game);
+						intent.putExtra(Game.PARCEL_NAME, game);
 						startActivity(intent);
 					}
 				}

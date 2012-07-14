@@ -12,6 +12,7 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
@@ -151,7 +152,7 @@ public class Server extends Service {
 	private class Implementation extends IServer.Stub {
 
 		@Override
-		public synchronized void addPlayer(GameInfo pGame, final Player pPlayer)
+		public synchronized void addPlayer(Game pGame, final Player pPlayer)
 		{
 			Log.d(TAG, "Somebody joins "+pGame.toString());
 
@@ -177,7 +178,7 @@ public class Server extends Service {
 		}
 
 		@Override
-		public void distributeOutcome(final GameInfo pGame,
+		public void distributeOutcome(final Game pGame,
 		                              final OutcomeContainer pOutcome)
 		{
 			final Message message =
@@ -218,8 +219,8 @@ public class Server extends Service {
 			{
 				final Gson gson = CustomGSON.getInstance();
 
-				GameInfo game =
-					gson.fromJson(json.get(GameInfo.JSON_TAG), GameInfo.class);
+				final Game game =
+					gson.fromJson(json.get(Game.JSON_TAG), Game.class);
 
 				if(!game.isServer(getSettings().getPlayer()))
 				{
@@ -232,12 +233,12 @@ public class Server extends Service {
 					return false;
 				}
 
-				game = hostedGames.find(game);
-
 				final Player player =
 					gson.fromJson(json.get(Player.JSON_TAG), Player.class);
 
-				switch (game.getState()) {
+				final GameInfo info = GameInfo.fromFile(Server.this, game);
+
+				switch (info.getState()) {
 				case JOINED:
 				{
 					addPlayer(game, player);
@@ -275,7 +276,7 @@ public class Server extends Service {
 		}
 
 		@Override
-		public void initiateGame(final GameInfo pGame)
+		public void initiateGame(final Game pGame)
 		{
 			if(hostedGames.contains(pGame))
 			{
@@ -290,7 +291,8 @@ public class Server extends Service {
 					new GameStorage(Server.this, pGame, map);
 				storage.saveToFile();
 
-				pGame.setState(GameState.ANNOUNCED);
+				final GameInfo info = GameInfo.fromFile(Server.this, pGame);
+				info.setState(GameState.ANNOUNCED);
 
 				final AnnouncementMessage message =
 					new AnnouncementMessage(Server.this, pGame, map);
@@ -324,8 +326,8 @@ public class Server extends Service {
 					CustomGSON.assertElement(reader, "games");
 					reader.beginArray();
 					while (reader.hasNext()) {
-						final GameInfo game =
-							(GameInfo) gson.fromJson(reader, GameInfo.class);
+						final Game game =
+							(Game) gson.fromJson(reader, Game.class);
 						hostedGames.add(game);
 					}
 					reader.endArray();
@@ -358,8 +360,8 @@ public class Server extends Service {
 
 					writer.name("games");
 					writer.beginArray();
-					for(final GameInfo game : hostedGames) {
-						gson.toJson(game, GameInfo.class, writer);
+					for(final Game game : hostedGames) {
+						gson.toJson(game, Game.class, writer);
 					}
 					writer.endArray();
 				}
@@ -379,7 +381,7 @@ public class Server extends Service {
 		 * @param pGame game
 		 * @param pPlayer player
 		 */
-		public void onPlayerAborts(final GameInfo pGame, final Player pPlayer)
+		public void onPlayerAborts(final Game pGame, final Player pPlayer)
 		{
 			if(pGame.getServer().equals(pPlayer))
 			{
@@ -394,7 +396,7 @@ public class Server extends Service {
 		class AnnouncementMessage extends Message
 		{
 			public AnnouncementMessage(final Context pContext,
-			                           final GameInfo pGame,
+			                           final Game pGame,
 			                           final String pMapName) {
 				super(pContext, pGame);
 				map = pMapName;
@@ -406,7 +408,7 @@ public class Server extends Service {
 
 		class OutcomeMessage extends Message
 		{
-			public OutcomeMessage(final Context pContext, final GameInfo pGame,
+			public OutcomeMessage(final Context pContext, final Game pGame,
 			                      final OutcomeContainer pOutcome) {
 				super(pContext, pGame);
 				outcome = pOutcome;
@@ -419,7 +421,7 @@ public class Server extends Service {
 		class PlanningPhaseMessage extends Message
 		{
 			public PlanningPhaseMessage(final Context pContext,
-			                            final GameInfo pGame) {
+			                            final Game pGame) {
 				super(pContext, pGame);
 				players = playerMap.get(pGame);
 			}
@@ -447,7 +449,7 @@ public class Server extends Service {
 		 * @param player
 		 * @param decisions
 		 */
-		private void onReceiveDecisions(GameInfo pGame, final Player pPlayer,
+		private void onReceiveDecisions(final Game pGame, final Player pPlayer,
 		                                final String pSoldiers)
 		{
 			if(!hostedGames.contains(pGame))
@@ -457,12 +459,12 @@ public class Server extends Service {
 				return;
 			}
 
-			pGame = hostedGames.find(pGame);
+			final GameInfo info = GameInfo.fromFile(Server.this, pGame);
 
-			if(!pGame.isInState(GameState.PLANNING_PHASE))
+			if(!info.isInState(GameState.PLANNING_PHASE))
 			{
 				Log.e(TAG, getString(R.string.error_wrong_state,
-						pGame.toString(), pGame.getState().toString()));
+				                     pGame, info.getState()));
 				return;
 			}
 
@@ -476,16 +478,19 @@ public class Server extends Service {
 		 * @param pContext activity context
 		 * @param pGame game
 		 */
-		private void startPlanningPhase(final GameInfo pGame)
+		private void startPlanningPhase(final Game pGame)
 		{
-			if(!pGame.isInState(GameState.ANNOUNCED))
+			final GameInfo info = GameInfo.fromFile(Server.this, pGame);
+
+			if(!info.isInState(GameState.ANNOUNCED))
 			{
 				Log.e(TAG, getString(R.string.error_wrong_state,
-						pGame.toString(), pGame.getState().toString()));
+						pGame.toString(), info.getState().toString()));
 				return;
 			}
 
-			pGame.setState(GameState.PLANNING_PHASE);
+			info.setState(GameState.PLANNING_PHASE);
+			info.saveToFile(Server.this, pGame);
 
 			final Message message =
 				new PlanningPhaseMessage(Server.this, pGame);

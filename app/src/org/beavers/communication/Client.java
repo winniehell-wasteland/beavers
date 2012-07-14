@@ -13,6 +13,7 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
@@ -164,7 +165,7 @@ public class Client extends Service {
 	private class Implementation extends IClient.Stub {
 
 		@Override
-		public void abortGame(GameInfo pGame) {
+		public void abortGame(Game pGame) {
 			if (!runningGames.contains(pGame)) {
 				Log.e(TAG, getString(R.string.error_not_running, pGame));
 				return;
@@ -188,7 +189,7 @@ public class Client extends Service {
 		}
 
 		@Override
-		public GameInfo getAnnouncedGame(final String pKey) {
+		public Game getAnnouncedGame(final String pKey) {
 			return announcedGames.get(pKey);
 		};
 
@@ -203,7 +204,7 @@ public class Client extends Service {
 		};
 
 		@Override
-		public GameInfo getRunningGame(final String pKey) {
+		public Game getRunningGame(final String pKey) {
 			return runningGames.get(pKey);
 		};
 
@@ -248,11 +249,13 @@ public class Client extends Service {
 
 			final Gson gson = CustomGSON.getInstance();
 
-			final GameInfo game =
-				gson.fromJson(json.get(GameInfo.JSON_TAG), GameInfo.class);
+			final Game game =
+				gson.fromJson(json.get(Game.JSON_TAG), Game.class);
 			Log.e(TAG, "game: "+game);
 
-			switch (game.getState()) {
+			final GameInfo info = GameInfo.fromFile(Client.this, game);
+
+			switch (info.getState()) {
 			case ANNOUNCED:
 			{
 				if(announcedGames.contains(game)) {
@@ -307,21 +310,23 @@ public class Client extends Service {
 		}
 
 		@Override
-		public void joinGame(GameInfo pGame) {
+		public void joinGame(final Game pGame) {
 			if (!announcedGames.contains(pGame)) {
 				Log.e(TAG, getString(R.string.error_not_announced, pGame));
 				return;
 			}
 
-			pGame = announcedGames.find(pGame);
+			final GameInfo info = GameInfo.fromFile(Client.this, pGame);
 
-			if (!pGame.isInState(GameState.ANNOUNCED)) {
+			if (!info.isInState(GameState.ANNOUNCED)) {
 				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState()));
+				                     info.getState()));
 				return;
 			}
 
-			pGame.setState(GameState.JOINED);
+			info.setState(GameState.JOINED);
+			info.saveToFile(Client.this, pGame);
+
 			broadcastGameInfo(pGame);
 
 			final Message message =
@@ -357,8 +362,8 @@ public class Client extends Service {
 					CustomGSON.assertElement(reader, "games");
 					reader.beginArray();
 					while (reader.hasNext()) {
-						final GameInfo game =
-							(GameInfo) gson.fromJson(reader, GameInfo.class);
+						final Game game =
+							(Game) gson.fromJson(reader, Game.class);
 						runningGames.add(game);
 					}
 					reader.endArray();
@@ -391,7 +396,7 @@ public class Client extends Service {
 
 					writer.name("games");
 					writer.beginArray();
-					for(final GameInfo game : runningGames) {
+					for(final Game game : runningGames) {
 						gson.toJson(game, GameInfo.class, writer);
 					}
 					writer.endArray();
@@ -407,17 +412,17 @@ public class Client extends Service {
 		}
 
 		@Override
-		public void sendDecisions(GameInfo pGame, final String pSoldiers) {
+		public void sendDecisions(final Game pGame, final String pSoldiers) {
 			if (!runningGames.contains(pGame)) {
 				Log.e(TAG, getString(R.string.error_not_running, pGame));
 				return;
 			}
 
-			pGame = runningGames.find(pGame);
+			final GameInfo info = GameInfo.fromFile(Client.this, pGame);
 
-			if (!pGame.isInState(GameState.PLANNING_PHASE)) {
+			if (!info.isInState(GameState.PLANNING_PHASE)) {
 				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState()));
+				                     info.getState()));
 				return;
 			}
 
@@ -442,7 +447,7 @@ public class Client extends Service {
 		class ClientMessage extends Message
 		{
 			public ClientMessage(final Context pContext, final Player pPlayer,
-			                     final GameInfo pGame) {
+			                     final Game pGame) {
 				super(pContext, pGame);
 
 				player = pPlayer;
@@ -455,7 +460,7 @@ public class Client extends Service {
 		class DecissionMessage extends ClientMessage
 		{
 			public DecissionMessage(final Context pContext,
-									final Player pPlayer, final GameInfo pGame,
+									final Player pPlayer, final Game pGame,
 			                        final String pSoldiers) {
 				super(pContext, pPlayer, pGame);
 
@@ -484,12 +489,12 @@ public class Client extends Service {
 		 *
 		 * @param pGame changed game
 		 */
-		private void broadcastGameInfo(final GameInfo pGame) {
+		private void broadcastGameInfo(final Game pGame) {
 			Log.d(TAG, "Broadcasting new game info...");
 
 			final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
 
-			update_intent.putExtra(GameInfo.PARCEL_NAME, pGame);
+			update_intent.putExtra(Game.PARCEL_NAME, pGame);
 
 			sendBroadcast(update_intent);
 		}
@@ -504,7 +509,7 @@ public class Client extends Service {
 		 * @param pGame new game
 		 * @param pMapName name of the game's map
 		 */
-		private void onReceiveAnnouncedGame(final GameInfo pGame,
+		private void onReceiveAnnouncedGame(final Game pGame,
 		                                    final String pMapName) {
 			try {
 				final GameStorage storage =
@@ -529,7 +534,7 @@ public class Client extends Service {
 		 * @param pGame game
 		 * @param pOutcome
 		 */
-		private void onReceiveOutcome(final GameInfo pGame,
+		private void onReceiveOutcome(final Game pGame,
 		                              final OutcomeContainer pOutcome) {
 			// TODO handle outcome
 		}
@@ -540,18 +545,20 @@ public class Client extends Service {
 		 * @param pGame running game
 		 */
 		private void onReceiveStartPlanningPhase(
-			final GameInfo pGame, final HashSet<Player> players) {
+			final Game pGame, final HashSet<Player> players) {
 
-			if(!pGame.isInState(GameState.JOINED)
-			   && !pGame.isInState(GameState.EXECUTION_PHASE)) {
+			final GameInfo info = GameInfo.fromFile(Client.this, pGame);
+
+			if(!info.isInState(GameState.JOINED)
+			   && !info.isInState(GameState.EXECUTION_PHASE)) {
 
 				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState()));
+				                     info.getState()));
 
 				return;
 			}
 
-			if(pGame.isInState(GameState.JOINED))
+			if(info.isInState(GameState.JOINED))
 			{
 				announcedGames.remove(pGame);
 
@@ -566,7 +573,9 @@ public class Client extends Service {
 			}
 
 			// start planning phase
-			pGame.setState(GameState.PLANNING_PHASE);
+			info.setState(GameState.PLANNING_PHASE);
+			info.saveToFile(Client.this, pGame);
+
 			broadcastGameInfo(pGame);
 		}
 	};

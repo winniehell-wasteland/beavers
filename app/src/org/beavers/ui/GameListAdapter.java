@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
 
 import android.view.LayoutInflater;
@@ -59,9 +60,10 @@ public abstract class GameListAdapter extends BaseAdapter {
 			holder = (ViewHolder) pConvertView.getTag();
 		}
 
-		final GameInfo item = (GameInfo) getItem(pPosition);
+		final Game item = (Game) getItem(pPosition);
+		final GameInfo info = GameInfo.fromFile(app, item);
 
-		holder.txtName.setText(item.getGame().getName());
+		holder.txtName.setText(item.getName());
 
 		if(item.isServer(settings.getPlayer()))
 		{
@@ -72,7 +74,7 @@ public abstract class GameListAdapter extends BaseAdapter {
 
 		holder.txtState.setText(
 			app.getString(R.string.state) + ": "
-			+ app.getString(item.getState().getResId()));
+			+ app.getString(info.getState().getResId()));
 
 		return pConvertView;
 	}
@@ -85,7 +87,7 @@ public abstract class GameListAdapter extends BaseAdapter {
 	}
 
 	protected abstract String[] fetchKeys();
-	protected abstract GameInfo getItem(String pKey);
+	protected abstract Game getItem(String pKey);
 	protected abstract LayoutInflater getLayoutInflater();
 
 	private ArrayList<String> keys;

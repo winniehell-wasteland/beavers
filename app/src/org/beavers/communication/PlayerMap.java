@@ -3,7 +3,7 @@ package org.beavers.communication;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.Player;
 
 /**
@@ -12,18 +12,18 @@ import org.beavers.gameplay.Player;
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 @SuppressWarnings("serial")
-public class PlayerMap extends HashMap<GameInfo, HashSet<Player>> {
+public class PlayerMap extends HashMap<Game, HashSet<Player>> {
 	public PlayerMap() {
 		super();
 	}
 
 	@Override
 	public HashSet<Player> get(final Object key) {
-		if(key instanceof GameInfo)
+		if(key instanceof Game)
 		{
 			if(!containsKey(key))
 			{
-				put((GameInfo) key, new HashSet<Player>());
+				put((Game) key, new HashSet<Player>());
 			}
 
 			return super.get(key);

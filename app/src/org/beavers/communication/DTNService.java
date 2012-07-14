@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.beavers.App;
 import org.beavers.Settings;
-import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
 
@@ -178,10 +178,10 @@ public class DTNService extends Service {
 
 	public static class Message
 	{
-		public Message(final Context pContext, final GameInfo pGame)
+		public Message(final Context pContext, final Game pGame)
 		{
 			context = pContext;
-			gameinfo = pGame;
+			game = pGame;
 		}
 
 		public String getFile()
@@ -208,8 +208,8 @@ public class DTNService extends Service {
 
 		private transient final Context context;
 
-		@SerializedName(GameInfo.JSON_TAG)
-		private final GameInfo gameinfo;
+		@SerializedName(Game.JSON_TAG)
+		private final Game game;
 	}
 
 	/**

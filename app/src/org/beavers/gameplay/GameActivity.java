@@ -440,7 +440,7 @@ public class GameActivity extends BaseGameActivity
 		mEngine.registerUpdateHandler(new FPSLogger());
 		mainScene = new Scene();
 
-		loadMap(storage.getMapName());
+		loadMap(currentGameInfo.getMapName());
 
 		if(map == null)
 		{
@@ -476,9 +476,8 @@ public class GameActivity extends BaseGameActivity
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
 
-			final HashSet<Soldier> mySoldiers =  storage.getSoldiersByTeam(
-				currentGame.getTeam(getSettings().getPlayer())
-			);
+			final HashSet<Soldier> mySoldiers =
+				storage.getSoldiersByTeam(currentGameInfo.getTeam());
 
 			try {
 				final Gson gson = CustomGSON.getInstance();
@@ -615,7 +614,8 @@ public class GameActivity extends BaseGameActivity
 			return;
 		}
 
-		currentGame = getIntent().getParcelableExtra(GameInfo.PARCEL_NAME);
+		currentGame = getIntent().getParcelableExtra(Game.PARCEL_NAME);
+		currentGameInfo = GameInfo.fromFile(this, currentGame);
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
@@ -722,14 +722,15 @@ public class GameActivity extends BaseGameActivity
 
 	private Line parallelA,parallelB,lineA,lineB;
 
-	private GameInfo currentGame;
+	private Game currentGame;
+	private GameInfo currentGameInfo;
 	private AStarPathFinder<IMovableObject> pathFinder;
 
 	private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
 			final GameInfo game =
-				pIntent.getParcelableExtra(GameInfo.PARCEL_NAME);
+				pIntent.getParcelableExtra(Game.PARCEL_NAME);
 
 			// TODO update GameActivity
 		}
