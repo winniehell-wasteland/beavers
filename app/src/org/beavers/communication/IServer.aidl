@@ -49,4 +49,14 @@ interface IServer {
 	 * @param pGame new game
 	 */
 	void initiateGame(in GameInfo pGame);
+	
+	/**
+	 * load the running games from file
+	 */
+	 void loadGameList();
+	
+	/**
+	 * save the running games to file
+	 */
+	 void saveGameList();
 }

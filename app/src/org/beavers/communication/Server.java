@@ -30,6 +30,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * server for game communication
@@ -85,10 +87,22 @@ public class Server extends Service {
 		public void onServiceConnected(final ComponentName pName,
 		                               final IBinder pService) {
 			service = IServer.Stub.asInterface(pService);
+
+			try {
+				service.loadGameList();
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Could not load game list!", e);
+			}
 		}
 
 		@Override
 		public void onServiceDisconnected(final ComponentName pName) {
+			try {
+				service.saveGameList();
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Could not save game list!", e);
+			}
+
 			service = null;
 		}
 
@@ -145,6 +159,21 @@ public class Server extends Service {
 				{
 					startPlanningPhase(pGame);
 				}
+			}
+		}
+
+		@Override
+		public void distributeOutcome(final GameInfo pGame,
+		                              final OutcomeContainer pOutcome)
+		{
+			final Message message =
+				new OutcomeMessage(Server.this, pGame, pOutcome);
+
+			try {
+				dtn.getService().sendToClients(message.getFile());
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 
@@ -238,17 +267,70 @@ public class Server extends Service {
 		}
 
 		@Override
-		public void distributeOutcome(final GameInfo pGame,
-		                              final OutcomeContainer pOutcome)
-		{
-			final Message message =
-				new OutcomeMessage(Server.this, pGame, pOutcome);
+		public void loadGameList() {
+
+			final Gson gson = CustomGSON.getInstance();
+			final JsonReader reader = CustomGSON.getReader(Server.this,
+			                                               getListFileName());
+
+			// file does not exist
+			if(reader == null) {
+				return;
+			}
 
 			try {
-				dtn.getService().sendToClients(message.getFile());
-			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				reader.beginObject();
+
+				synchronized (hostedGames) {
+					hostedGames.clear();
+
+					reader.beginArray();
+					while (reader.hasNext()) {
+						final GameInfo game =
+							(GameInfo) gson.fromJson(reader, GameInfo.class);
+						hostedGames.add(game);
+					}
+					reader.endArray();
+				}
+
+				reader.endObject();
+
+				reader.close();
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not read JSON file!", e);
+				return;
+			}
+		}
+
+		@Override
+		public void saveGameList() {
+
+			final Gson gson = CustomGSON.getInstance();
+			final JsonWriter writer = CustomGSON.getWriter(Server.this,
+			                                               getListFileName());
+
+			if(writer == null) {
+				return;
+			}
+
+			try {
+				writer.beginObject();
+
+				synchronized (hostedGames) {
+
+					writer.beginArray();
+					for(final GameInfo game : hostedGames) {
+						gson.toJson(game, GameInfo.class, writer);
+					}
+					writer.endArray();
+				}
+
+				writer.endObject();
+
+				writer.close();
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not write JSON file!", e);
+				return;
 			}
 		}
 
@@ -335,6 +417,10 @@ public class Server extends Service {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+
+		private String getListFileName() {
+			return "hosted_games.json";
 		}
 
 		/**
