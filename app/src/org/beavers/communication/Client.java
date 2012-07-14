@@ -1,5 +1,7 @@
 package org.beavers.communication;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.lang.reflect.Type;
 import java.util.HashSet;
@@ -25,7 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -112,14 +113,13 @@ public class Client extends Service {
 		if(pIntent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
         	final int stopId = pStartId;
-        	final ParcelFileDescriptor data =
-        		(ParcelFileDescriptor) pIntent.getParcelableExtra("data");
+        	final String fileName = pIntent.getStringExtra("file");
 
 			executor.execute(new Runnable() {
 
 				@Override
 				public void run() {
-					implementation.handleData(data);
+					implementation.handleData(fileName);
 				}
 			});
 
@@ -219,16 +219,25 @@ public class Client extends Service {
 		/**
 		 * receive a DTN message
 		 *
-		 * @param pData file descriptor of payload file
+		 * @param fileName file descriptor of payload file
 		 * @return true if handled
 		 */
-		public boolean handleData(final ParcelFileDescriptor pData) {
-			Log.i(TAG, "Processing "+pData.getStatSize()+" bytes...");
+		public boolean handleData(final String pFileName) {
+			final File input = new File(pFileName);
 
-			final JsonParser parser = new JsonParser();
-			final FileReader reader = new FileReader(pData.getFileDescriptor());
+			Log.i(TAG, "Processing "+input.length()+" bytes...");
 
-			final JsonObject json = (JsonObject) parser.parse(reader);
+			JsonObject json = new JsonObject();
+
+			try {
+				final JsonParser parser = new JsonParser();
+				final FileReader reader = new FileReader(input);
+
+				json = (JsonObject) parser.parse(reader);
+			} catch (final FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 			if(!json.has(GameInfo.JSON_TAG))
 			{
@@ -312,11 +321,9 @@ public class Client extends Service {
 			final Message message =
 				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
 
-			final ParcelFileDescriptor file = message.getFile();
-
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              file);//message.getFile());
+				                              message.getFile());
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

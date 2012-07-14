@@ -184,7 +184,7 @@ public class DTNService extends Service {
 			gameinfo = pGame;
 		}
 
-		public ParcelFileDescriptor getFile()
+		public String getFile()
 		{
 			try {
 				final File file = File.createTempFile("outgoing-", ".msg",
@@ -199,9 +199,7 @@ public class DTNService extends Service {
 
 				Log.d(TAG, "File content: "+CustomGSON.getInstance().toJson(this));
 
-				return ParcelFileDescriptor.open(
-					file, ParcelFileDescriptor.MODE_READ_ONLY
-				);
+				return file.getAbsolutePath();
 			} catch (final IOException e) {
 				Log.e(TAG, "Error writing message!", e);
 				return null;
@@ -242,31 +240,41 @@ public class DTNService extends Service {
 
 		@Override
 		public void sendToServer(final Player pServer,
-		                         final ParcelFileDescriptor pData) {
-
-			// send to our server
-			notifyServer(pData);
-
-			Log.d(TAG, "Sending to server...");
+		                         final String pFileName) {
 			try {
-				sendFileDescriptor(SERVER_EID, pData);
+				final ParcelFileDescriptor data = ParcelFileDescriptor.open(
+					new File(pFileName),
+					ParcelFileDescriptor.MODE_READ_ONLY
+				);
+
+				Log.d(TAG, "Sending to server...");
+
+				sendFileDescriptor(SERVER_EID, data);
 			} catch (final Exception e) {
 				Log.e(TAG, "Could not send DTN packet!", e);
 			}
+
+			// send to our server
+			notifyServer(pFileName);
 		}
 
 		@Override
-		public void sendToClients(final ParcelFileDescriptor pData) {
-
-			// send to our client
-			notifyClient(pData);
-
-			Log.d(TAG, "Sending to client...");
+		public void sendToClients(final String pFileName) {
 			try {
-				sendFileDescriptor(CLIENT_EID, pData);
+				final ParcelFileDescriptor data = ParcelFileDescriptor.open(
+						new File(pFileName),
+						ParcelFileDescriptor.MODE_READ_ONLY
+					);
+
+				Log.d(TAG, "Sending to client...");
+
+				sendFileDescriptor(CLIENT_EID, data);
 			} catch (final Exception e) {
 				Log.e(TAG, "Could not send DTN packet!", e);
 			}
+
+			// send to our client
+			notifyClient(pFileName);
 		}
 	};
 
@@ -361,35 +369,28 @@ public class DTNService extends Service {
 			if(file != null)
 			{
 				final String destination = bundle.destination;
-				final File input = file;
+				final String fileName = file.getAbsolutePath();
 
 				executor.execute(new Runnable() {
 
 					@Override
 					public void run() {
 						try {
-							final ParcelFileDescriptor data =
-								ParcelFileDescriptor.open(
-									input,
-									ParcelFileDescriptor.MODE_READ_ONLY
-								);
-
 							if(destination.equals(SERVER_EID.toString()))
 							{
-								notifyServer(data);
+								notifyServer(fileName);
 							}
 							else if(destination.equals(CLIENT_EID.toString()))
 							{
-								notifyClient(data);
+								notifyClient(fileName);
 							}
 							else
 							{
 								Log.w(TAG, "Got stuff that we don't want: "
 								      + "destination="+destination);
-							}
 
-							data.close();
-							input.delete();
+								(new File(fileName)).delete();
+							}
 						} catch (final Exception e) {
 							Log.e(TAG,
 								"Could not forward payload to other services!",
@@ -454,7 +455,7 @@ public class DTNService extends Service {
 
 		public void initialize() {
 	        try {
-	        	final Registration registration = new Registration("game/beavers");
+	        	final Registration registration = new Registration(null);
 
 	        	registration.add(SERVER_EID);
 	        	registration.add(CLIENT_EID);
@@ -525,20 +526,20 @@ public class DTNService extends Service {
 		}
 	}
 
-	private void notifyClient(final ParcelFileDescriptor pData) {
+	private void notifyClient(final String pFileName) {
 		final Intent intent = new Intent(DTNService.this, Client.class);
 
 		intent.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
-		intent.putExtra("data", pData);
+		intent.putExtra("file", pFileName);
 
 		startService(intent);
 	}
 
-	private void notifyServer(final ParcelFileDescriptor pData) {
+	private void notifyServer(final String pFileName) {
 		final Intent intent = new Intent(DTNService.this, Server.class);
 
 		intent.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
-		intent.putExtra("data", pData);
+		intent.putExtra("file", pFileName);
 
 		startService(intent);
 	}
