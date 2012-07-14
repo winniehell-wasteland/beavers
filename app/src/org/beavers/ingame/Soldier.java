@@ -115,6 +115,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		if(hasParent()){
 			removeListener.onRemoveObject(this);
 			detachSelf();
+
 			if(isShooting()){
 				setShooting(false);
 				shot.stopShooting();
@@ -122,7 +123,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			for(final WayPoint waypoint : waypoints)
 			{
-				waypoint.detachSelf();
+				waypoint.remove();
 			}
 
 			waypoints.clear();
@@ -372,6 +373,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				}
 			}
 		});
+	}
+
+	@Override
+	public void onAttached() {
+		super.onAttached();
+		getParent().sortChildren();
 	}
 
 	/**
