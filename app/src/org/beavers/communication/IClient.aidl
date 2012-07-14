@@ -20,36 +20,15 @@ interface IClient {
 	 */
 	void abortGame(in Game pGame);
 	
-	
 	/**
-	 * @return announced game with given key
+	 * @return announced games
 	 */
-	Game getAnnouncedGame(in String pKey);
-	
-	/**
-	 * @return keys of announced games
-	 */
-	String[] getAnnouncedGames();
-	
-	/**
-	 * @return number of announced games
-	 */
-	int getAnnouncedGamesCount();
-	
-	/**
-	 * @return running game with given key
-	 */
-	Game getRunningGame(in String pKey);
+	Game[] getAnnouncedGames();
 	
 	/**
 	 * @return keys of running games
 	 */
-	String[] getRunningGames();
-	
-	/**
-	 * @return number of running games
-	 */
-	int getRunningGamesCount();
+	Game[] getRunningGames();
 
 	/**
 	 * join a game

@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +17,6 @@ import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
@@ -165,13 +166,11 @@ public class Client extends Service {
 	private class Implementation extends IClient.Stub {
 
 		@Override
-		public void abortGame(Game pGame) {
+		public void abortGame(final Game pGame) {
 			if (!runningGames.contains(pGame)) {
 				Log.e(TAG, getString(R.string.error_not_running, pGame));
 				return;
 			}
-
-			pGame = runningGames.find(pGame);
 
 			runningGames.remove(pGame);
 			broadcastGameInfo(pGame);
@@ -189,33 +188,13 @@ public class Client extends Service {
 		}
 
 		@Override
-		public Game getAnnouncedGame(final String pKey) {
-			return announcedGames.get(pKey);
+		public Game[] getAnnouncedGames() {
+			return announcedGames.toArray(new Game[0]);
 		};
 
 		@Override
-		public String[] getAnnouncedGames() {
-			return announcedGames.getKeys();
-		};
-
-		@Override
-		public int getAnnouncedGamesCount() {
-			return announcedGames.size();
-		};
-
-		@Override
-		public Game getRunningGame(final String pKey) {
-			return runningGames.get(pKey);
-		};
-
-		@Override
-		public String[] getRunningGames() {
-			return runningGames.getKeys();
-		};
-
-		@Override
-		public int getRunningGamesCount() {
-			return runningGames.size();
+		public Game[] getRunningGames() {
+			return runningGames.toArray(new Game[0]);
 		};
 
 		/**
@@ -278,7 +257,7 @@ public class Client extends Service {
 			{
 				if(runningGames.contains(game))
 				{
-					onReceiveOutcome(runningGames.find(game),
+					onReceiveOutcome(game,
 					                 gson.fromJson(json.get("outcome"),
 					                               OutcomeContainer.class));
 				}
@@ -296,8 +275,7 @@ public class Client extends Service {
 					final HashSet<Player> players =
 						gson.fromJson(json.get("players"), type);
 
-					onReceiveStartPlanningPhase(runningGames.find(game),
-					                            players);
+					onReceiveStartPlanningPhase(game, players);
 				}
 
 				return true;
@@ -478,8 +456,10 @@ public class Client extends Service {
 		 * @name game containers
 		 * @{
 		 */
-		private final GameList announcedGames = new GameList();
-		private final GameList runningGames = new GameList();
+		private final Set<Game> announcedGames =
+			Collections.synchronizedSet(new HashSet<Game>());
+		private final Set<Game> runningGames =
+			Collections.synchronizedSet(new HashSet<Game>());
 		/**
 		 * @}
 		 */

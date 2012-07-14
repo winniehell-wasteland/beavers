@@ -255,33 +255,9 @@ public class GameListActivity extends FragmentActivity
 			adapter = new GameListAdapter() {
 
 				@Override
-				protected String[] fetchKeys() {
+				protected Game[] fetchList() {
 					try {
 						return client.getService().getAnnouncedGames();
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return null;
-				}
-
-				@Override
-				public int getCount() {
-					try {
-						return client.getService().getAnnouncedGamesCount();
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return 0;
-				}
-
-				@Override
-				protected Game getItem(final String pKey) {
-					try {
-						return client.getService().getAnnouncedGame(pKey);
 					} catch (final RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -307,33 +283,9 @@ public class GameListActivity extends FragmentActivity
 			adapter = new GameListAdapter() {
 
 				@Override
-				protected String[] fetchKeys() {
+				protected Game[] fetchList() {
 					try {
 						return client.getService().getRunningGames();
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return null;
-				}
-
-				@Override
-				public int getCount() {
-					try {
-						return client.getService().getRunningGamesCount();
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return 0;
-				}
-
-				@Override
-				protected Game getItem(final String pKey) {
-					try {
-						return client.getService().getRunningGame(pKey);
 					} catch (final RemoteException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

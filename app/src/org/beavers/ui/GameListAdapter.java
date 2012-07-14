@@ -18,19 +18,17 @@ import android.widget.TextView;
 public abstract class GameListAdapter extends BaseAdapter {
 
 	public GameListAdapter() {
-		keys = new ArrayList<String>(Arrays.asList(fetchKeys()));
+		games = new ArrayList<Game>(Arrays.asList(fetchList()));
+	}
+
+	@Override
+	public int getCount() {
+		return games.size();
 	}
 
 	@Override
 	public Object getItem(final int pPosition) {
-		if((0 <= pPosition) && (pPosition < keys.size()))
-		{
-			return getItem(keys.get(pPosition));
-		}
-		else
-		{
-			return null;
-		}
+		return games.get(pPosition);
 	}
 
 	@Override
@@ -81,16 +79,15 @@ public abstract class GameListAdapter extends BaseAdapter {
 
 	@Override
 	public void notifyDataSetChanged() {
-		keys = new ArrayList<String>(Arrays.asList(fetchKeys()));
+		games = new ArrayList<Game>(Arrays.asList(fetchList()));
 
 		super.notifyDataSetChanged();
 	}
 
-	protected abstract String[] fetchKeys();
-	protected abstract Game getItem(String pKey);
+	protected abstract Game[] fetchList();
 	protected abstract LayoutInflater getLayoutInflater();
 
-	private ArrayList<String> keys;
+	private ArrayList<Game> games;
 
 	private TextView findTextView(final View pParent, final int pID)
 	{

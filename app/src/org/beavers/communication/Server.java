@@ -3,7 +3,9 @@ package org.beavers.communication;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +16,6 @@ import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
@@ -152,7 +153,7 @@ public class Server extends Service {
 	private class Implementation extends IServer.Stub {
 
 		@Override
-		public synchronized void addPlayer(Game pGame, final Player pPlayer)
+		public synchronized void addPlayer(final Game pGame, final Player pPlayer)
 		{
 			Log.d(TAG, "Somebody joins "+pGame.toString());
 
@@ -161,8 +162,6 @@ public class Server extends Service {
 				Log.e(TAG, getString(R.string.error_not_hosted, pGame));
 				return;
 			}
-
-			pGame = hostedGames.find(pGame);
 
 			final HashSet<Player> gamePlayers = playerMap.get(pGame);
 
@@ -434,7 +433,8 @@ public class Server extends Service {
 		 */
 
 		/** game container */
-		private final GameList hostedGames = new GameList();
+		private final Set<Game> hostedGames =
+				Collections.synchronizedSet(new HashSet<Game>());
 
 		private final PlayerMap playerMap = new PlayerMap();
 
