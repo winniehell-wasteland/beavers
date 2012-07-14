@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.beavers.App;
+import org.beavers.Settings;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
 import org.beavers.ingame.IGameObject;
@@ -72,6 +74,12 @@ public class GameStorage {
 
 		gameObjects.put(pWaypoint.getTile(), pWaypoint);
 		pWaypoint.setRemoveObjectListener(removeListener);
+	}
+
+	/** @return name of the map played */
+	public String getMapName()
+	{
+		return map;
 	}
 
 	public Soldier getSoldierByTile(final Tile pTile)
@@ -182,8 +190,8 @@ public class GameStorage {
 			writer.name(GameState.JSON_TAG);
 			writer.value(game.getState().name());
 
-			writer.name(GameInfo.JSON_TAG_MAP);
-			writer.value(game.getMapName());
+			writer.name(JSON_TAG_MAP);
+			writer.value(map);
 
 			writer.name(Soldier.JSON_TAG_COLLECTION);
 			writer.beginArray();
@@ -241,8 +249,14 @@ public class GameStorage {
 	 * @}
 	 */
 
+	/** JSON tag for map name */
+	private static final String JSON_TAG_MAP = "map";
+
 	private final Context context;
 	private final GameInfo game;
+
+	/** map name */
+	private String map;
 
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> teams;
@@ -266,12 +280,23 @@ public class GameStorage {
 		return "game-" + game.toString().replace('/', '_');
 	}
 
+	private Settings getSettings() {
+		if(context.getApplicationContext() instanceof App) {
+			return ((App) context.getApplicationContext()).getSettings();
+		}
+		else {
+			return null;
+		}
+	}
+
 	private void loadDefaults() throws UnexpectedTileContentException {
 		// load teams
 		addSoldier(new Soldier(0, new Tile(0, 0)));
 		addSoldier(new Soldier(0, new Tile(2, 0)));
 		addSoldier(new Soldier(1, new Tile(6, 9)));
 		addSoldier(new Soldier(1, new Tile(8, 9)));
+
+		map = getSettings().getDefaultMapName();
 	}
 
 	private boolean loadFromFile() {
@@ -286,11 +311,8 @@ public class GameStorage {
 		try {
 			reader.beginObject();
 
-			CustomGSON.assertElement(reader, GameState.JSON_TAG);
-			game.setState(GameState.valueOf(reader.nextString()));
-
-			CustomGSON.assertElement(reader, GameInfo.JSON_TAG_MAP);
-			game.setMapName(reader.nextString());
+			CustomGSON.assertElement(reader, JSON_TAG_MAP);
+			map = reader.nextString();
 
 			CustomGSON.assertElement(reader, Soldier.JSON_TAG_COLLECTION);
 

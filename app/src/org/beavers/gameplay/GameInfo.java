@@ -18,9 +18,6 @@ public final class GameInfo implements Parcelable {
 	/** tag for JSON files */
 	public static final String JSON_TAG = "gameinfo";
 
-	/** {@link #JSON_TAG} for map name */
-	public static final String JSON_TAG_MAP = "map";
-
 	/** {@link #JSON_TAG} for game server */
 	public static final String JSON_TAG_SERVER = "server";
 
@@ -59,12 +56,6 @@ public final class GameInfo implements Parcelable {
 		return game;
 	}
 
-	/** @return name of the map played */
-	public String getMapName()
-	{
-		return map;
-	}
-
 	/** @return server of the game */
 	public Player getServer() {
 		return server;
@@ -91,11 +82,6 @@ public final class GameInfo implements Parcelable {
 		return getServer().equals(pPlayer);
 	}
 
-	/** set the map */
-	public void setMapName(final String pMap) {
-		map = pMap;
-	}
-
 	/**
 	 * changes the state
 	 * @param pState new state
@@ -112,7 +98,6 @@ public final class GameInfo implements Parcelable {
     @Override
 	public void writeToParcel(final Parcel pOut, final int pFlags) {
     	pOut.writeParcelable(game, pFlags);
-    	pOut.writeString(map);
     	pOut.writeParcelable(server, pFlags);
     	pOut.writeParcelable(state, pFlags);
     }
@@ -133,9 +118,6 @@ public final class GameInfo implements Parcelable {
 	/** unique game on server */
     @SerializedName(Game.JSON_TAG)
 	private final Game game;
-	/** map name */
-    @SerializedName(JSON_TAG_MAP)
-	private String map;
 	/** server of the game */
     @SerializedName(JSON_TAG_SERVER)
 	private final Player server;
@@ -145,7 +127,6 @@ public final class GameInfo implements Parcelable {
 
     private GameInfo(final Parcel in) {
 		game = in.readParcelable(Game.class.getClassLoader());
-		map = in.readString();
     	server = in.readParcelable(Player.class.getClassLoader());
 		state = in.readParcelable(GameState.class.getClassLoader());
     }

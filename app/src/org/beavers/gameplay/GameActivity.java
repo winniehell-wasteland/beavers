@@ -428,10 +428,19 @@ public class GameActivity extends BaseGameActivity
 
 	@Override
 	public Scene onLoadScene() {
+		// initialize storage
+		try {
+			storage = new GameStorage(this, currentGame);
+			storage.setRemoveObjectListener(this);
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not create game storage!", e);
+			finish();
+		}
+
 		mEngine.registerUpdateHandler(new FPSLogger());
 		mainScene = new Scene();
 
-		loadMap(currentGame.getMapName());
+		loadMap(storage.getMapName());
 
 		if(map == null)
 		{
@@ -449,15 +458,6 @@ public class GameActivity extends BaseGameActivity
 		mainScene.setOnSceneTouchListener(this);
 
         mRenderSurfaceView.setOnCreateContextMenuListener(this);
-
-		// initialize storage
-		try {
-			storage = new GameStorage(this, currentGame);
-			storage.setRemoveObjectListener(this);
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not create game storage!", e);
-			finish();
-		}
 
 		// show soldiers on mainScene
 		for(int team = 0; team < storage.getTeamCount(); ++team)

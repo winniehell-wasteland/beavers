@@ -19,7 +19,7 @@ public class Settings {
 		return DTN_LIFETIME_DEFAULT;
 	}
 
-	public String getMapName()
+	public String getDefaultMapName()
 	{
 		return MAP_NAME_DEFAULT;
 	}
