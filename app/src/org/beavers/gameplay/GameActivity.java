@@ -227,7 +227,7 @@ public class GameActivity extends BaseGameActivity
 
 		if(tile != null)
 		{
-			Log.d(TAG, "Hold on tile ("+tile.getColumn()+","+tile.getRow()+")");
+			Log.d(TAG, "Hold on tile "+tile);
 
 			// create new Aim if necessary
 			if(selectedWaypoint instanceof WayPoint)
@@ -315,11 +315,11 @@ public class GameActivity extends BaseGameActivity
 						@Override
 						public void run() {
 							Toast.makeText(GameActivity.this,
-								"No AP left",
+								"Not enough AP left!",
 								Toast.LENGTH_SHORT).show();
 						}
 					});
-					}
+				}
 				else{
 					try {
 						storage.addWaypoint(waypoint);

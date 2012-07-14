@@ -147,6 +147,11 @@ public class Tile {
 		return new Tile((int) Math.floor(pX/TILE_WIDTH), (int) Math.floor(pY/TILE_HEIGHT));
 	}
 
+	@Override
+	public String toString() {
+		return "(" + column + ", " + row + ")";
+	}
+
 	/**
 	 * @name tile position
 	 * @{
