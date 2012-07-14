@@ -625,6 +625,14 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
+	protected void onDestroy() {
+		unbindService(client);
+		unbindService(server);
+
+		super.onDestroy();
+	}
+
+	@Override
 	protected void onPause() {
 		super.onPause();
 
