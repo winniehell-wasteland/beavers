@@ -95,6 +95,6 @@ public final class Game extends UniqueID {
 
 	public File getDirectory(final Context pContext) {
 		return new File(pContext.getFilesDir().getAbsolutePath()
-		                + "/" + toString());
+		                + "/" + this);
 	}
 }

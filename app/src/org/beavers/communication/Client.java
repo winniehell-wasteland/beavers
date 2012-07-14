@@ -207,6 +207,7 @@ public class Client extends Service {
 
 			Log.i(TAG, "Processing "+input.length()+" bytes...");
 
+			final Gson gson = CustomGSON.getInstance();
 			JsonObject json = new JsonObject();
 
 			try {
@@ -219,21 +220,26 @@ public class Client extends Service {
 				e.printStackTrace();
 			}
 
-			if(!json.has(GameInfo.JSON_TAG))
+			if(!json.has(Game.JSON_TAG))
 			{
-				Log.e(TAG, "JSON object does not contain game info!");
+				Log.e(TAG, "JSON object does not contain game!");
 				return false;
 			}
-
-			final Gson gson = CustomGSON.getInstance();
 
 			final Game game =
 				gson.fromJson(json.get(Game.JSON_TAG), Game.class);
 			Log.e(TAG, "game: "+game);
 
-			final GameInfo info = GameInfo.fromFile(Client.this, game);
+			if(!json.has(GameState.JSON_TAG))
+			{
+				Log.e(TAG, "JSON object does not contain game state!");
+				return false;
+			}
 
-			switch (info.getState()) {
+			final GameState state =
+				gson.fromJson(json.get(GameState.JSON_TAG), GameState.class);
+
+			switch (state) {
 			case ANNOUNCED:
 			{
 				if(announcedGames.contains(game)) {
@@ -479,7 +485,7 @@ public class Client extends Service {
 		}
 
 		private String getListFileName() {
-			return "running_games.json";
+			return getFilesDir() + "/running_games.json";
 		}
 
 		/**
@@ -491,18 +497,21 @@ public class Client extends Service {
 		private void onReceiveAnnouncedGame(final Game pGame,
 		                                    final String pMapName) {
 			try {
-				final File dir = pGame.getDirectory(Client.this);
+				if(!pGame.isServer(getSettings().getPlayer()))
+				{
+					final File dir = pGame.getDirectory(Client.this);
 
-				if(dir.exists()) {
-					Log.e(TAG, "Game directory already exists!");
-					return;
+					if(dir.exists()) {
+						Log.e(TAG, "Game directory already exists!");
+						return;
+					}
+
+					dir.mkdirs();
+
+					final GameInfo info = new GameInfo(pMapName, 1);
+					info.setState(GameState.ANNOUNCED);
+					info.saveToFile(Client.this, pGame);
 				}
-
-				dir.mkdirs();
-
-				final GameInfo info = new GameInfo(pMapName, 1);
-				info.setState(GameState.ANNOUNCED);
-				info.saveToFile(Client.this, pGame);
 
 				announcedGames.add(pGame);
 				broadcastGameInfo(pGame);

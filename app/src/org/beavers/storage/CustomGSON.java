@@ -1,6 +1,7 @@
 package org.beavers.storage;
 
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class CustomGSON {
 		InputStream file = null;
 
 		try {
-			file = pContext.openFileInput(pFileName);
+			file = new FileInputStream(pFileName);
 		} catch (final FileNotFoundException e) {
 			Log.w(TAG, "Could not open file for input! " + e.getMessage());
 			return null;
@@ -67,7 +68,7 @@ public class CustomGSON {
 		FileOutputStream file = null;
 
 		try {
-			file = pContext.openFileOutput(pFileName, Context.MODE_PRIVATE);
+			file = new FileOutputStream(pFileName);
 		} catch (final FileNotFoundException e) {
 			Log.e(TAG, "Could not open file for output! " + e.getMessage());
 			return null;

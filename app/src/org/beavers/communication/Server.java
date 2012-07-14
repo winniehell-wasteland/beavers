@@ -439,7 +439,7 @@ public class Server extends Service {
 		private final PlayerMap playerMap = new PlayerMap();
 
 		private String getListFileName() {
-			return "hosted_games.json";
+			return getFilesDir() + "/hosted_games.json";
 		}
 
 		/**

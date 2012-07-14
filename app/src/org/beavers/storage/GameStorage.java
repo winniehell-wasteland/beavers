@@ -259,7 +259,7 @@ public class GameStorage {
 	}
 
 	private String getFileName() {
-		return "game-" + game.toString().replace('/', '_');
+		return game.getDirectory(context) + "/state.json";
 	}
 
 	private Settings getSettings() {

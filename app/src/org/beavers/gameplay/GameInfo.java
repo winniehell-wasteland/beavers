@@ -66,7 +66,7 @@ public final class GameInfo {
 
 	public void saveToFile(final Context pContext, final Game pGame) {
 		final JsonWriter writer =
-				CustomGSON.getWriter(pContext, getFileName(pGame));
+				CustomGSON.getWriter(pContext, getFileName(pContext, pGame));
 
 		CustomGSON.getInstance().toJson(this, getClass(), writer);
 	}
@@ -81,14 +81,15 @@ public final class GameInfo {
 
 	public static GameInfo fromFile(final Context pContext, final Game pGame) {
 		final JsonReader reader =
-			CustomGSON.getReader(pContext, getFileName(pGame));
+			CustomGSON.getReader(pContext, getFileName(pContext, pGame));
 
 		return CustomGSON.getInstance().fromJson(reader, GameInfo.class);
 	}
 
 
-	private static String getFileName(final Game pGame) {
-		return pGame.toString() + "/info.json";
+	private static String getFileName(final Context pContext,
+	                                  final Game pGame) {
+		return pGame.getDirectory(pContext).toString() + "/info.json";
 	}
 
 	/** map name */
