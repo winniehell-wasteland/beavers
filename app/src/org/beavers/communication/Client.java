@@ -20,6 +20,7 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.GameStorage;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -258,9 +259,14 @@ public class Client extends Service {
 					Log.e(TAG, getString(R.string.error_already_announced,
 						                 game));
 				}
-				else
-				{
-					onReceiveGameInfo(game);
+				else {
+					if(!json.has("map")) {
+						Log.e(TAG, "Map name is missing!");
+					}
+					else {
+						onReceiveAnnouncedGame(game,
+						                       json.get("map").getAsString());
+					}
 				}
 
 				return true;
@@ -493,18 +499,27 @@ public class Client extends Service {
 		}
 
 		/**
-		 * server has announced new game
+		 * server has announced a new game
 		 *
 		 * @param pGame new game
+		 * @param pMapName name of the game's map
 		 */
-		private void onReceiveGameInfo(final GameInfo pGame) {
-			announcedGames.add(pGame);
-			broadcastGameInfo(pGame);
+		private void onReceiveAnnouncedGame(final GameInfo pGame,
+		                                    final String pMapName) {
+			try {
+				final GameStorage storage =
+					new GameStorage(Client.this, pGame, pMapName);
 
-			if(pGame.isServer(getSettings().getPlayer()))
-			{
-				// auto join own game
-				joinGame(pGame);
+				announcedGames.add(pGame);
+				broadcastGameInfo(pGame);
+
+				if(pGame.isServer(getSettings().getPlayer()))
+				{
+					// auto join own game
+					joinGame(pGame);
+				}
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not create storage!");
 			}
 		}
 

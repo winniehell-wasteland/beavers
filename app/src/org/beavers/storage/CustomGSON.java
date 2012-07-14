@@ -36,11 +36,11 @@ public class CustomGSON {
 	/** ensure the next element has the given Name */
 	public static void assertElement(final JsonReader pReader,
 	                                 final String pName)
-	            throws IOException, Exception {
+	            throws IOException, WrongElementException {
 		if(!pReader.nextName().equals(pName))
 		{
 			pReader.close();
-			throw new Exception("Expected " + pName + "!");
+			throw new WrongElementException("Expected " + pName + "!");
 		}
 	}
 
@@ -111,6 +111,15 @@ public class CustomGSON {
 		}
 
 		return instance;
+	}
+
+	public static class WrongElementException extends Exception {
+
+		private static final long serialVersionUID = -6931539282887171426L;
+
+		public WrongElementException(final String pMessage) {
+			super(pMessage);
+		}
 	}
 
 	/**

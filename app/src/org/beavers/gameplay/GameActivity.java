@@ -460,7 +460,7 @@ public class GameActivity extends BaseGameActivity
         mRenderSurfaceView.setOnCreateContextMenuListener(this);
 
 		// show soldiers on mainScene
-		for(int team = 0; team < storage.getTeamCount(); ++team)
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team)
 		{
 			for(final Soldier soldier : storage.getSoldiersByTeam(team))
 			{
@@ -497,7 +497,7 @@ public class GameActivity extends BaseGameActivity
 
 			final ExecutorService executor = Executors.newCachedThreadPool();
 
-			for(int team = 0; team < storage.getTeamCount(); ++team) {
+			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 				for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
 					for(final WayPoint waypoint : soldier.getWaypoints())
 					{

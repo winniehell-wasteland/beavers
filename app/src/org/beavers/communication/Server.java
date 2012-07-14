@@ -284,13 +284,16 @@ public class Server extends Service {
 			}
 
 			try {
-				final GameStorage storage = new GameStorage(Server.this, pGame);
+				final String map = getSettings().getDefaultMapName();
+
+				final GameStorage storage =
+					new GameStorage(Server.this, pGame, map);
+				storage.saveToFile();
 
 				pGame.setState(GameState.ANNOUNCED);
 
 				final AnnouncementMessage message =
-					new AnnouncementMessage(Server.this, pGame,
-					                        storage.getMapName());
+					new AnnouncementMessage(Server.this, pGame, map);
 
 				dtn.getService().sendToClients(message.getFile());
 

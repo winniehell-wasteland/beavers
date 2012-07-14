@@ -1,5 +1,6 @@
 package org.beavers.storage;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,11 +15,14 @@ import org.beavers.ingame.IRemoveObjectListener;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
+import org.beavers.storage.CustomGSON.WrongElementException;
 
 import android.content.Context;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -30,29 +34,37 @@ import com.google.gson.stream.JsonWriter;
 public class GameStorage {
 
 	/**
-	 * default constructor
+	 * default constructor, loads game state from file
 	 * @param pContext
 	 * @param pGame
 	 * @throws UnexpectedTileContentException
 	 */
 	public GameStorage(final Context pContext, final GameInfo pGame)
-	       throws UnexpectedTileContentException {
+	       throws Exception {
+		this(pContext, pGame, null);
+	}
+
+	public GameStorage(final Context pContext, final GameInfo pGame,
+	                   final String pMapName)
+	       throws Exception{
 		context = pContext;
 		game = pGame;
 
 		// initialize game object containers
 		gameObjects = new HashMap<Tile, IGameObject>();
-		teams = new ArrayList<HashSet<Soldier>>(getTeamCount());
+		teams = new ArrayList<HashSet<Soldier>>(getSettings().getMaxPlayers());
 
-		for(int i = 0; i < getTeamCount(); ++i)
+		for(int i = 0; i < getSettings().getMaxPlayers(); ++i)
 		{
 			teams.add(new HashSet<Soldier>());
 		}
 
-		if(!loadFromFile())
-		{
+		if(pMapName == null) {
+			map = loadFromFile();
+		}
+		else {
+			map = pMapName;
 			loadDefaults();
-			saveToFile();
 		}
 	}
 
@@ -91,7 +103,7 @@ public class GameStorage {
 	}
 
 	public HashSet<Soldier> getSoldiersByTeam(final int pTeam) {
-		if(pTeam < getTeamCount())
+		if(pTeam < getSettings().getMaxPlayers())
 		{
 			return teams.get(pTeam);
 		}
@@ -99,10 +111,6 @@ public class GameStorage {
 		{
 			throw new IndexOutOfBoundsException();
 		}
-	}
-
-	public int getTeamCount() {
-		return 2;
 	}
 
 	public WayPoint getWaypointByTile(final Tile pTile)
@@ -243,7 +251,7 @@ public class GameStorage {
 	private final GameInfo game;
 
 	/** map name */
-	private String map;
+	private final String map;
 
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> teams;
@@ -282,41 +290,47 @@ public class GameStorage {
 		addSoldier(new Soldier(0, new Tile(2, 0)));
 		addSoldier(new Soldier(1, new Tile(6, 9)));
 		addSoldier(new Soldier(1, new Tile(8, 9)));
-
-		map = getSettings().getDefaultMapName();
 	}
 
-	private boolean loadFromFile() {
+	/**
+	 * loads the storage from file
+	 * @return map name
+	 * @throws IOException
+	 * @throws WrongElementException
+	 * @throws UnexpectedTileContentException
+	 * @throws JsonSyntaxException
+	 * @throws JsonIOException
+	 */
+	private String loadFromFile()
+	               throws IOException, WrongElementException, JsonIOException,
+	                      JsonSyntaxException, UnexpectedTileContentException {
 		final Gson gson = CustomGSON.getInstance();
 		final JsonReader reader = CustomGSON.getReader(context, getFileName());
 
 		// file does not exist
 		if(reader == null) {
-			return false;
+			throw new FileNotFoundException(getFileName());
 		}
 
-		try {
-			reader.beginObject();
+		String mapName = null;
 
-			CustomGSON.assertElement(reader, JSON_TAG_MAP);
-			map = reader.nextString();
+		reader.beginObject();
 
-			CustomGSON.assertElement(reader, Soldier.JSON_TAG_COLLECTION);
+		CustomGSON.assertElement(reader, JSON_TAG_MAP);
+		mapName = reader.nextString();
 
-			reader.beginArray();
-			while (reader.hasNext()) {
-				addSoldier((Soldier) gson.fromJson(reader, Soldier.class));
-			}
-			reader.endArray();
+		CustomGSON.assertElement(reader, Soldier.JSON_TAG_COLLECTION);
 
-			reader.endObject();
-
-			reader.close();
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not read JSON from file!", e);
-			return false;
+		reader.beginArray();
+		while (reader.hasNext()) {
+			addSoldier((Soldier) gson.fromJson(reader, Soldier.class));
 		}
+		reader.endArray();
 
-		return true;
+		reader.endObject();
+
+		reader.close();
+
+		return mapName;
 	}
 }
