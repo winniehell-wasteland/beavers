@@ -15,8 +15,21 @@ import com.google.gson.stream.JsonWriter;
  */
 public final class GameInfo {
 
+	/**
+	 * @name JSON tags
+	 * @{
+	 */
 	/** tag for JSON files */
 	public static final String JSON_TAG = "gameinfo";
+
+	/** {@link #JSON_TAG} for map */
+	public static final String JSON_TAG_MAP = "map";
+
+	/** {@link #JSON_TAG} for team */
+	public static final String JSON_TAG_TEAM = "team";
+	/**
+	 * @}
+	 */
 
 	/**
 	 * default constructor
@@ -78,11 +91,15 @@ public final class GameInfo {
 		return pGame.toString() + "/info.json";
 	}
 
+	/** map name */
+    @SerializedName(JSON_TAG_MAP)
+    private final String map;
 
 	/** state of the game */
     @SerializedName(GameState.JSON_TAG)
 	private GameState state;
 
+    /** team number */
+    @SerializedName(JSON_TAG_TEAM)
     private final int team;
-    private final String map;
 }

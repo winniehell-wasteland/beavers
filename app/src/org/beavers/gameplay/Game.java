@@ -1,7 +1,9 @@
 package org.beavers.gameplay;
 
+import java.io.File;
 import java.util.UUID;
 
+import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -89,5 +91,10 @@ public final class Game extends UniqueID {
 	{
 		super(pParcel);
     	server = pParcel.readParcelable(Player.class.getClassLoader());
+	}
+
+	public File getDirectory(final Context pContext) {
+		return new File(pContext.getFilesDir().getAbsolutePath()
+		                + "/" + toString());
 	}
 }

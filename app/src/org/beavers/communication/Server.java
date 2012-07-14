@@ -21,11 +21,9 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
-import org.beavers.storage.GameStorage;
 
 import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
@@ -180,11 +178,10 @@ public class Server extends Service {
 		public void distributeOutcome(final Game pGame,
 		                              final OutcomeContainer pOutcome)
 		{
-			final Message message =
-				new OutcomeMessage(Server.this, pGame, pOutcome);
+			final Message message = new OutcomeMessage(pGame, pOutcome);
 
 			try {
-				dtn.getService().sendToClients(message.getFile());
+				dtn.getService().sendToClients(message.saveToFile(Server.this));
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -284,19 +281,24 @@ public class Server extends Service {
 			}
 
 			try {
+				final File dir = pGame.getDirectory(Server.this);
+
+				if(dir.exists()) {
+					Log.e(TAG, "Game directory already exists!");
+					return;
+				}
+
+				dir.mkdirs();
+
 				final String map = getSettings().getDefaultMapName();
 
-				final GameStorage storage =
-					new GameStorage(Server.this, pGame, map);
-				storage.saveToFile();
-
-				final GameInfo info = GameInfo.fromFile(Server.this, pGame);
+				final GameInfo info = new GameInfo(map, 0);
 				info.setState(GameState.ANNOUNCED);
+				info.saveToFile(Server.this, pGame);
 
-				final AnnouncementMessage message =
-					new AnnouncementMessage(Server.this, pGame, map);
+				final Message message = new AnnouncementMessage(pGame, map);
 
-				dtn.getService().sendToClients(message.getFile());
+				dtn.getService().sendToClients(message.saveToFile(Server.this));
 
 				hostedGames.add(pGame);
 			} catch (final Exception e) {
@@ -394,22 +396,21 @@ public class Server extends Service {
 		 */
 		class AnnouncementMessage extends Message
 		{
-			public AnnouncementMessage(final Context pContext,
-			                           final Game pGame,
+			public AnnouncementMessage(final Game pGame,
 			                           final String pMapName) {
-				super(pContext, pGame);
+				super(pGame, GameState.ANNOUNCED);
 				map = pMapName;
 			}
 
-			@SerializedName("map")
+			@SerializedName(GameInfo.JSON_TAG_MAP)
 			private final String map;
 		}
 
 		class OutcomeMessage extends Message
 		{
-			public OutcomeMessage(final Context pContext, final Game pGame,
+			public OutcomeMessage(final Game pGame,
 			                      final OutcomeContainer pOutcome) {
-				super(pContext, pGame);
+				super(pGame, GameState.EXECUTION_PHASE);
 				outcome = pOutcome;
 			}
 
@@ -419,9 +420,8 @@ public class Server extends Service {
 
 		class PlanningPhaseMessage extends Message
 		{
-			public PlanningPhaseMessage(final Context pContext,
-			                            final Game pGame) {
-				super(pContext, pGame);
+			public PlanningPhaseMessage(final Game pGame) {
+				super(pGame, GameState.PLANNING_PHASE);
 				players = playerMap.get(pGame);
 			}
 
@@ -492,11 +492,10 @@ public class Server extends Service {
 			info.setState(GameState.PLANNING_PHASE);
 			info.saveToFile(Server.this, pGame);
 
-			final Message message =
-				new PlanningPhaseMessage(Server.this, pGame);
+			final Message message = new PlanningPhaseMessage(pGame);
 
 			try {
-				dtn.getService().sendToClients(message.getFile());
+				dtn.getService().sendToClients(message.saveToFile(Server.this));
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

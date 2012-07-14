@@ -22,11 +22,9 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
-import org.beavers.storage.GameStorage;
 
 import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
@@ -176,11 +174,12 @@ public class Client extends Service {
 			broadcastGameInfo(pGame);
 
 			final Message message =
-				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
+				new ClientMessage(pGame, getSettings().getPlayer(),
+				                  GameState.ABORTED);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              message.getFile());
+				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -308,11 +307,12 @@ public class Client extends Service {
 			broadcastGameInfo(pGame);
 
 			final Message message =
-				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
+				new ClientMessage(pGame, getSettings().getPlayer(),
+				                  GameState.JOINED);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              message.getFile());
+				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -405,12 +405,12 @@ public class Client extends Service {
 			}
 
 			final Message message =
-				new DecissionMessage(Client.this, getSettings().getPlayer(),
+				new DecissionMessage(getSettings().getPlayer(),
 				                     pGame, pSoldiers);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              message.getFile());
+				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -424,9 +424,9 @@ public class Client extends Service {
 
 		class ClientMessage extends Message
 		{
-			public ClientMessage(final Context pContext, final Player pPlayer,
-			                     final Game pGame) {
-				super(pContext, pGame);
+			public ClientMessage(final Game pGame, final Player pPlayer,
+			                     final GameState pState) {
+				super(pGame, pState);
 
 				player = pPlayer;
 			}
@@ -437,10 +437,9 @@ public class Client extends Service {
 
 		class DecissionMessage extends ClientMessage
 		{
-			public DecissionMessage(final Context pContext,
-									final Player pPlayer, final Game pGame,
+			public DecissionMessage(final Player pPlayer, final Game pGame,
 			                        final String pSoldiers) {
-				super(pContext, pPlayer, pGame);
+				super(pGame, pPlayer, GameState.PLANNING_PHASE);
 
 				soldiers = pSoldiers;
 			}
@@ -492,8 +491,18 @@ public class Client extends Service {
 		private void onReceiveAnnouncedGame(final Game pGame,
 		                                    final String pMapName) {
 			try {
-				final GameStorage storage =
-					new GameStorage(Client.this, pGame, pMapName);
+				final File dir = pGame.getDirectory(Client.this);
+
+				if(dir.exists()) {
+					Log.e(TAG, "Game directory already exists!");
+					return;
+				}
+
+				dir.mkdirs();
+
+				final GameInfo info = new GameInfo(pMapName, 1);
+				info.setState(GameState.ANNOUNCED);
+				info.saveToFile(Client.this, pGame);
 
 				announcedGames.add(pGame);
 				broadcastGameInfo(pGame);

@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.beavers.App;
 import org.beavers.Settings;
 import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
 
@@ -178,18 +179,19 @@ public class DTNService extends Service {
 
 	public static class Message
 	{
-		public Message(final Context pContext, final Game pGame)
+		public Message(final Game pGame, final GameState pState)
 		{
-			context = pContext;
 			game = pGame;
+			state = pState;
 		}
 
-		public String getFile()
+		/** @return file name */
+		public String saveToFile(final Context pContext)
 		{
 			try {
-				final File file = File.createTempFile("outgoing-", ".msg",
-				                                context.getExternalCacheDir());
-
+				final File file =
+					File.createTempFile("outgoing-", ".msg",
+				                        pContext.getExternalCacheDir());
 
 				Log.d(TAG, "writing message to file "+file.getAbsolutePath());
 
@@ -206,10 +208,11 @@ public class DTNService extends Service {
 			}
 		}
 
-		private transient final Context context;
-
 		@SerializedName(Game.JSON_TAG)
 		private final Game game;
+
+		@SerializedName(GameState.JSON_TAG)
+		private final GameState state;
 	}
 
 	/**
