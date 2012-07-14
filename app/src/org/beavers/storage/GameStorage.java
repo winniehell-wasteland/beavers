@@ -73,6 +73,7 @@ public class GameStorage {
 		}
 
 		gameObjects.put(pWaypoint.getTile(), pWaypoint);
+		pWaypoint.setRemoveObjectListener(removeListener);
 	}
 
 	public Soldier getSoldierByTile(final Tile pTile)
@@ -151,15 +152,15 @@ public class GameStorage {
 		teams.get(soldier.getTeam()).remove(soldier);
 	}
 
-	public void removeWaypoint(final WayPoint waypoint)
+	public void removeWaypoint(final WayPoint pWaypoint)
 	            throws UnexpectedTileContentException {
 
-		if(!hasWaypointOnTile(waypoint.getTile()))
+		if(!hasWaypointOnTile(pWaypoint.getTile()))
 		{
 			throw new UnexpectedTileContentException("No waypoint on that tile!");
 		}
 
-		gameObjects.remove(waypoint);
+		gameObjects.remove(pWaypoint);
 	}
 
 	public boolean saveToFile() {
@@ -218,6 +219,8 @@ public class GameStorage {
 
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
 	{
+		removeListener = pListener;
+
 		for(final IGameObject object : gameObjects.values())
 		{
 			object.setRemoveObjectListener(pListener);
@@ -246,6 +249,8 @@ public class GameStorage {
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> teams;
 
+	private IRemoveObjectListener removeListener;
+
 	private void addSoldier(final Soldier pSoldier)
 	             throws UnexpectedTileContentException {
 
@@ -256,6 +261,7 @@ public class GameStorage {
 
 		gameObjects.put(pSoldier.getTile(), pSoldier);
 		teams.get(pSoldier.getTeam()).add(pSoldier);
+		pSoldier.setRemoveObjectListener(removeListener);
 	}
 
 	private void assertSection(final JsonReader pReader, final String pSection)
