@@ -2,9 +2,11 @@ package org.beavers.storage;
 
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 
 import org.anddev.andengine.util.path.Path.Step;
@@ -19,6 +21,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * customized {@link Gson}
@@ -41,19 +44,38 @@ public class CustomGSON {
 		}
 	}
 
-	public static JsonReader getReader(final Context pContext, final String pFileName) {
+	public static JsonReader getReader(final Context pContext,
+	                                   final String pFileName) {
 
 		InputStream file = null;
 
 		try {
 			file = pContext.openFileInput(pFileName);
 		} catch (final FileNotFoundException e) {
-			Log.w(TAG, "Could not open file! " + e.getMessage());
+			Log.w(TAG, "Could not open file for input! " + e.getMessage());
 			return null;
 		}
+
 		return new JsonReader(
 				new InputStreamReader(file, Charset.defaultCharset())
 			);
+	}
+
+	public static JsonWriter getWriter(final Context pContext,
+	                                   final String pFileName) {
+
+		FileOutputStream file = null;
+
+		try {
+			file = pContext.openFileOutput(pFileName, Context.MODE_PRIVATE);
+		} catch (final FileNotFoundException e) {
+			Log.e(TAG, "Could not open file for output! " + e.getMessage());
+			return null;
+		}
+
+		return new JsonWriter(
+			new OutputStreamWriter(file, Charset.defaultCharset())
+		);
 	}
 
 	/**

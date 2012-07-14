@@ -1,9 +1,6 @@
 package org.beavers.storage;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,19 +167,9 @@ public class GameStorage {
 	}
 
 	public boolean saveToFile() {
+
 		final Gson gson = CustomGSON.getInstance();
-		FileOutputStream file = null;
-
-		try {
-			file = context.openFileOutput(getFileName(), Context.MODE_PRIVATE);
-		} catch (final Exception e) {
-			Log.e(TAG, "Could not open file!", e);
-			return false;
-		}
-
-		final JsonWriter writer =
-			new JsonWriter(new OutputStreamWriter(file,
-			                                      Charset.defaultCharset()));
+		final JsonWriter writer = CustomGSON.getWriter(context, getFileName());
 
 		try {
 			writer.beginObject();
