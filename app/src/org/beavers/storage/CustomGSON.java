@@ -1,6 +1,8 @@
 package org.beavers.storage;
 
 
+import java.io.IOException;
+
 import org.anddev.andengine.util.path.Path.Step;
 import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.ingame.Soldier;
@@ -11,12 +13,31 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
 
 /**
  * customized {@link Gson}
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
 public class CustomGSON {
+
+	/**
+	 * @name helper functions
+	 * @{
+	 */
+	/** ensure the next element has the given Name */
+	public static void assertElement(final JsonReader pReader,
+	                                 final String pName)
+	            throws IOException, Exception {
+		if(!pReader.nextName().equals(pName))
+		{
+			pReader.close();
+			throw new Exception("Expected " + pName + "!");
+		}
+	}
+	/**
+	 * @}
+	 */
 
 	/** get singleton instance */
 	public static Gson getInstance()

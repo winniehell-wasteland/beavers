@@ -264,15 +264,6 @@ public class GameStorage {
 		pSoldier.setRemoveObjectListener(removeListener);
 	}
 
-	private void assertSection(final JsonReader pReader, final String pSection)
-	             throws IOException, Exception {
-		if(!pReader.nextName().equals(pSection))
-		{
-			pReader.close();
-			throw new Exception("Expected " + pSection + "!");
-		}
-	}
-
 	private String getFileName() {
 		return "game-" + game.toString().replace('/', '_');
 	}
@@ -301,13 +292,13 @@ public class GameStorage {
 
 			reader.beginObject();
 
-			assertSection(reader, GameState.JSON_TAG);
+			CustomGSON.assertElement(reader, GameState.JSON_TAG);
 			game.setState(GameState.valueOf(reader.nextString()));
 
-			assertSection(reader, GameInfo.JSON_TAG_MAP);
+			CustomGSON.assertElement(reader, GameInfo.JSON_TAG_MAP);
 			game.setMapName(reader.nextString());
 
-			assertSection(reader, Soldier.JSON_TAG_COLLECTION);
+			CustomGSON.assertElement(reader, Soldier.JSON_TAG_COLLECTION);
 
 			reader.beginArray();
 			while (reader.hasNext()) {
