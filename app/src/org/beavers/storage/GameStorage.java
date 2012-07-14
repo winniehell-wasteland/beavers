@@ -148,7 +148,7 @@ public class GameStorage {
 			throw new UnexpectedTileContentException("No soldier on that tile!");
 		}
 
-		gameObjects.remove(soldier);
+		gameObjects.remove(soldier.getTile());
 		teams.get(soldier.getTeam()).remove(soldier);
 	}
 
@@ -160,7 +160,7 @@ public class GameStorage {
 			throw new UnexpectedTileContentException("No waypoint on that tile!");
 		}
 
-		gameObjects.remove(pWaypoint);
+		gameObjects.remove(pWaypoint.getTile());
 	}
 
 	public boolean saveToFile() {
@@ -292,7 +292,7 @@ public class GameStorage {
 		try {
 			file = context.openFileInput(getFileName());
 		} catch (final Exception e) {
-			Log.e(TAG, "Could not open file!", e);
+			Log.e(TAG, "Could not open file! " + e);
 			return false;
 		}
 
