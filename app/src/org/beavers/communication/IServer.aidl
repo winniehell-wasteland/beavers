@@ -13,13 +13,6 @@ import org.beavers.gameplay.OutcomeContainer;
  * @see {@link Server}
  */
 interface IServer {
-
-	/**
-	 * become server of an existing game
-	 *
-	 * @param pGame game
-	 */
-	void acquireGame(in GameInfo pGame);
 	
 	/**
 	 * player tries to join game

@@ -19,6 +19,7 @@ import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.GameStorage;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -148,17 +149,6 @@ public class Server extends Service {
 
 	/** implementation of the {@link IServer} interface */
 	private class Implementation extends IServer.Stub {
-
-		@Override
-		public void acquireGame(final GameInfo pGame) {
-			if(hostedGames.contains(pGame))
-			{
-				Log.e(TAG, getString(R.string.error_game_exists, pGame));
-				return;
-			}
-
-			hostedGames.add(pGame);
-		}
 
 		@Override
 		public synchronized void addPlayer(GameInfo pGame, final Player pPlayer)
@@ -293,16 +283,20 @@ public class Server extends Service {
 				return;
 			}
 
-			pGame.setState(GameState.ANNOUNCED);
-			hostedGames.add(pGame);
-
-			final Message message = new Message(Server.this, pGame);
-
 			try {
+				final GameStorage storage = new GameStorage(Server.this, pGame);
+
+				pGame.setState(GameState.ANNOUNCED);
+
+				final AnnouncementMessage message =
+					new AnnouncementMessage(Server.this, pGame,
+					                        storage.getMapName());
+
 				dtn.getService().sendToClients(message.getFile());
-			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+				hostedGames.add(pGame);
+			} catch (final Exception e) {
+				Log.e(TAG, "Could not announcement!", e);
 			}
 		}
 
@@ -386,9 +380,7 @@ public class Server extends Service {
 		{
 			if(pGame.getServer().equals(pPlayer))
 			{
-				// TODO find new server
-				final Player newServer = null;
-				announceNewServer(pGame, newServer);
+				// TODO remove player from map and stop game
 			}
 		}
 
@@ -396,17 +388,17 @@ public class Server extends Service {
 		 * @name messages
 		 * @{
 		 */
-		@SuppressWarnings("unused")
-		class NewServerMessage extends Message
+		class AnnouncementMessage extends Message
 		{
-			public NewServerMessage(final Context pContext,
-			                        final GameInfo pGame,
-			                        final Player pServer) {
+			public AnnouncementMessage(final Context pContext,
+			                           final GameInfo pGame,
+			                           final String pMapName) {
 				super(pContext, pGame);
-				new_server = pServer;
+				map = pMapName;
 			}
 
-			private final Player new_server;
+			@SerializedName("map")
+			private final String map;
 		}
 
 		class OutcomeMessage extends Message
@@ -440,26 +432,6 @@ public class Server extends Service {
 		private final GameList hostedGames = new GameList();
 
 		private final PlayerMap playerMap = new PlayerMap();
-
-		/**
-		 * server has quit, inform clients about new server
-		 *
-		 * @param pGame old game info
-		 * @param pServer new server
-		 */
-		private void announceNewServer(final GameInfo pGame,
-		                               final Player pServer)
-		{
-			final Message message =
-				new NewServerMessage(Server.this, pGame, pServer);
-
-			try {
-				dtn.getService().sendToClients(message.getFile());
-			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 
 		private String getListFileName() {
 			return "hosted_games.json";
