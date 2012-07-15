@@ -63,11 +63,6 @@ public final class GameInfo {
 		return team;
 	}
 
-	/** @return true if game is in given state */
-	public boolean isInState(final GameState pState) {
-		return state.equals(pState);
-	}
-
 	public void saveToFile(final Context pContext, final Game pGame)
 	            throws IOException {
 		final JsonWriter writer =

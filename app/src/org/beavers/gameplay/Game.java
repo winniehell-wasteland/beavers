@@ -1,6 +1,8 @@
 package org.beavers.gameplay;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.UUID;
 
 import android.content.Context;
@@ -56,9 +58,48 @@ public final class Game extends UniqueID implements Checkable {
 		return server;
 	}
 
+	/** @return game state or {@link GameState#UNKNOWN} if game info file does
+	 *          not exist
+	 */
+	public GameState getState(final Context pContext) {
+		try {
+			final GameInfo info = GameInfo.fromFile(pContext, this);
+			return info.getState();
+		} catch (final FileNotFoundException e) {
+			return GameState.UNKNOWN;
+		}
+	}
+
+	/** @return true if game is in given state(s) */
+	public boolean isInState(final Context pContext,
+	                         final GameState... pStates) {
+
+		final GameState myState = getState(pContext);
+
+		for(final GameState state : pStates) {
+			if(myState.equals(state)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/** @return true if given player is server of the game */
 	public boolean isServer(final Player pPlayer) {
 		return server.equals(pPlayer);
+	}
+
+	/**
+	 * set game state
+	 *
+	 * @throws IOException if game info could not be written
+	 */
+	public void setState(final Context pContext, final GameState newState)
+	            throws IOException {
+		final GameInfo info = GameInfo.fromFile(pContext, this);
+		info.setState(newState);
+		info.saveToFile(pContext, this);
 	}
 
 	@Override
