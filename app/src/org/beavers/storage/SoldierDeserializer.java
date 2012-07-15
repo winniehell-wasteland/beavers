@@ -31,8 +31,7 @@ class SoldierDeserializer implements JsonDeserializer<Soldier> {
     	final JsonObject object = pJson.getAsJsonObject();
 
     	if(!object.has("team") || !object.has("tile")
-    	   || !object.has("view_angle") || !object.has("waypoints")
-    	   || !object.get("waypoints").isJsonArray())
+    	   || !object.has("view_angle"))
     	{
     		return null;
     	}
@@ -42,35 +41,34 @@ class SoldierDeserializer implements JsonDeserializer<Soldier> {
 
     	soldier.setRotation(object.get("view_angle").getAsFloat());
 
-    	if(soldier != null) {
-    		return soldier;
-    	}
+    	if(object.has("waypoints") && object.get("waypoints").isJsonArray()) {
+	    	synchronized (currentSoldier) {
+	        	currentSoldier = soldier;
 
-    	synchronized (currentSoldier) {
-        	currentSoldier = soldier;
+		    	final JsonArray waypoints =
+		    		object.get("waypoints").getAsJsonArray();
 
-	    	final JsonArray waypoints = object.get("waypoints").getAsJsonArray();
+		    	final Iterator<JsonElement> it = waypoints.iterator();
 
-	    	final Iterator<JsonElement> it = waypoints.iterator();
+		    	final WayPoint firstWaypoint =
+		    		pContext.deserialize(it.next(), WayPoint.class);
 
-	    	final WayPoint firstWaypoint =
-	    		pContext.deserialize(it.next(), WayPoint.class);
+		    	if(firstWaypoint.getAim() != null)
+		    	{
+		    		soldier.getFirstWaypoint().setAim(
+		    			firstWaypoint.getAim().getTile());
+		    	}
 
-	    	if(firstWaypoint.getAim() != null)
-	    	{
-	    		soldier.getFirstWaypoint().setAim(
-	    			firstWaypoint.getAim().getTile());
+		    	while(it.hasNext())
+		    	{
+		    		final WayPoint waypoint =
+		    			pContext.deserialize(it.next(),WayPoint.class);
+
+		    		soldier.addWayPoint(waypoint);
+		    	}
+
+		    	currentSoldier = null;
 	    	}
-
-	    	while(it.hasNext())
-	    	{
-	    		final WayPoint waypoint =
-	    			pContext.deserialize(it.next(),WayPoint.class);
-
-	    		soldier.addWayPoint(waypoint);
-	    	}
-
-	    	currentSoldier = null;
     	}
 
         return soldier;
