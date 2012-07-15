@@ -1,5 +1,6 @@
 package org.beavers.gameplay;
 
+import java.io.FileNotFoundException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
@@ -616,7 +617,12 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		currentGame = getIntent().getParcelableExtra(Game.PARCEL_NAME);
-		currentGameInfo = GameInfo.fromFile(this, currentGame);
+
+		try {
+			currentGameInfo = GameInfo.fromFile(this, currentGame);
+		} catch (final FileNotFoundException e) {
+			finish();
+		}
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
