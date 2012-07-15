@@ -3,25 +3,28 @@ package org.beavers.gameplay;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.UUID;
 
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.widget.Checkable;
 
 /**
  * class to uniquely identify a game
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public final class Game extends UniqueID implements Checkable {
+public final class Game extends UniqueID {
 	/**
 	 * @name public constants
 	 * @{
 	 */
 	/** tag for JSON files */
 	public static final String JSON_TAG = "game";
+
+	/** {@link #JSON_TAG} for {@link Collection}s */
+	public static final String JSON_TAG_COLLECTION = "games";
 
 	/** name for parcel in intent extras */
 	public static final String PARCEL_NAME = Game.class.getName();
@@ -138,22 +141,5 @@ public final class Game extends UniqueID implements Checkable {
 	public File getDirectory(final Context pContext) {
 		return new File(pContext.getFilesDir().getAbsolutePath()
 		                + "/" + this);
-	}
-
-	private boolean is_checked = false;
-
-	@Override
-	public boolean isChecked() {
-		return is_checked;
-	}
-
-	@Override
-	public void setChecked(final boolean checked) {
-		is_checked = checked;
-	}
-
-	@Override
-	public void toggle() {
-		is_checked = !is_checked;
 	}
 }

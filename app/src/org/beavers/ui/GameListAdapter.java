@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Checkable;
 import android.widget.TextView;
 
 public abstract class GameListAdapter extends BaseAdapter {
@@ -102,24 +101,9 @@ public abstract class GameListAdapter extends BaseAdapter {
 		}
 	}
 
-	private class ViewHolder implements Checkable {
+	private class ViewHolder {
 		TextView txtName;
 		TextView txtServer;
 		TextView txtState;
-
-		private boolean checked = false;
-
-		@Override
-		public boolean isChecked() {
-			return checked;
-		}
-		@Override
-		public void setChecked(final boolean checked) {
-			this.checked = checked;
-		}
-		@Override
-		public void toggle() {
-			checked = !checked;
-		}
 	}
 }
