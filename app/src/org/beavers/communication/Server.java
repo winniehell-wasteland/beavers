@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,7 +67,11 @@ public class Server extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		implementation.loadPlayerMap();
+		try {
+			implementation.loadPlayerMap();
+		} catch (final ServerRemoteException e) {
+			e.log();
+		}
 
 		dtn = new DTNService.Connection();
 		final Intent intent = new Intent(Server.this, DTNService.class);
@@ -89,7 +96,11 @@ public class Server extends Service {
 			Log.e(TAG, "Interrupted while processing executor queue!", e);
 		}
 
-		implementation.savePlayerMap();
+		try {
+			implementation.savePlayerMap();
+		} catch (final ServerRemoteException e) {
+			e.log();
+		}
 
 		super.onDestroy();
 	}
@@ -108,7 +119,13 @@ public class Server extends Service {
 
 				@Override
 				public void run() {
-					implementation.handleData(fileName);
+					try {
+						implementation.handleData(fileName);
+					} catch (final ServerRemoteException e) {
+						Log.e(TAG, getString(R.string.error_dtn_receiving), e);
+					}
+
+					(new File(fileName)).delete();
 				}
 			});
 
@@ -140,6 +157,68 @@ public class Server extends Service {
 		private IServer service;
 	}
 
+	public class ServerRemoteException extends RemoteException {
+
+		/** @see {@link Serializable} */
+		private static final long serialVersionUID = 5092163419629856671L;
+
+		public ServerRemoteException(final int pResId,
+		                             final Object... pFormatArgs) {
+			this(pResId, null, pFormatArgs);
+		}
+
+
+		public ServerRemoteException(final int pResId,
+		                             final Exception pInnerException,
+		                             final Object... pFormatArgs) {
+			if(pFormatArgs.length > 0) {
+				message = getString(pResId, pFormatArgs);
+			} else {
+				message = getString(pResId);
+			}
+
+			innerException = pInnerException;
+		}
+
+		public Exception getInnerException() {
+			return innerException;
+		}
+
+		@Override
+		public String getMessage() {
+			return message;
+		}
+
+		@Override
+		public StackTraceElement[] getStackTrace() {
+			final ArrayList<StackTraceElement> stack =
+				new ArrayList<StackTraceElement>();
+
+			stack.addAll(Arrays.asList(super.getStackTrace()));
+			stack.addAll(Arrays.asList(innerException.getStackTrace()));
+
+			return stack.toArray(new StackTraceElement[0]);
+		}
+
+		public void log() {
+			if(innerException == null) {
+				Log.e(TAG, message);
+			}
+			else {
+				Log.e(TAG, message, innerException);
+			}
+		}
+
+		@Override
+		public void printStackTrace() {
+			super.printStackTrace();
+			innerException.printStackTrace();
+		}
+
+		private final Exception innerException;
+		private final String message;
+	}
+
 	/** communication service connection */
 	private DTNService.Connection dtn;
 
@@ -149,16 +228,25 @@ public class Server extends Service {
 	/** implementation of the {@link IServer} interface */
 	private class Implementation extends IServer.Stub {
 
+		public Implementation() {
+			Log.d(TAG, "Create player map...");
+
+			playerMap = new PlayerMap();
+		}
+
 		@Override
-		public synchronized void addPlayer(final Game pGame, final Player pPlayer)
+		public synchronized void addPlayer(final Game pGame,
+		                                   final Player pPlayer)
+		                         throws ServerRemoteException
 		{
 			Log.d(TAG, pPlayer.getName() + " joins "+pGame.getName());
 
 			// we already joined this game
 			if(!pGame.isInState(Server.this, GameState.JOINED)) {
-				Log.e(TAG, getString(R.string.error_wrong_state,
-				                     pGame, pGame.getState(Server.this)));
-				return;
+				throw new ServerRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Server.this)
+				);
 			}
 
 			final HashSet<Player> gamePlayers = playerMap.get(pGame);
@@ -177,14 +265,14 @@ public class Server extends Service {
 		@Override
 		public void distributeOutcome(final Game pGame,
 		                              final OutcomeContainer pOutcome)
+		            throws ServerRemoteException
 		{
 			final Message message = new OutcomeMessage(pGame, pOutcome);
 
 			try {
 				dtn.getService().sendToClients(message.saveToFile(Server.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ServerRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 
@@ -193,8 +281,10 @@ public class Server extends Service {
 		 *
 		 * @param pData file descriptor of payload file
 		 * @return true if handled
+		 * @throws ServerRemoteException
 		 */
-		public boolean handleData(final String pFileName) {
+		public boolean handleData(final String pFileName)
+		               throws ServerRemoteException {
 			final File input = new File(pFileName);
 
 			Log.i(TAG, "Processing "+input.length()+" bytes...");
@@ -207,8 +297,9 @@ public class Server extends Service {
 
 				json = (JsonObject) parser.parse(reader);
 			} catch (final FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ServerRemoteException(
+					R.string.error_dtn_receiving, e
+				);
 			}
 
 			if(json.has(Game.JSON_TAG) && json.has(Player.JSON_TAG))
@@ -226,8 +317,9 @@ public class Server extends Service {
 
 				if(game.isInState(Server.this, GameState.UNKNOWN))
 				{
-					Log.e(TAG, getString(R.string.error_not_hosted, game));
-					return false;
+					throw new ServerRemoteException(
+						R.string.error_game_not_hosted, game
+					);
 				}
 
 				final Player player =
@@ -235,8 +327,9 @@ public class Server extends Service {
 
 				if(!json.has(GameState.JSON_TAG))
 				{
-					Log.e(TAG, "JSON object does not contain game state!");
-					return false;
+					throw new ServerRemoteException(
+						R.string.error_json_missing_element, GameState.JSON_TAG
+					);
 				}
 
 				final GameState state =
@@ -254,10 +347,10 @@ public class Server extends Service {
 				{
 					if(!json.has(Soldier.JSON_TAG_COLLECTION))
 					{
-						Log.e(TAG,
-						      getString(R.string.error_incomplete_decisions,
-						                game, player));
-						return true;
+						throw new ServerRemoteException(
+							R.string.error_json_missing_element,
+							game, Soldier.JSON_TAG_COLLECTION
+						);
 					}
 
 					final JsonElement soldiers =
@@ -282,41 +375,57 @@ public class Server extends Service {
 		}
 
 		@Override
-		public void initiateGame(final Game pGame)
+		public void initiateGame(final Game pGame) throws ServerRemoteException
 		{
 			if(!pGame.isInState(Server.this, GameState.UNKNOWN))
 			{
-				Log.e(TAG, getString(R.string.error_game_exists, pGame));
-				return;
+				throw new ServerRemoteException(R.string.error_game_exists,
+				                                pGame);
 			}
 
+			final File dir = pGame.getDirectory(Server.this);
+
+			if(dir.exists()) {
+				throw new ServerRemoteException(
+					R.string.error_game_dir_exists, pGame
+				);
+			}
+
+			dir.mkdirs();
+
+			final String map = getSettings().getDefaultMapName();
+
 			try {
-				final File dir = pGame.getDirectory(Server.this);
-
-				if(dir.exists()) {
-					Log.e(TAG, "Game directory already exists!");
-					return;
-				}
-
-				dir.mkdirs();
-
-				final String map = getSettings().getDefaultMapName();
-
 				final GameInfo info = new GameInfo(map, 0);
 				info.setState(GameState.ANNOUNCED);
 				info.saveToFile(Server.this, pGame);
+			} catch (final IOException e) {
+				throw new ServerRemoteException(
+					R.string.error_game_save_state, e, pGame
+				);
+			}
 
+			try {
 				final Message message = new AnnouncementMessage(pGame, map);
-
 				dtn.getService().sendToClients(message.saveToFile(Server.this));
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not announce!", e);
+			} catch (final RemoteException e) {
+				throw new ServerRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 
 		@Override
-		public void loadPlayerMap() {
-			JsonReader reader;
+		public void loadPlayerMap() throws ServerRemoteException {
+
+			/*
+			try {
+				Log.d(TAG, "loading: "+StreamUtils.readFully(new FileInputStream(getListFileName())));
+			} catch (final Exception e) {
+				Log.e(TAG, e.getMessage());
+				return;
+			}
+			*/
+
+			final JsonReader reader;
 			try {
 				reader = CustomGSON.getReader(Server.this, getListFileName());
 			} catch (final FileNotFoundException e) {
@@ -326,36 +435,94 @@ public class Server extends Service {
 
 			synchronized (playerMap) {
 				final Gson gson = CustomGSON.getInstance();
-				playerMap = gson.fromJson(reader, playerMap.getClass());
+				playerMap.clear();
+
+				try {
+					reader.beginArray();
+
+					while(reader.hasNext()) {
+						reader.beginObject();
+
+						CustomGSON.assertElement(reader, Game.JSON_TAG);
+						final Game game = gson.fromJson(reader, Game.class);
+
+						CustomGSON.assertElement(
+							reader, Player.JSON_TAG_COLLECTION
+						);
+						final PlayerSet players = new PlayerSet();
+
+						reader.beginArray();
+						while(reader.hasNext()) {
+							players.add(
+								(Player) gson.fromJson(reader, Player.class)
+							);
+						}
+						reader.endArray();
+
+						reader.endObject();
+
+						playerMap.put(game, players);
+					}
+
+					reader.endArray();
+				} catch(final Exception e) {
+					throw new ServerRemoteException(
+						R.string.error_json_reading, e
+					);
+				} finally {
+					try {
+						reader.close();
+					} catch (final IOException e) {
+						throw new ServerRemoteException(
+							R.string.error_json_reading, e
+						);
+					}
+				}
 			}
 		}
 
 		@Override
-		public void savePlayerMap() {
-			final JsonWriter writer =
-				CustomGSON.getWriter(Server.this, getListFileName());
+		public void savePlayerMap() throws ServerRemoteException {
+			JsonWriter writer;
 
-			if(writer == null) {
-				return;
+			try {
+				writer = CustomGSON.getWriter(Server.this, getListFileName());
+			} catch (final FileNotFoundException e) {
+				throw new ServerRemoteException(R.string.error_json_writing, e);
 			}
 
 			synchronized(playerMap) {
 				final Gson gson = CustomGSON.getInstance();
-				gson.toJson(playerMap, playerMap.getClass(), writer);
-			}
-		}
 
-		/**
-		 * player quits game
-		 *
-		 * @param pGame game
-		 * @param pPlayer player
-		 */
-		public void onPlayerAborts(final Game pGame, final Player pPlayer)
-		{
-			if(pGame.getServer().equals(pPlayer))
-			{
-				// TODO remove player from map and stop game
+				try {
+					writer.beginArray();
+
+					for(final Game game : playerMap.keySet()) {
+						writer.beginObject();
+
+						writer.name(Game.JSON_TAG);
+						gson.toJson(game, Game.class, writer);
+
+						writer.name(Player.JSON_TAG_COLLECTION);
+						gson.toJson(playerMap.get(game), PlayerSet.class, writer);
+
+						writer.endObject();
+					}
+
+					writer.endArray();
+				} catch (final Exception e) {
+					throw new ServerRemoteException(
+						R.string.error_json_writing, e
+					);
+				} finally {
+					try {
+						writer.close();
+					} catch (final IOException e) {
+						throw new ServerRemoteException(
+							R.string.error_json_writing, e
+						);
+					}
+				}
 			}
 		}
 
@@ -401,27 +568,41 @@ public class Server extends Service {
 		 * @}
 		 */
 
-		private PlayerMap playerMap = new PlayerMap();
+		private final PlayerMap playerMap;
 
 		private String getListFileName() {
-			return getFilesDir() + "/hosted_games.json";
+			return getFilesDir() + "/player_map.json";
+		}
+
+		/**
+		 * player quits game
+		 *
+		 * @param pGame game
+		 * @param pPlayer player
+		 */
+		private void onPlayerAborts(final Game pGame, final Player pPlayer)
+		{
+			// TODO remove player from map and stop game
 		}
 
 		/**
 		 * get decisions from player
 		 *
-		 * @param game
-		 * @param player
-		 * @param decisions
+		 * @param pGame
+		 * @param pPlayer
+		 * @param pSoldiers
+		 * @throws ServerRemoteException
 		 */
 		private void onReceiveDecisions(final Game pGame, final Player pPlayer,
 		                                final String pSoldiers)
+		             throws ServerRemoteException
 		{
 			if(!pGame.isInState(Server.this, GameState.PLANNING_PHASE))
 			{
-				Log.e(TAG, getString(R.string.error_wrong_state,
-				                     pGame, pGame.getState(Server.this)));
-				return;
+				throw new ServerRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Server.this)
+				);
 			}
 
 			// TODO handle decisions
@@ -432,23 +613,20 @@ public class Server extends Service {
 		 *
 		 * @param pContext activity context
 		 * @param pGame game
+		 * @throws ServerRemoteException
 		 */
 		private void startPlanningPhase(final Game pGame)
+		             throws ServerRemoteException
 		{
 			Log.d(TAG, "Starting planning phase...");
 
+			// we are not part of our game
 			if(!pGame.isInState(Server.this, GameState.JOINED))
 			{
-				Log.e(TAG, getString(R.string.error_wrong_state,
-				                     pGame, pGame.getState(Server.this)));
-				return;
-			}
-
-			try {
-				pGame.setState(Server.this, GameState.PLANNING_PHASE);
-			} catch (final IOException e) {
-				Log.e(TAG, "Could not store game info!", e);
-				return;
+				throw new ServerRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Server.this)
+				);
 			}
 
 			final Message message = new PlanningPhaseMessage(pGame);
@@ -456,8 +634,7 @@ public class Server extends Service {
 			try {
 				dtn.getService().sendToClients(message.saveToFile(Server.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ServerRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 	};

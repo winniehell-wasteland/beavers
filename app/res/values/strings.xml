@@ -10,17 +10,24 @@
     <string name="context_menu_shoot">Shoot</string>
     <string name="context_menu_waypoint_remove">Remove</string>
     <string name="context_menu_waypoint">Waypoint</string>
+    
     <string name="error_already_announced">Game %1$s was already announced!</string>
-    <string name="error_binding_client_failed">Could not bind client service!</string>
-    <string name="error_binding_server_failed">Could not bind server service!</string>
+    <string name="error_binding_client">Could not bind client service!</string>
+    <string name="error_binding_server">Could not bind server service!</string>
+    <string name="error_dtn_receiving">Could not handle DTN message!</string>
+    <string name="error_dtn_sending">Could not send DTN message!</string>
+    <string name="error_game_dir_exists">Directory for game %1$s already exists!</string>
     <string name="error_game_exists">Game %1$s already exists!</string>
-    <string name="error_incomplete_decisions">Received incomplete decisions for game %1$s from %2$s!</string>
-    <string name="error_json">Could not generate JSON!</string>
-    <string name="error_not_announced">Game %1$s was not announced!</string>
-    <string name="error_not_hosted">Could not find game %1$s!</string>
-    <string name="error_not_running">Game %1$s is not running!</string>
-    <string name="error_sending_decisions_failed">Could send decisions to server!</string>
-    <string name="error_wrong_state">Game %1$s is in wrong state! (%2$s)</string>
+    <string name="error_game_not_announced">Game %1$s was not announced!</string>
+    <string name="error_game_not_hosted">Could not find game %1$s!</string>
+    <string name="error_game_not_running">Game %1$s is not running!</string>
+    <string name="error_game_save_state">State of game %1$s could not be saved!</string>
+    <string name="error_game_wrong_state">Game %1$s is in wrong state! (%2$s)</string>
+    <string name="error_json_missing_element">JSON data does not contain "%1$s"!</string>
+    <string name="error_json_reading">Could not read JSON!</string>
+    <string name="error_json_writing">Could not write JSON!</string>
+    <!-- string name="error_sending_decisions_failed">Could send decisions to server!</string-->
+    
     <string name="menu_execute">Execute</string>
     <string name="menu_help">Help</string>
     <string name="menu_join_game">Join game</string>

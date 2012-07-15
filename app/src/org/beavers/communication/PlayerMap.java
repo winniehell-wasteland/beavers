@@ -1,29 +1,30 @@
 package org.beavers.communication;
 
+import java.io.Serializable;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import org.beavers.gameplay.Game;
-import org.beavers.gameplay.Player;
 
 /**
  * map for players of a all games
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-@SuppressWarnings("serial")
-public class PlayerMap extends HashMap<Game, HashSet<Player>> {
+public class PlayerMap extends HashMap<Game, PlayerSet> {
+	/** @see {@link Serializable} */
+	private static final long serialVersionUID = 332279770783868241L;
+
 	public PlayerMap() {
 		super();
 	}
 
 	@Override
-	public HashSet<Player> get(final Object key) {
+	public PlayerSet get(final Object key) {
 		if(key instanceof Game)
 		{
 			if(!containsKey(key))
 			{
-				put((Game) key, new HashSet<Player>());
+				put((Game) key, new PlayerSet());
 			}
 
 			return super.get(key);

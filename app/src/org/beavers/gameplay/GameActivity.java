@@ -49,6 +49,7 @@ import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.Textures;
 import org.beavers.communication.Client;
+import org.beavers.communication.Client.ClientRemoteException;
 import org.beavers.communication.Server;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IMovableObject;
@@ -253,9 +254,9 @@ public class GameActivity extends BaseGameActivity
 			// there is an something on the tile
 			if(storage.isTileOccupied(tile))
 			{
-				try {
-					if(storage.hasSoldierOnTile(tile))
-					{
+				if(storage.hasSoldierOnTile(tile))
+				{
+					try {
 						final Soldier soldier = storage.getSoldierByTile(tile);
 
 						if(soldier.equals(selectedSoldier))
@@ -266,9 +267,13 @@ public class GameActivity extends BaseGameActivity
 						{
 							selectSoldier(soldier);
 						}
+					} catch (final UnexpectedTileContentException e) {
+						Log.e(TAG, e.getMessage());
 					}
-					else if(storage.hasWaypointOnTile(tile))
-					{
+				}
+				else if(storage.hasWaypointOnTile(tile))
+				{
+					try {
 						final WayPoint waypoint =
 							storage.getWaypointByTile(tile);
 
@@ -289,10 +294,9 @@ public class GameActivity extends BaseGameActivity
 						{
 							selectedWaypoint = waypoint;
 						}
+					} catch (final UnexpectedTileContentException e) {
+						Log.e(TAG, e.getMessage());
 					}
-				} catch (final UnexpectedTileContentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
 
 				if(selectedWaypoint != null)
@@ -486,8 +490,7 @@ public class GameActivity extends BaseGameActivity
 				client.getService().sendDecisions(currentGame,
 				                                  gson.toJson(mySoldiers));
 			} catch (final RemoteException e) {
-				Log.e(TAG, getString(R.string.error_sending_decisions_failed), e);
-				return true;
+				((ClientRemoteException)e).log();
 			}
 
 			// deselect soldier
@@ -605,14 +608,14 @@ public class GameActivity extends BaseGameActivity
 		Intent intent = new Intent(GameActivity.this, Client.class);
 		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, getString(R.string.error_binding_client_failed));
+			Log.e(TAG, getString(R.string.error_binding_client));
 			return;
 		}
 
 		intent = new Intent(GameActivity.this, Server.class);
 		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, getString(R.string.error_binding_server_failed));
+			Log.e(TAG, getString(R.string.error_binding_server));
 			return;
 		}
 

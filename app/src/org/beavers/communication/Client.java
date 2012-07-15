@@ -1,10 +1,13 @@
 package org.beavers.communication;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Type;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.anddev.andengine.util.StreamUtils;
 import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
@@ -37,7 +41,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -78,7 +81,12 @@ public class Client extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		implementation.loadGameList();
+		try {
+			implementation.loadGameList();
+		} catch (final ClientRemoteException e) {
+			e.log();
+		}
+
 		implementation.addDummyGames();
 
 		dtn = new DTNService.Connection();
@@ -104,7 +112,11 @@ public class Client extends Service {
 			Log.e(TAG, "Interrupted while processing executor queue!", e);
 		}
 
-		implementation.saveGameList();
+		try {
+			implementation.saveGameList();
+		} catch (final ClientRemoteException e) {
+			e.log();
+		}
 
 		super.onDestroy();
 	}
@@ -123,7 +135,13 @@ public class Client extends Service {
 
 				@Override
 				public void run() {
-					implementation.handleData(fileName);
+					try {
+						implementation.handleData(fileName);
+					} catch (final ClientRemoteException e) {
+						Log.e(TAG, getString(R.string.error_dtn_receiving), e);
+					}
+
+					(new File(fileName)).delete();
 				}
 			});
 
@@ -158,6 +176,68 @@ public class Client extends Service {
 		private IClient service;
 	}
 
+	public class ClientRemoteException extends RemoteException {
+
+		/** @see {@link Serializable} */
+		private static final long serialVersionUID = 5092163419629856671L;
+
+		public ClientRemoteException(final int pResId,
+		                             final Object... pFormatArgs) {
+			this(pResId, null, pFormatArgs);
+		}
+
+
+		public ClientRemoteException(final int pResId,
+		                             final Exception pInnerException,
+		                             final Object... pFormatArgs) {
+			if(pFormatArgs.length > 0) {
+				message = getString(pResId, pFormatArgs);
+			} else {
+				message = getString(pResId);
+			}
+
+			innerException = pInnerException;
+		}
+
+		public Exception getInnerException() {
+			return innerException;
+		}
+
+		@Override
+		public String getMessage() {
+			return message;
+		}
+
+		@Override
+		public StackTraceElement[] getStackTrace() {
+			final ArrayList<StackTraceElement> stack =
+				new ArrayList<StackTraceElement>();
+
+			stack.addAll(Arrays.asList(super.getStackTrace()));
+			stack.addAll(Arrays.asList(innerException.getStackTrace()));
+
+			return stack.toArray(new StackTraceElement[0]);
+		}
+
+		public void log() {
+			if(innerException == null) {
+				Log.e(TAG, message);
+			}
+			else {
+				Log.e(TAG, message, innerException);
+			}
+		}
+
+		@Override
+		public void printStackTrace() {
+			super.printStackTrace();
+			innerException.printStackTrace();
+		}
+
+		private final Exception innerException;
+		private final String message;
+	}
+
 	/** communication service connection */
 	private DTNService.Connection dtn;
 
@@ -166,6 +246,13 @@ public class Client extends Service {
 
 	private class Implementation extends IClient.Stub {
 
+		public Implementation() {
+			Log.d(TAG, "Creating game lists...");
+
+			announcedGames = Collections.synchronizedSet(new HashSet<Game>());
+			runningGames = Collections.synchronizedSet(new HashSet<Game>());
+		}
+
 		/** just for debugging */
 		@Override
 		public void addDummyGames() {
@@ -173,22 +260,22 @@ public class Client extends Service {
 
 			game.getDirectory(Client.this).mkdirs();
 
-			final GameInfo info = new GameInfo("test", 0);
 			try {
+				final GameInfo info = new GameInfo("test", 0);
 				info.saveToFile(Client.this, game);
 			} catch (final IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Log.e(TAG, "saving game info failed!", e);
 			}
 
 			announcedGames.add(game);
 		}
 
 		@Override
-		public void abortGame(final Game pGame) {
+		public void abortGame(final Game pGame) throws ClientRemoteException {
 			if (!runningGames.contains(pGame)) {
-				Log.e(TAG, getString(R.string.error_not_running, pGame));
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_not_running, pGame
+				);
 			}
 
 			runningGames.remove(pGame);
@@ -202,8 +289,7 @@ public class Client extends Service {
 				dtn.getService().sendToServer(pGame.getServer(),
 				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 
@@ -222,8 +308,10 @@ public class Client extends Service {
 		 *
 		 * @param fileName file descriptor of payload file
 		 * @return true if handled
+		 * @throws ClientRemoteException
 		 */
-		public boolean handleData(final String pFileName) {
+		public boolean handleData(final String pFileName)
+		               throws ClientRemoteException {
 			final File input = new File(pFileName);
 
 			Log.i(TAG, "Processing "+input.length()+" bytes...");
@@ -237,14 +325,16 @@ public class Client extends Service {
 
 				json = (JsonObject) parser.parse(reader);
 			} catch (final FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(
+					R.string.error_dtn_receiving, e
+				);
 			}
 
 			if(!json.has(Game.JSON_TAG))
 			{
-				Log.e(TAG, "JSON object does not contain game!");
-				return false;
+				throw new ClientRemoteException(
+					R.string.error_json_missing_element, Game.JSON_TAG
+				);
 			}
 
 			final Game game =
@@ -253,8 +343,9 @@ public class Client extends Service {
 
 			if(!json.has(GameState.JSON_TAG))
 			{
-				Log.e(TAG, "JSON object does not contain game state!");
-				return false;
+				throw new ClientRemoteException(
+					R.string.error_json_missing_element, GameState.JSON_TAG
+				);
 			}
 
 			final GameState state =
@@ -264,17 +355,22 @@ public class Client extends Service {
 			case ANNOUNCED:
 			{
 				if(announcedGames.contains(game)) {
-					Log.e(TAG, getString(R.string.error_already_announced,
-						                 game));
+					throw new ClientRemoteException(
+						R.string.error_already_announced, game
+					);
 				}
 				else {
-					if(!json.has("map")) {
-						Log.e(TAG, "Map name is missing!");
+					if(!json.has(GameInfo.JSON_TAG_MAP)) {
+						throw new ClientRemoteException(
+							R.string.error_json_missing_element,
+							GameInfo.JSON_TAG_MAP
+						);
 					}
-					else {
-						onReceiveAnnouncedGame(game,
-						                       json.get("map").getAsString());
-					}
+
+					final String map =
+						json.get(GameInfo.JSON_TAG_MAP).getAsString();
+
+					onReceiveAnnouncedGame(game, map);
 				}
 
 				return true;
@@ -283,9 +379,17 @@ public class Client extends Service {
 			{
 				if(runningGames.contains(game))
 				{
-					onReceiveOutcome(game,
-					                 gson.fromJson(json.get("outcome"),
-					                               OutcomeContainer.class));
+					if(!json.has(OutcomeContainer.JSON_TAG)) {
+						throw new ClientRemoteException(
+							R.string.error_json_missing_element,
+							OutcomeContainer.JSON_TAG
+						);
+					}
+
+					final OutcomeContainer outcome =
+						gson.fromJson(json.get(OutcomeContainer.JSON_TAG),
+						              OutcomeContainer.class);
+					onReceiveOutcome(game, outcome);
 				}
 
 				return true;
@@ -295,11 +399,17 @@ public class Client extends Service {
 
 				if(runningGames.contains(game) || announcedGames.contains(game))
 				{
-					final Type type =
-						new TypeToken<HashSet<Player>>() {}.getType();
+					if(!json.has(Player.JSON_TAG_COLLECTION)) {
+						throw new ClientRemoteException(
+							R.string.error_json_missing_element,
+							OutcomeContainer.JSON_TAG
+						);
+					}
 
-					final HashSet<Player> players =
-						gson.fromJson(json.get("players"), type);
+					final PlayerSet players =
+						gson.fromJson(json.get(Player.JSON_TAG_COLLECTION),
+						PlayerSet.class
+					);
 
 					onReceiveStartPlanningPhase(game, players);
 				}
@@ -314,16 +424,18 @@ public class Client extends Service {
 		}
 
 		@Override
-		public void joinGame(final Game pGame) {
+		public void joinGame(final Game pGame) throws ClientRemoteException {
 			if (!announcedGames.contains(pGame)) {
-				Log.e(TAG, getString(R.string.error_not_announced, pGame));
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_not_announced, pGame
+				);
 			}
 
 			if (!pGame.isInState(Client.this, GameState.ANNOUNCED)) {
-				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState(Client.this)));
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
 			}
 
 			final Message message =
@@ -334,22 +446,28 @@ public class Client extends Service {
 				dtn.getService().sendToServer(pGame.getServer(),
 				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(R.string.error_dtn_sending, e);
 			}
 
 			try {
 				pGame.setState(Client.this, GameState.JOINED);
 			} catch (final IOException e) {
-				Log.e(TAG, "Could not store game info!", e);
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_save_state, e, pGame
+				);
 			}
 
 			broadcastGameInfo(pGame);
 		}
 
 		@Override
-		public void loadGameList() {
+		public void loadGameList() throws ClientRemoteException {
+			try {
+				Log.d(TAG, "loading: "+StreamUtils.readFully(new FileInputStream(getListFileName())));
+			} catch (final Exception e) {
+				Log.e(TAG, e.getMessage());
+				return;
+			}
 
 			JsonReader reader;
 			try {
@@ -360,56 +478,69 @@ public class Client extends Service {
 			}
 
 			synchronized (runningGames) {
-
 				final Gson gson = CustomGSON.getInstance();
-				runningGames = gson.fromJson(reader, runningGames.getClass());
+				runningGames.clear();
+
+				try {
+					reader.beginArray();
+					while(reader.hasNext()) {
+						final Game game = gson.fromJson(reader, Game.class);
+						runningGames.add(game);
+					}
+					reader.endArray();
+				} catch (final Exception e) {
+					throw new ClientRemoteException(
+						R.string.error_json_reading, e
+					);
+				}
 			}
 		}
 
 		@Override
-		public void saveGameList() {
-
-			final Gson gson = CustomGSON.getInstance();
-			final JsonWriter writer = CustomGSON.getWriter(Client.this,
-			                                               getListFileName());
-
-			if(writer == null) {
-				return;
-			}
+		public void saveGameList() throws ClientRemoteException {
+			JsonWriter writer;
 
 			try {
-				writer.beginObject();
+				writer = CustomGSON.getWriter(Client.this, getListFileName());
+			} catch (final FileNotFoundException e) {
+				throw new ClientRemoteException(R.string.error_json_writing, e);
+			}
 
-				synchronized (runningGames) {
+			synchronized (runningGames) {
+				final Gson gson = CustomGSON.getInstance();
 
-					writer.name("games");
-					writer.beginArray();
-					for(final Game game : runningGames) {
-						gson.toJson(game, GameInfo.class, writer);
+				try {
+					gson.toJson(runningGames, runningGames.getClass(), writer);
+				} catch (final Exception e) {
+					throw new ClientRemoteException(
+						R.string.error_json_writing, e
+					);
+				} finally {
+					try {
+						writer.close();
+					} catch (final IOException e) {
+						throw new ClientRemoteException(
+							R.string.error_json_writing, e
+						);
 					}
-					writer.endArray();
 				}
-
-				writer.endObject();
-
-				writer.close();
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not write JSON file!", e);
-				return;
 			}
 		}
 
 		@Override
-		public void sendDecisions(final Game pGame, final String pSoldiers) {
+		public void sendDecisions(final Game pGame, final String pSoldiers)
+		            throws ClientRemoteException {
 			if (!runningGames.contains(pGame)) {
-				Log.e(TAG, getString(R.string.error_not_running, pGame));
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_not_running, pGame
+				);
 			}
 
 			if (!pGame.isInState(Client.this, GameState.PLANNING_PHASE)) {
-				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState(Client.this)));
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
 			}
 
 			final Message message =
@@ -420,8 +551,7 @@ public class Client extends Service {
 				dtn.getService().sendToServer(pGame.getServer(),
 				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 
@@ -463,10 +593,8 @@ public class Client extends Service {
 		 * @name game containers
 		 * @{
 		 */
-		private final Set<Game> announcedGames =
-			Collections.synchronizedSet(new HashSet<Game>());
-		private Set<Game> runningGames =
-			Collections.synchronizedSet(new HashSet<Game>());
+		private final Set<Game> announcedGames;
+		private final Set<Game> runningGames;
 		/**
 		 * @}
 		 */
@@ -495,36 +623,41 @@ public class Client extends Service {
 		 *
 		 * @param pGame new game
 		 * @param pMapName name of the game's map
+		 * @throws ClientRemoteException
 		 */
 		private void onReceiveAnnouncedGame(final Game pGame,
-		                                    final String pMapName) {
-			try {
-				if(!pGame.isServer(getSettings().getPlayer()))
-				{
-					final File dir = pGame.getDirectory(Client.this);
+		                                    final String pMapName)
+		             throws ClientRemoteException {
+			if(!pGame.isServer(getSettings().getPlayer()))
+			{
+				final File dir = pGame.getDirectory(Client.this);
 
-					if(dir.exists()) {
-						Log.e(TAG, "Game directory already exists!");
-						return;
-					}
+				if(dir.exists()) {
+					throw new ClientRemoteException(
+						R.string.error_game_dir_exists, pGame
+					);
+				}
 
-					dir.mkdirs();
+				dir.mkdirs();
 
+				try {
 					final GameInfo info = new GameInfo(pMapName, 1);
 					info.setState(GameState.ANNOUNCED);
 					info.saveToFile(Client.this, pGame);
+				} catch (final IOException e) {
+					throw new ClientRemoteException(
+						R.string.error_game_save_state, e, pGame
+					);
 				}
+			}
 
-				announcedGames.add(pGame);
-				broadcastGameInfo(pGame);
+			announcedGames.add(pGame);
+			broadcastGameInfo(pGame);
 
-				if(pGame.isServer(getSettings().getPlayer()))
-				{
-					// auto join own game
-					joinGame(pGame);
-				}
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not handle announced game!", e);
+			// auto join own game
+			if(pGame.isServer(getSettings().getPlayer()))
+			{
+				joinGame(pGame);
 			}
 		}
 
@@ -543,29 +676,31 @@ public class Client extends Service {
 		 * start planning phase
 		 *
 		 * @param pGame running game
+		 * @throws ClientRemoteException
 		 */
-		private void onReceiveStartPlanningPhase(
-			final Game pGame, final HashSet<Player> players) {
+		private void onReceiveStartPlanningPhase(final Game pGame,
+		                                         final PlayerSet pPlayers)
+		             throws ClientRemoteException {
 
 			if(!pGame.isInState(Client.this, GameState.JOINED,
 			                                 GameState.EXECUTION_PHASE)) {
 
-				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState(Client.this)));
-
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
 			}
 
 			if(pGame.isInState(Client.this, GameState.JOINED))
 			{
 				announcedGames.remove(pGame);
 
-				if(players.contains(getSettings().getPlayer()))
+				if(pPlayers.contains(getSettings().getPlayer()))
 				{
 					runningGames.add(pGame);
 				}
 			}
-			else if(!players.contains(getSettings().getPlayer()))
+			else if(!pPlayers.contains(getSettings().getPlayer()))
 			{
 				// TODO do something, we got kicked out!
 			}
@@ -574,8 +709,9 @@ public class Client extends Service {
 			try {
 				pGame.setState(Client.this, GameState.PLANNING_PHASE);
 			} catch (final IOException e) {
-				Log.e(TAG, "Could not store game info!", e);
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_save_state, pGame, e
+				);
 			}
 
 			broadcastGameInfo(pGame);
