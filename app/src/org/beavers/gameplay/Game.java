@@ -6,9 +6,16 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.UUID;
 
+import org.beavers.storage.CustomGSON;
+import org.beavers.storage.SoldierList;
+
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import com.google.gson.JsonElement;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * class to uniquely identify a game
@@ -66,6 +73,27 @@ public final class Game extends UniqueID {
 		}
 	}
 
+	public SoldierList getDecisions(final Context pContext, final int pTeam)
+	                   throws IOException {
+		if(!hasDecisions(pContext, pTeam)) {
+			return null;
+		}
+
+		final JsonReader reader =
+			CustomGSON.getReader(pContext, getDecisionsFile(pContext, pTeam));
+
+		try {
+			return CustomGSON.getInstance().fromJson(reader, SoldierList.class);
+		} finally {
+			reader.close();
+		}
+	}
+
+	/** @return game directory */
+	public String getDirectory(final Context pContext) {
+		return pContext.getFilesDir().getAbsolutePath() + "/" + this;
+	}
+
 	/** @return server of the game */
 	public Player getServer() {
 		return server;
@@ -81,6 +109,11 @@ public final class Game extends UniqueID {
 		} catch (final FileNotFoundException e) {
 			return GameState.UNKNOWN;
 		}
+	}
+
+	/** @return true if there is a decisions file for this team */
+	public boolean hasDecisions(final Context pContext, final int pTeam) {
+		return new File(getDecisionsFile(pContext, pTeam)).exists();
 	}
 
 	/** @return true if game is in given state(s) */
@@ -103,6 +136,13 @@ public final class Game extends UniqueID {
 		return server.equals(pPlayer);
 	}
 
+	public void saveDecisions(final Context pContext,
+	                          final int pTeam, final SoldierList pDecisions)
+	            throws IOException {
+		writeDecisions(pContext, pTeam,
+		               CustomGSON.getInstance().toJsonTree(pDecisions));
+	}
+
 	/**
 	 * set game state
 	 *
@@ -118,6 +158,17 @@ public final class Game extends UniqueID {
 	@Override
 	public String toString() {
 		return server.toString()+"/"+super.toString();
+	}
+
+	public void writeDecisions(final Context pContext,
+	                           final int pTeam, final JsonElement pDecisions)
+	            throws IOException {
+		final JsonWriter writer =
+			CustomGSON.getWriter(pContext, getDecisionsFile(pContext, pTeam));
+
+		CustomGSON.getInstance().toJson(pDecisions, writer);
+
+		writer.close();
 	}
 
 	@Override
@@ -148,8 +199,7 @@ public final class Game extends UniqueID {
     	server = pParcel.readParcelable(Player.class.getClassLoader());
 	}
 
-	public File getDirectory(final Context pContext) {
-		return new File(pContext.getFilesDir().getAbsolutePath()
-		                + "/" + this);
+	private String getDecisionsFile(final Context pContext, final int pTeam) {
+		return getDirectory(pContext) + "/decisions-" + pTeam + ".json";
 	}
 }

@@ -26,10 +26,12 @@
 	<string name="error_dtn_sending">Could not send DTN message!</string>
 	<string name="error_game_dir_exists">Directory for game %1$s already exists!</string>
 	<string name="error_game_exists">Game %1$s already exists!</string>
+	<string name="error_game_load_decisions">Could not load decisions for game %1$s!</string>
 	<string name="error_game_not_announced">Game %1$s was not announced!</string>
 	<string name="error_game_not_hosted">Could not find game %1$s!</string>
 	<string name="error_game_not_running">Game %1$s is not running!</string>
 	<string name="error_game_save_state">State of game %1$s could not be saved!</string>
+	<string name="error_game_write_decisions">Could not write decisions file for game %1$s!</string>
 	<string name="error_game_wrong_state">Game %1$s is in wrong state! (%2$s)</string>
 	<string name="error_json_missing_element">JSON data does not contain "%1$s"!</string>
 	<string name="error_json_reading">Could not read JSON!</string>

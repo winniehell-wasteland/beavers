@@ -24,8 +24,8 @@ import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
-import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.SoldierList;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -246,7 +246,7 @@ public class Client extends Service {
 		public void addDummyGames() {
 			final Game game = new Game(new Player(UUID.randomUUID(), "playa"), UUID.randomUUID(), "foooooooo");
 
-			game.getDirectory(Client.this).mkdirs();
+			new File(game.getDirectory(Client.this)).mkdirs();
 
 			try {
 				final GameInfo info = new GameInfo("test", 0);
@@ -518,7 +518,7 @@ public class Client extends Service {
 		}
 
 		@Override
-		public void sendDecisions(final Game pGame, final String pSoldiers)
+		public void sendDecisions(final Game pGame)
 		            throws ClientRemoteException {
 			if (!runningGames.contains(pGame)) {
 				throw new ClientRemoteException(
@@ -533,9 +533,22 @@ public class Client extends Service {
 				);
 			}
 
+			SoldierList decisions;
+
+			try {
+				GameInfo info;
+				info = GameInfo.fromFile(Client.this, pGame);
+				decisions = pGame.getDecisions(Client.this, info.getTeam());
+			} catch (final IOException e) {
+				throw new ClientRemoteException(
+					R.string.error_game_load_decisions, e,
+					pGame
+				);
+			}
+
 			final Message message =
 				new DecissionMessage(getSettings().getPlayer(),
-				                     pGame, pSoldiers);
+				                     pGame, decisions);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
@@ -566,14 +579,14 @@ public class Client extends Service {
 		class DecissionMessage extends ClientMessage
 		{
 			public DecissionMessage(final Player pPlayer, final Game pGame,
-			                        final String pSoldiers) {
+			                        final SoldierList pDecisions) {
 				super(pGame, pPlayer, GameState.PLANNING_PHASE);
 
-				soldiers = pSoldiers;
+				decisions = pDecisions;
 			}
 
-			@SerializedName(Soldier.JSON_TAG_COLLECTION)
-			private final String soldiers;
+			@SerializedName(SoldierList.JSON_TAG)
+			private final SoldierList decisions;
 		}
 		/**
 		 * @}
@@ -620,7 +633,7 @@ public class Client extends Service {
 		             throws ClientRemoteException {
 			if(!pGame.isServer(getSettings().getPlayer()))
 			{
-				final File dir = pGame.getDirectory(Client.this);
+				final File dir = new File(pGame.getDirectory(Client.this));
 
 				if(dir.exists()) {
 					throw new ClientRemoteException(

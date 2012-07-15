@@ -1,7 +1,7 @@
 package org.beavers.gameplay;
 
 import java.io.FileNotFoundException;
-import java.util.HashSet;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,7 +58,6 @@ import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
-import org.beavers.storage.CustomGSON;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
 
@@ -82,8 +81,6 @@ import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
-
-import com.google.gson.Gson;
 
 /**
  * Activity for game display
@@ -481,16 +478,25 @@ public class GameActivity extends BaseGameActivity
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
-
-			final HashSet<Soldier> mySoldiers =
-				storage.getSoldiersByTeam(currentGameInfo.getTeam());
+		{
+			try {
+				currentGame.saveDecisions(
+					this, currentGameInfo.getTeam(),
+					storage.getSoldiersByTeam(currentGameInfo.getTeam())
+				);
+			} catch (final IOException e) {
+				Log.e(TAG,
+					getString(R.string.error_game_write_decisions, currentGame),
+					e
+				);
+				return true;
+			}
 
 			try {
-				final Gson gson = CustomGSON.getInstance();
-				client.getService().sendDecisions(currentGame,
-				                                  gson.toJson(mySoldiers));
+				client.getService().sendDecisions(currentGame);
 			} catch (final RemoteException e) {
 				((ClientRemoteException)e).log();
+				return true;
 			}
 
 			// deselect soldier
@@ -499,32 +505,53 @@ public class GameActivity extends BaseGameActivity
 			// disable user interaction
 			holdDetector.setEnabled(false);
 
-			final ExecutorService executor = Executors.newCachedThreadPool();
-
-			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
-				for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
-					for(final WayPoint waypoint : soldier.getWaypoints())
-					{
-						mainScene.attachChild(waypoint);
-					}
-
-					executor.execute(new Runnable() {
-
-						@Override
-						public void run() {
-							final PathWalker walker = new PathWalker(GameActivity.this, soldier);
-							walker.start();
-						}
-					});
-				}
-			}
-
 			return true;
+		}
 		case R.id.menu_reset_hold_detector:
+		{
 
 			holdDetector.setEnabled(true);
 
 			return true;
+		}
+		case R.id.menu_execute_second:
+		{
+			final int team = 1 - currentGameInfo.getTeam();
+
+			try {
+				currentGame.saveDecisions(
+					this, team,
+					storage.getSoldiersByTeam(team)
+				);
+			} catch (final IOException e) {
+				Log.e(TAG,
+					getString(R.string.error_game_write_decisions, currentGame),
+					e
+				);
+				return true;
+			}
+
+			try {
+				currentGame.setState(this, GameState.EXECUTION_PHASE);
+			} catch (final IOException e) {
+				Log.e(TAG,
+					getString(R.string.error_game_save_state, currentGame), e
+				);
+				return true;
+			}
+
+			final Intent update_intent = new Intent(Game.STATE_CHANGED_INTENT);
+			update_intent.putExtra(Game.PARCEL_NAME, currentGame);
+			sendBroadcast(update_intent);
+
+			// deselect soldier
+			selectSoldier(null);
+
+			// disable user interaction
+			holdDetector.setEnabled(false);
+
+			return true;
+		}
 		default:
 			return false;
 		}
@@ -631,6 +658,16 @@ public class GameActivity extends BaseGameActivity
 		if(currentGame == null)
 		{
 			finish();
+		}
+
+		holdDetector.setEnabled(
+			currentGame.isInState(this, GameState.PLANNING_PHASE)
+			&& !currentGame.hasDecisions(this, currentGameInfo.getTeam())
+		);
+
+		if(currentGame.isInState(this, GameState.PLANNING_PHASE)
+		   && currentGame.hasDecisions(this, currentGameInfo.getTeam())) {
+			Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -748,7 +785,11 @@ public class GameActivity extends BaseGameActivity
 			final Game game =
 				pIntent.getParcelableExtra(Game.PARCEL_NAME);
 
-			// TODO update GameActivity
+			if(game.isInState(GameActivity.this, GameState.EXECUTION_PHASE)) {
+				recordOutcome();
+			}
+
+			// TODO handle other states
 		}
 	};
 
@@ -914,6 +955,33 @@ public class GameActivity extends BaseGameActivity
 						}
 					}
 				}
+			}
+		}
+	}
+
+	private void recordOutcome() {
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+			// TODO load decisions
+		}
+
+		final ExecutorService executor = Executors.newCachedThreadPool();
+
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+			for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
+				for(final WayPoint waypoint : soldier.getWaypoints())
+				{
+					mainScene.attachChild(waypoint);
+				}
+
+				executor.execute(new Runnable() {
+
+					@Override
+					public void run() {
+						final PathWalker walker =
+							new PathWalker(GameActivity.this, soldier);
+						walker.start();
+					}
+				});
 			}
 		}
 	}

@@ -21,8 +21,8 @@ import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
-import org.beavers.ingame.Soldier;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.SoldierList;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -345,18 +345,18 @@ public class Server extends Service {
 				}
 				case PLANNING_PHASE:
 				{
-					if(!json.has(Soldier.JSON_TAG_COLLECTION))
+					if(!json.has(SoldierList.JSON_TAG))
 					{
 						throw new ServerRemoteException(
 							R.string.error_json_missing_element,
-							game, Soldier.JSON_TAG_COLLECTION
+							game, SoldierList.JSON_TAG
 						);
 					}
 
-					final JsonElement soldiers =
-						json.get(Soldier.JSON_TAG_COLLECTION);
+					final JsonElement decisions =
+						json.get(SoldierList.JSON_TAG);
 
-					onReceiveDecisions(game, player, soldiers.getAsString());
+					onReceiveDecisions(game, player, decisions);
 
 					return true;
 				}
@@ -383,7 +383,7 @@ public class Server extends Service {
 				                                pGame);
 			}
 
-			final File dir = pGame.getDirectory(Server.this);
+			final File dir = new File(pGame.getDirectory(Server.this));
 
 			if(dir.exists()) {
 				throw new ServerRemoteException(
@@ -590,11 +590,11 @@ public class Server extends Service {
 		 *
 		 * @param pGame
 		 * @param pPlayer
-		 * @param pSoldiers
+		 * @param pDecisions
 		 * @throws ServerRemoteException
 		 */
 		private void onReceiveDecisions(final Game pGame, final Player pPlayer,
-		                                final String pSoldiers)
+		                                final JsonElement pDecisions)
 		             throws ServerRemoteException
 		{
 			if(!pGame.isInState(Server.this, GameState.PLANNING_PHASE))
@@ -605,7 +605,34 @@ public class Server extends Service {
 				);
 			}
 
-			// TODO handle decisions
+			try {
+				pGame.writeDecisions(
+					Server.this, pGame.isServer(pPlayer)?0:1, pDecisions
+				);
+			} catch (final IOException e) {
+				throw new ServerRemoteException(
+					R.string.error_game_write_decisions, e, pGame
+				);
+			}
+
+			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+				if(!pGame.hasDecisions(Server.this, team)) {
+					// wait for the rest
+					return;
+				}
+			}
+
+			try {
+				pGame.setState(Server.this, GameState.EXECUTION_PHASE);
+			} catch (final IOException e) {
+				throw new ServerRemoteException(
+					R.string.error_game_save_state, e, pGame
+				);
+			}
+
+			final Intent update_intent = new Intent(Game.STATE_CHANGED_INTENT);
+			update_intent.putExtra(Game.PARCEL_NAME, pGame);
+			sendBroadcast(update_intent);
 		}
 
 		/**

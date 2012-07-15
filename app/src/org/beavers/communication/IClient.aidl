@@ -53,7 +53,6 @@ interface IClient {
 	 * send decisions to server
 	 *
 	 * @param pGame running game
-	 * @param decisions
 	 */
-	void sendDecisions(in Game pGame, in String pSoldiers);
+	void sendDecisions(in Game pGame);
 }

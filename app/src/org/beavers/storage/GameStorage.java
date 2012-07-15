@@ -49,11 +49,11 @@ public class GameStorage {
 
 		// initialize game object containers
 		gameObjects = new HashMap<Tile, IGameObject>();
-		teams = new ArrayList<HashSet<Soldier>>(getSettings().getMaxPlayers());
+		teams = new ArrayList<SoldierList>(getSettings().getMaxPlayers());
 
 		for(int i = 0; i < getSettings().getMaxPlayers(); ++i)
 		{
-			teams.add(new HashSet<Soldier>());
+			teams.add(new SoldierList());
 		}
 
 		loadFromFile();
@@ -88,7 +88,7 @@ public class GameStorage {
 		return (Soldier) gameObjects.get(pTile);
 	}
 
-	public HashSet<Soldier> getSoldiersByTeam(final int pTeam) {
+	public SoldierList getSoldiersByTeam(final int pTeam) {
 		if(pTeam < getSettings().getMaxPlayers())
 		{
 			return teams.get(pTeam);
@@ -219,7 +219,7 @@ public class GameStorage {
 	private final Game game;
 
 	private final HashMap<Tile, IGameObject> gameObjects;
-	private final ArrayList<HashSet<Soldier>> teams;
+	private final ArrayList<SoldierList> teams;
 
 	private IRemoveObjectListener removeListener;
 
