@@ -320,11 +320,9 @@ public class Client extends Service {
 				return;
 			}
 
-			final GameInfo info = GameInfo.fromFile(Client.this, pGame);
-
-			if (!info.isInState(GameState.ANNOUNCED)) {
+			if (!pGame.isInState(Client.this, GameState.ANNOUNCED)) {
 				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     info.getState()));
+				                     pGame.getState(Client.this)));
 				return;
 			}
 
@@ -340,10 +338,8 @@ public class Client extends Service {
 				e.printStackTrace();
 			}
 
-			info.setState(GameState.JOINED);
-
 			try {
-				info.saveToFile(Client.this, pGame);
+				pGame.setState(Client.this, GameState.JOINED);
 			} catch (final IOException e) {
 				Log.e(TAG, "Could not store game info!", e);
 				return;
@@ -355,37 +351,18 @@ public class Client extends Service {
 		@Override
 		public void loadGameList() {
 
-			final Gson gson = CustomGSON.getInstance();
-			final JsonReader reader = CustomGSON.getReader(Client.this,
-			                                               getListFileName());
-
-			// file does not exist
-			if(reader == null) {
+			JsonReader reader;
+			try {
+				reader = CustomGSON.getReader(Client.this, getListFileName());
+			} catch (final FileNotFoundException e1) {
+				// file does not exist
 				return;
 			}
 
-			try {
-				reader.beginObject();
+			synchronized (runningGames) {
 
-				synchronized (runningGames) {
-					runningGames.clear();
-
-					CustomGSON.assertElement(reader, "games");
-					reader.beginArray();
-					while (reader.hasNext()) {
-						final Game game =
-							(Game) gson.fromJson(reader, Game.class);
-						runningGames.add(game);
-					}
-					reader.endArray();
-				}
-
-				reader.endObject();
-
-				reader.close();
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not read JSON file!", e);
-				return;
+				final Gson gson = CustomGSON.getInstance();
+				runningGames = gson.fromJson(reader, runningGames.getClass());
 			}
 		}
 
@@ -429,11 +406,9 @@ public class Client extends Service {
 				return;
 			}
 
-			final GameInfo info = GameInfo.fromFile(Client.this, pGame);
-
-			if (!info.isInState(GameState.PLANNING_PHASE)) {
+			if (!pGame.isInState(Client.this, GameState.PLANNING_PHASE)) {
 				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     info.getState()));
+				                     pGame.getState(Client.this)));
 				return;
 			}
 
@@ -490,7 +465,7 @@ public class Client extends Service {
 		 */
 		private final Set<Game> announcedGames =
 			Collections.synchronizedSet(new HashSet<Game>());
-		private final Set<Game> runningGames =
+		private Set<Game> runningGames =
 			Collections.synchronizedSet(new HashSet<Game>());
 		/**
 		 * @}
@@ -572,18 +547,16 @@ public class Client extends Service {
 		private void onReceiveStartPlanningPhase(
 			final Game pGame, final HashSet<Player> players) {
 
-			final GameInfo info = GameInfo.fromFile(Client.this, pGame);
-
-			if(!info.isInState(GameState.JOINED)
-			   && !info.isInState(GameState.EXECUTION_PHASE)) {
+			if(!pGame.isInState(Client.this, GameState.JOINED,
+			                                 GameState.EXECUTION_PHASE)) {
 
 				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     info.getState()));
+				                     pGame.getState(Client.this)));
 
 				return;
 			}
 
-			if(info.isInState(GameState.JOINED))
+			if(pGame.isInState(Client.this, GameState.JOINED))
 			{
 				announcedGames.remove(pGame);
 
@@ -598,10 +571,8 @@ public class Client extends Service {
 			}
 
 			// start planning phase
-			info.setState(GameState.PLANNING_PHASE);
-
 			try {
-				info.saveToFile(Client.this, pGame);
+				pGame.setState(Client.this, GameState.PLANNING_PHASE);
 			} catch (final IOException e) {
 				Log.e(TAG, "Could not store game info!", e);
 				return;
