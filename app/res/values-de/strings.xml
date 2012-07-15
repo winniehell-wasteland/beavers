@@ -32,11 +32,12 @@
 	<string name="state_aborted">Abgebrochen</string>
 	<string name="state_announced">Angekündigt</string>
 	<string name="state_execution">Ausführungsphase</string>
-	<string name="state_joined">Beigetreten</string>
+	<string name="state_joined">Warte auf Spielbeginn</string>
 	<string name="state_lost">Verloren</string>
 	<string name="state_planning">Planungsphase</string>
 	<string name="state_started">Gestartet</string>
 	<string name="state_unknown">Unbekannt</string>
+	<string name="state_waiting">Warte auf Mitspieler</string>
 	<string name="state_won">Gewonnen</string>
 	
 	<!-- dialog titles -->

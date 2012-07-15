@@ -112,11 +112,7 @@ public class GameListActivity extends FragmentActivity
 		}
 		case R.id.context_menu_load_game:
 		{
-			// show game
-			final Intent intent =
-				new Intent(GameListActivity.this, GameActivity.class);
-			intent.putExtra(Game.PARCEL_NAME, game);
-			startActivity(intent);
+			showGame(game);
 
 			return true;
 		}
@@ -130,6 +126,8 @@ public class GameListActivity extends FragmentActivity
 				((ServerRemoteException)e).log();
 			}
 
+			showGame(game);
+
 			return true;
 		}
 		}
@@ -141,17 +139,13 @@ public class GameListActivity extends FragmentActivity
 		switch (item.getItemId()) {
 		case R.id.menu_announced_games:
 		{
-			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-			intent.setAction(ANNOUNCED);
-			startActivity(intent);
+			showAnnouncedGames();
 
 			return true;
 		}
 		case R.id.menu_running_games:
 		{
-			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-			intent.setAction(RUNNING);
-			startActivity(intent);
+			showRunningGames();
 
 			return true;
 		}
@@ -177,11 +171,7 @@ public class GameListActivity extends FragmentActivity
 				((ServerRemoteException)e).log();
 			}
 
-			// show game
-			final Intent intent =
-				new Intent(GameListActivity.this, GameActivity.class);
-			intent.putExtra(Game.PARCEL_NAME, game);
-			startActivity(intent);
+			showAnnouncedGames();
 
 			return true;
 		}
@@ -263,9 +253,7 @@ public class GameListActivity extends FragmentActivity
 
 		if(isFinishing() && !getIntent().getAction().equals(RUNNING))
 		{
-			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-			intent.setAction(RUNNING);
-			startActivity(intent);
+			showRunningGames();
 		}
 	}
 
@@ -285,20 +273,8 @@ public class GameListActivity extends FragmentActivity
 	private GameListView listView;
 	private BroadcastReceiver updateReceiver;
 
-	void showGameStartDialog() {
-	    final FragmentTransaction transaction =
-	    	getSupportFragmentManager().beginTransaction();
-	    final Fragment old =
-	    	getSupportFragmentManager().findFragmentByTag("dialog");
-
-	    if (old != null) {
-	    	transaction.remove(old);
-	    }
-	    transaction.addToBackStack(null);
-
-	    final DialogFragment dialog = new GameStartDialog();
-	    dialog.show(transaction, "dialog");
-	}
+	private final Client.Connection client;
+	private final Server.Connection server;
 
 	private void loadList()
 	{
@@ -393,10 +369,47 @@ public class GameListActivity extends FragmentActivity
 		setContentView(listView);
 	}
 
+	private void showAnnouncedGames() {
+		final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
+		intent.setAction(ANNOUNCED);
+		startActivity(intent);
+	}
+
+	private void showGame(final Game game) {
+		showRunningGames();
+
+		final Intent intent =
+			new Intent(GameListActivity.this, GameActivity.class);
+		intent.putExtra(Game.PARCEL_NAME, game);
+		startActivity(intent);
+	}
+
+	private void showGameStartDialog() {
+	    final FragmentTransaction transaction =
+	    	getSupportFragmentManager().beginTransaction();
+	    final Fragment old =
+	    	getSupportFragmentManager().findFragmentByTag("dialog");
+
+	    if (old != null) {
+	    	transaction.remove(old);
+	    }
+	    transaction.addToBackStack(null);
+
+	    final DialogFragment dialog = new GameStartDialog();
+	    dialog.show(transaction, "dialog");
+	}
+
+	private void showRunningGames() {
+		final Intent intent =
+			new Intent(GameListActivity.this, GameListActivity.class);
+		intent.setAction(RUNNING);
+		startActivity(intent);
+	}
+
 	/**
 	 * gets opened when presses "start game"
 	 */
-	public static class GameStartDialog extends DialogFragment {
+	private static class GameStartDialog extends DialogFragment {
 
 		/** default constructor */
 		public GameStartDialog()
@@ -406,13 +419,15 @@ public class GameListActivity extends FragmentActivity
 
 		@Override
 		public Dialog onCreateDialog(final Bundle savedInstanceState) {
-			final LayoutInflater inflater = LayoutInflater.from(getActivity());
+			final GameListActivity activity =  (GameListActivity)getActivity();
+
+			final LayoutInflater inflater = LayoutInflater.from(activity);
 	        final View layout = inflater.inflate(R.layout.start_game_dialog, null);
 
 	        final Settings settings = ((App)getActivity().getApplication())
 	        	.getSettings();
 
-	        return new AlertDialog.Builder(getActivity())
+	        return new AlertDialog.Builder(activity)
 	        .setView(layout)
 			.setTitle(R.string.title_start_game)
             .setCancelable(true)
@@ -436,8 +451,7 @@ public class GameListActivity extends FragmentActivity
 
 						try {
 							// announce to clients
-							((GameListActivity)getActivity()).server.getService()
-								.initiateGame(game);
+							activity.server.getService().initiateGame(game);
 						} catch (final RemoteException e) {
 							((ServerRemoteException)e).log();
 						}
@@ -445,11 +459,7 @@ public class GameListActivity extends FragmentActivity
 						// close dialog before Activity gets destroyed
 						dismiss();
 
-						// show game
-						final Intent intent =
-							new Intent(getActivity(), GameActivity.class);
-						intent.putExtra(Game.PARCEL_NAME, game);
-						startActivity(intent);
+						activity.showAnnouncedGames();
 					}
 				}
 			)
@@ -463,7 +473,4 @@ public class GameListActivity extends FragmentActivity
 			).create();
 		}
 	}
-
-	private final Client.Connection client;
-	private final Server.Connection server;
 }
