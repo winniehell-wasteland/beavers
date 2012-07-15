@@ -264,7 +264,7 @@ public class GameListActivity extends FragmentActivity
 		super.onResume();
 
 		registerReceiver(updateReceiver,
-			new IntentFilter(Client.GAME_STATE_CHANGED_INTENT));
+			new IntentFilter(Game.STATE_CHANGED_INTENT));
 	}
 
 	private GameListView listView;

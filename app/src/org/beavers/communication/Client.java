@@ -60,16 +60,6 @@ public class Client extends Service {
 	 * @}
 	 */
 
-	/**
-	 * @name intents
-	 * @{
-	 */
-	public static final String GAME_STATE_CHANGED_INTENT =
-		Client.class.getName() + ".GAME_STATE_CHANGED";
-	/**
-	 * @}
-	 */
-
 	@Override
 	public IBinder onBind(final Intent pIntent) {
 		Log.d(TAG, "onBind()");
@@ -607,7 +597,7 @@ public class Client extends Service {
 		private void broadcastGameInfo(final Game pGame) {
 			Log.d(TAG, "Broadcasting new game info...");
 
-			final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
+			final Intent update_intent = new Intent(Game.STATE_CHANGED_INTENT);
 
 			update_intent.putExtra(Game.PARCEL_NAME, pGame);
 

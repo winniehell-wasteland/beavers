@@ -33,6 +33,16 @@ public final class Game extends UniqueID {
 	 */
 
 	/**
+	 * @name intents
+	 * @{
+	 */
+	public static final String STATE_CHANGED_INTENT =
+		Game.class.getName() + ".STATE_CHANGED";
+	/**
+	 * @}
+	 */
+
+	/**
 	 * default constructor
 	 *
 	 * @param pServer server of the game

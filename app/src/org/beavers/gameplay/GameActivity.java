@@ -653,7 +653,7 @@ public class GameActivity extends BaseGameActivity
 	protected void onResume() {
 		super.onResume();
 
-		registerReceiver(updateReceiver, new IntentFilter(Client.GAME_STATE_CHANGED_INTENT));
+		registerReceiver(updateReceiver, new IntentFilter(Game.STATE_CHANGED_INTENT));
 	}
 
 	/**
