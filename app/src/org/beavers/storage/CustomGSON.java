@@ -46,7 +46,8 @@ public class CustomGSON {
 	}
 
 	public static JsonReader getReader(final Context pContext,
-	                                   final String pFileName) {
+	                                   final String pFileName)
+	                         throws FileNotFoundException {
 
 		InputStream file = null;
 
@@ -54,7 +55,7 @@ public class CustomGSON {
 			file = new FileInputStream(pFileName);
 		} catch (final FileNotFoundException e) {
 			Log.w(TAG, "Could not open file for input! " + e.getMessage());
-			return null;
+			throw e;
 		}
 
 		return new JsonReader(

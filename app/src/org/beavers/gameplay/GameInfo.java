@@ -1,5 +1,6 @@
 package org.beavers.gameplay;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.beavers.storage.CustomGSON;
@@ -87,7 +88,8 @@ public final class GameInfo {
 		state = pState;
 	}
 
-	public static GameInfo fromFile(final Context pContext, final Game pGame) {
+	public static GameInfo fromFile(final Context pContext, final Game pGame)
+	                       throws FileNotFoundException {
 		Log.d(GameInfo.class.getSimpleName(), "Reading from "+getFileName(pContext, pGame));
 
 		final JsonReader reader =
