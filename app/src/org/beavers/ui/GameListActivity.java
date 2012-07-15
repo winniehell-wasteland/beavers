@@ -14,7 +14,6 @@ import org.beavers.communication.Client;
 import org.beavers.communication.Server;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
-import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.Player;
 
@@ -333,14 +332,13 @@ public class GameListActivity extends FragmentActivity
 
 				if(getIntent().getAction().equals(ANNOUNCED))
 				{
-			        inflater.inflate(R.menu.context_announced_game, menu);
+					inflater.inflate(R.menu.context_announced_game, menu);
 
-			        final GameInfo info =
-			        	GameInfo.fromFile(GameListActivity.this, game);
-
-			        menu.findItem(R.id.context_menu_join).setVisible(
-			        	info.getState().equals(GameState.ANNOUNCED)
-			        );
+					menu.findItem(R.id.context_menu_join)
+					.setVisible(
+						game.isInState(GameListActivity.this,
+						               GameState.ANNOUNCED)
+					);
 				}
 				else if(getIntent().getAction().equals(RUNNING))
 				{

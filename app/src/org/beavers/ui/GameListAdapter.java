@@ -7,7 +7,6 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.Game;
-import org.beavers.gameplay.GameInfo;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -60,7 +59,6 @@ public abstract class GameListAdapter extends BaseAdapter {
 		}
 
 		final Game item = (Game) getItem(pPosition);
-		final GameInfo info = GameInfo.fromFile(app, item);
 
 		holder.txtName.setText(item.getName());
 
@@ -73,7 +71,7 @@ public abstract class GameListAdapter extends BaseAdapter {
 
 		holder.txtState.setText(
 			app.getString(R.string.state) + ": "
-			+ app.getString(info.getState().getResId()));
+			+ app.getString(item.getState(app).getResId()));
 
 		return pConvertView;
 	}
