@@ -1,6 +1,7 @@
 package org.beavers.storage;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,14 +21,11 @@ import org.beavers.ingame.IRemoveObjectListener;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
-import org.beavers.storage.CustomGSON.WrongElementException;
 
 import android.content.Context;
 import android.util.Log;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
@@ -162,25 +160,16 @@ public class GameStorage {
 		gameObjects.remove(pWaypoint.getTile());
 	}
 
-	public boolean saveToFile() {
+	public void saveToFile() throws FileNotFoundException {
 
 		final Gson gson = CustomGSON.getInstance();
 
 		JsonWriter writer;
 
-		try {
-			writer = CustomGSON.getWriter(context, getFileName());
-		} catch (final FileNotFoundException e) {
-			Log.e(TAG, context.getString(R.string.error_json_writing), e);
-			return false;
-		}
+		writer = CustomGSON.getWriter(context, getFileName());
 
 		try {
-			writer.beginObject();
-
-			writer.name(Soldier.JSON_TAG_COLLECTION);
 			writer.beginArray();
-
 			for(final HashSet<Soldier> team : teams)
 			{
 				for(final Soldier soldier : team)
@@ -188,26 +177,16 @@ public class GameStorage {
 					gson.toJson(soldier, Soldier.class, writer);
 				}
 			}
-
 			writer.endArray();
-
-			writer.endObject();
-
 		} catch (final IOException e) {
 			Log.e(TAG, context.getString(R.string.error_json_writing), e);
-			return false;
 		} finally {
 			try {
 				writer.close();
 			} catch (final IOException e) {
 				Log.e(TAG, context.getString(R.string.error_json_writing), e);
-				return false;
 			}
 		}
-
-		Log.d(TAG, "Content: "+gson.toJson(teams));
-
-		return true;
 	}
 
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
@@ -272,29 +251,34 @@ public class GameStorage {
 
 	/**
 	 * loads the storage from file
-	 * @return map name
-	 * @throws IOException
-	 * @throws WrongElementException
-	 * @throws UnexpectedTileContentException
-	 * @throws JsonSyntaxException
-	 * @throws JsonIOException
+	 * @throws FileNotFoundException
 	 */
-	private void loadFromFile()
-	               throws IOException, WrongElementException, JsonIOException,
-	                      JsonSyntaxException, UnexpectedTileContentException {
+	private void loadFromFile() throws FileNotFoundException {
 
 		if(!(new File(getFileName())).exists()) {
 			final GameInfo info = GameInfo.fromFile(context, game);
 
 			Log.d(TAG, "Copying maps/" + info.getMapName() + "/setup.json");
 
-			final InputStream src = context.getAssets().open(
-				"maps/" + info.getMapName() + "/setup.json"
-			);
+			try {
+				final InputStream src = context.getAssets().open(
+					"maps/" + info.getMapName() + "/setup.json"
+				);
 
-			final FileOutputStream dest = new FileOutputStream(getFileName());
+				final FileOutputStream dest = new FileOutputStream(getFileName());
 
-			StreamUtils.copyAndClose(src, dest);
+				StreamUtils.copyAndClose(src, dest);
+			} catch (final IOException e) {
+				Log.e(TAG, "Copying map failed!", e);
+				return;
+			}
+		}
+
+		try {
+			Log.d(TAG, "loading: "+StreamUtils.readFully(new FileInputStream(getFileName())));
+		} catch (final Exception e) {
+			Log.e(TAG, e.getMessage());
+			return;
 		}
 
 		final Gson gson = CustomGSON.getInstance();
@@ -305,16 +289,26 @@ public class GameStorage {
 			throw new FileNotFoundException(getFileName());
 		}
 
-		final Setup setup = gson.fromJson(reader, Setup.class);
+		try {
+			reader.beginArray();
+			while(reader.hasNext()) {
+				final Soldier soldier = gson.fromJson(reader, Soldier.class);
 
-		for(final Soldier soldier : setup.soldiers) {
-			addSoldier(soldier);
+				try {
+					addSoldier(soldier);
+				} catch (final UnexpectedTileContentException e) {
+					Log.e(TAG, "Adding soldier failed!", e);
+				}
+			}
+			reader.endArray();
+		} catch (final Exception e) {
+			Log.e(TAG, "Loading game storage failed!", e);
+		} finally {
+			try {
+				reader.close();
+			} catch (final IOException e) {
+				Log.e(TAG, "Closing reader failed!", e);
+			}
 		}
-
-		reader.close();
-	}
-
-	public static class Setup {
-		public ArrayList<Soldier> soldiers;
 	}
 }

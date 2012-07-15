@@ -28,20 +28,24 @@ class WayPointDeserializer implements JsonDeserializer<WayPoint> {
 
     	final JsonObject object = pJson.getAsJsonObject();
 
-    	if(!object.has("path") || !object.has("tile"))
+    	if(!object.has("tile") || (SoldierDeserializer.currentSoldier == null))
     	{
     		return null;
     	}
 
-    	if(SoldierDeserializer.currentSoldier == null)
-    	{
-    		return null;
+    	WeightedPath path = null;
+
+    	if(object.has("path")) {
+    		path = (WeightedPath) pContext.deserialize(
+    			object.get("path"), WeightedPath.class
+    		);
     	}
 
     	final WayPoint waypoint = new WayPoint(
         	SoldierDeserializer.currentSoldier,
-        	(WeightedPath) pContext.deserialize(object.get("path"), WeightedPath.class),
-        	(Tile) pContext.deserialize(object.get("tile"), Tile.class));
+        	path,
+        	(Tile) pContext.deserialize(object.get("tile"), Tile.class)
+        );
 
     	if(object.has("aim") && !object.get("aim").isJsonNull())
     	{
