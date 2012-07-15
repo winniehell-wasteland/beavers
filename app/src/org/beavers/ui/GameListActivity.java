@@ -265,6 +265,11 @@ public class GameListActivity extends FragmentActivity
 
 		registerReceiver(updateReceiver,
 			new IntentFilter(Game.STATE_CHANGED_INTENT));
+
+		// update game list
+		if(listView != null) {
+			listView.getAdapter().notifyDataSetChanged();
+		}
 	}
 
 	private GameListView listView;
