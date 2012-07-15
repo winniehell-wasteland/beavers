@@ -42,6 +42,10 @@ class SoldierDeserializer implements JsonDeserializer<Soldier> {
 
     	soldier.setRotation(object.get("view_angle").getAsFloat());
 
+    	if(soldier != null) {
+    		return soldier;
+    	}
+
     	synchronized (currentSoldier) {
         	currentSoldier = soldier;
 

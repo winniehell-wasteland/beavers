@@ -1,0 +1,9 @@
+{
+	"soldiers" : 
+	[
+		{"team":0,"tile":[2,0],"view_angle":0.0,"waypoints":[{"tile":[2,0]}]},
+		{"team":0,"tile":[0,0],"view_angle":0.0,"waypoints":[{"tile":[0,0]}]},
+		{"team":1,"tile":[8,9],"view_angle":0.0,"waypoints":[{"tile":[8,9]}]},
+		{"team":1,"tile":[6,9],"view_angle":0.0,"waypoints":[{"tile":[6,9]}]}
+	]
+}

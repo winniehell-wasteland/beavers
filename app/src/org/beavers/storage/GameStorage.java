@@ -1,7 +1,10 @@
 package org.beavers.storage;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,16 +44,8 @@ public class GameStorage {
 	 */
 	public GameStorage(final Context pContext, final Game pGame)
 	       throws Exception {
-		this(pContext, pGame, null);
-	}
-
-	public GameStorage(final Context pContext, final Game pGame,
-	                   final String pMapName)
-	       throws Exception{
 		context = pContext;
 		game = pGame;
-
-		info = null;
 
 		// initialize game object containers
 		gameObjects = new HashMap<Tile, IGameObject>();
@@ -62,7 +57,7 @@ public class GameStorage {
 		}
 
 		loadFromFile();
-		loadDefaults();
+		//saveToFile();
 	}
 
 	/**
@@ -173,9 +168,6 @@ public class GameStorage {
 		try {
 			writer.beginObject();
 
-			writer.name(GameInfo.JSON_TAG);
-			gson.toJson(info, GameInfo.class, writer);
-
 			writer.name(Soldier.JSON_TAG_COLLECTION);
 			writer.beginArray();
 
@@ -202,6 +194,8 @@ public class GameStorage {
 				return false;
 			}
 		}
+
+		Log.d(TAG, "Content: "+gson.toJson(teams));
 
 		return true;
 	}
@@ -232,13 +226,8 @@ public class GameStorage {
 	 * @}
 	 */
 
-	/** JSON tag for map name */
-	private static final String JSON_TAG_MAP = "map";
-
 	private final Context context;
 	private final Game game;
-
-	private GameInfo info = null;
 
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<HashSet<Soldier>> teams;
@@ -259,7 +248,7 @@ public class GameStorage {
 	}
 
 	private String getFileName() {
-		return game.getDirectory(context) + "/state.json";
+		return game.getDirectory(context) + "/setup.json";
 	}
 
 	private Settings getSettings() {
@@ -271,14 +260,6 @@ public class GameStorage {
 		}
 	}
 
-	private void loadDefaults() throws UnexpectedTileContentException {
-		// load teams
-		addSoldier(new Soldier(0, new Tile(0, 0)));
-		addSoldier(new Soldier(0, new Tile(2, 0)));
-		addSoldier(new Soldier(1, new Tile(6, 9)));
-		addSoldier(new Soldier(1, new Tile(8, 9)));
-	}
-
 	/**
 	 * loads the storage from file
 	 * @return map name
@@ -288,9 +269,14 @@ public class GameStorage {
 	 * @throws JsonSyntaxException
 	 * @throws JsonIOException
 	 */
-	private String loadFromFile()
+	private void loadFromFile()
 	               throws IOException, WrongElementException, JsonIOException,
 	                      JsonSyntaxException, UnexpectedTileContentException {
+
+		if(!(new File(getFileName())).exists()) {
+			copyMap();
+		}
+
 		final Gson gson = CustomGSON.getInstance();
 		final JsonReader reader = CustomGSON.getReader(context, getFileName());
 
@@ -299,25 +285,41 @@ public class GameStorage {
 			throw new FileNotFoundException(getFileName());
 		}
 
-		String mapName = null;
+		final Setup setup = gson.fromJson(reader, Setup.class);
 
-		reader.beginObject();
-
-		CustomGSON.assertElement(reader, JSON_TAG_MAP);
-		mapName = reader.nextString();
-
-		CustomGSON.assertElement(reader, Soldier.JSON_TAG_COLLECTION);
-
-		reader.beginArray();
-		while (reader.hasNext()) {
-			addSoldier((Soldier) gson.fromJson(reader, Soldier.class));
+		for(final Soldier soldier : setup.soldiers) {
+			addSoldier(soldier);
 		}
-		reader.endArray();
-
-		reader.endObject();
 
 		reader.close();
+	}
 
-		return mapName;
+	private void copyMap() throws IOException {
+		final GameInfo info = GameInfo.fromFile(context, game);
+
+		Log.d(TAG, "Copying maps/" + info.getMapName() + "/setup.json");
+
+		final InputStream src = context.getAssets().open(
+			"maps/" + info.getMapName() + "/setup.json"
+		);
+
+		final FileOutputStream dest = new FileOutputStream(getFileName());
+
+		final byte[] buffer = new byte[1024];
+		int numBytes;
+
+		while((numBytes = src.read(buffer)) > 0) {
+			dest.write(buffer, 0, numBytes);
+		}
+
+        src.close();
+
+        Log.d(TAG, "Wrote " + dest.getChannel().size() + " bytes!");
+
+        dest.close();
+	}
+
+	public static class Setup {
+		public ArrayList<Soldier> soldiers;
 	}
 }

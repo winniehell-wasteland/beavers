@@ -1,8 +1,11 @@
 package org.beavers.gameplay;
 
+import java.io.IOException;
+
 import org.beavers.storage.CustomGSON;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
@@ -64,11 +67,16 @@ public final class GameInfo {
 		return state.equals(pState);
 	}
 
-	public void saveToFile(final Context pContext, final Game pGame) {
+	public void saveToFile(final Context pContext, final Game pGame)
+	            throws IOException {
 		final JsonWriter writer =
 				CustomGSON.getWriter(pContext, getFileName(pContext, pGame));
 
 		CustomGSON.getInstance().toJson(this, getClass(), writer);
+
+		writer.close();
+
+		Log.d(getClass().getSimpleName(), "Stored in "+getFileName(pContext, pGame));
 	}
 
 	/**
@@ -80,6 +88,8 @@ public final class GameInfo {
 	}
 
 	public static GameInfo fromFile(final Context pContext, final Game pGame) {
+		Log.d(GameInfo.class.getSimpleName(), "Reading from "+getFileName(pContext, pGame));
+
 		final JsonReader reader =
 			CustomGSON.getReader(pContext, getFileName(pContext, pGame));
 

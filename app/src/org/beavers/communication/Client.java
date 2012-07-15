@@ -3,6 +3,7 @@ package org.beavers.communication;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
@@ -308,7 +309,13 @@ public class Client extends Service {
 			}
 
 			info.setState(GameState.JOINED);
-			info.saveToFile(Client.this, pGame);
+
+			try {
+				info.saveToFile(Client.this, pGame);
+			} catch (final IOException e) {
+				Log.e(TAG, "Could not store game info!", e);
+				return;
+			}
 
 			broadcastGameInfo(pGame);
 
@@ -522,7 +529,7 @@ public class Client extends Service {
 					joinGame(pGame);
 				}
 			} catch (final Exception e) {
-				Log.e(TAG, "Could not create storage!");
+				Log.e(TAG, "Could not handle announced game!", e);
 			}
 		}
 
@@ -572,7 +579,13 @@ public class Client extends Service {
 
 			// start planning phase
 			info.setState(GameState.PLANNING_PHASE);
-			info.saveToFile(Client.this, pGame);
+
+			try {
+				info.saveToFile(Client.this, pGame);
+			} catch (final IOException e) {
+				Log.e(TAG, "Could not store game info!", e);
+				return;
+			}
 
 			broadcastGameInfo(pGame);
 		}

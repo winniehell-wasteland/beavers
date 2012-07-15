@@ -3,6 +3,7 @@ package org.beavers.communication;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -490,7 +491,13 @@ public class Server extends Service {
 			}
 
 			info.setState(GameState.PLANNING_PHASE);
-			info.saveToFile(Server.this, pGame);
+
+			try {
+				info.saveToFile(Server.this, pGame);
+			} catch (final IOException e) {
+				Log.e(TAG, "Could not store game info!", e);
+				return;
+			}
 
 			final Message message = new PlanningPhaseMessage(pGame);
 

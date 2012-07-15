@@ -305,7 +305,7 @@ public class GameListActivity extends FragmentActivity
 		listView = new GameListView(this, adapter) {
 			@Override
 			protected void onCreateContextMenu(final ContextMenu menu) {
-				final GameInfo game = (GameInfo) getItemAtPosition(getCheckedItemPosition());
+				final Game game = (Game) getItemAtPosition(getCheckedItemPosition());
 
 				if(game == null)
 				{
@@ -319,8 +319,12 @@ public class GameListActivity extends FragmentActivity
 				{
 			        inflater.inflate(R.menu.context_announced_game, menu);
 
+			        final GameInfo info =
+			        	GameInfo.fromFile(GameListActivity.this, game);
+
 			        menu.findItem(R.id.context_menu_join).setVisible(
-			        	game.getState().equals(GameState.ANNOUNCED));
+			        	info.getState().equals(GameState.ANNOUNCED)
+			        );
 				}
 				else if(getIntent().getAction().equals(RUNNING))
 				{

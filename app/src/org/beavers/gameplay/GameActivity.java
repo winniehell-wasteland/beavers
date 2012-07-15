@@ -20,6 +20,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXProperties;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
+import org.anddev.andengine.entity.layer.tiled.tmx.TSXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
@@ -440,7 +441,7 @@ public class GameActivity extends BaseGameActivity
 		mEngine.registerUpdateHandler(new FPSLogger());
 		mainScene = new Scene();
 
-		loadMap(currentGameInfo.getMapName());
+		loadMap();
 
 		if(map == null)
 		{
@@ -729,7 +730,7 @@ public class GameActivity extends BaseGameActivity
 	private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
-			final GameInfo game =
+			final Game game =
 				pIntent.getParcelableExtra(Game.PARCEL_NAME);
 
 			// TODO update GameActivity
@@ -749,7 +750,7 @@ public class GameActivity extends BaseGameActivity
 		}
 	}
 
-	private void loadMap(final String pMapName)
+	private void loadMap()
 	{
 		try {
 			final TMXLoader tmxLoader = new TMXLoader(this, getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
@@ -758,7 +759,12 @@ public class GameActivity extends BaseGameActivity
 
 				}
 			});
-			map = tmxLoader.loadFromAsset(this, "tmx/"+pMapName+".tmx");
+
+			TMXLoader.setAssetBasePath("maps/" + currentGameInfo.getMapName() + "/");
+			TSXLoader.setAssetBasePath("maps/" + currentGameInfo.getMapName() + "/");
+
+			map = tmxLoader.loadFromAsset(this, "map.tmx");
+
 		} catch (final TMXLoadException tmxle) {
 			Debug.e(tmxle);
 			return;
