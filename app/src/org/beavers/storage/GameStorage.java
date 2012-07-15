@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.beavers.App;
+import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
@@ -163,7 +164,15 @@ public class GameStorage {
 	public boolean saveToFile() {
 
 		final Gson gson = CustomGSON.getInstance();
-		final JsonWriter writer = CustomGSON.getWriter(context, getFileName());
+
+		JsonWriter writer;
+
+		try {
+			writer = CustomGSON.getWriter(context, getFileName());
+		} catch (final FileNotFoundException e) {
+			Log.e(TAG, context.getString(R.string.error_json_writing), e);
+			return false;
+		}
 
 		try {
 			writer.beginObject();
@@ -184,13 +193,13 @@ public class GameStorage {
 			writer.endObject();
 
 		} catch (final IOException e) {
-			Log.e(TAG, "Could not write file!", e);
+			Log.e(TAG, context.getString(R.string.error_json_writing), e);
 			return false;
 		} finally {
 			try {
 				writer.close();
 			} catch (final IOException e) {
-				Log.e(TAG, "Could not close writer!", e);
+				Log.e(TAG, context.getString(R.string.error_json_writing), e);
 				return false;
 			}
 		}

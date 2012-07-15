@@ -64,7 +64,8 @@ public class CustomGSON {
 	}
 
 	public static JsonWriter getWriter(final Context pContext,
-	                                   final String pFileName) {
+	                                   final String pFileName)
+	                         throws FileNotFoundException {
 
 		FileOutputStream file = null;
 
@@ -72,7 +73,7 @@ public class CustomGSON {
 			file = new FileOutputStream(pFileName);
 		} catch (final FileNotFoundException e) {
 			Log.e(TAG, "Could not open file for output! " + e.getMessage());
-			return null;
+			throw e;
 		}
 
 		return new JsonWriter(
