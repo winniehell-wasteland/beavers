@@ -11,7 +11,9 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.Client;
+import org.beavers.communication.Client.ClientRemoteException;
 import org.beavers.communication.Server;
+import org.beavers.communication.Server.ServerRemoteException;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.gameplay.GameState;
@@ -103,8 +105,7 @@ public class GameListActivity extends FragmentActivity
 			try {
 				client.getService().joinGame(game);
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				((ClientRemoteException)e).log();
 			}
 
 			return true;
@@ -116,8 +117,7 @@ public class GameListActivity extends FragmentActivity
 			try {
 				server.getService().addPlayer(game, new Player(UUID.randomUUID(), "dummy player"));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				((ServerRemoteException)e).log();
 			}
 
 			return true;
@@ -151,6 +151,30 @@ public class GameListActivity extends FragmentActivity
 
 			return true;
 		}
+		case R.id.menu_start_dummy_game:
+		{
+	        final Settings settings = ((App)getApplication()).getSettings();
+
+			// create new game
+			final Game game = new Game(settings.getPlayer(),
+			                           UUID.randomUUID(),
+			                           "created dummy game");
+
+			try {
+				// announce to clients
+				server.getService().initiateGame(game);
+			} catch (final RemoteException e) {
+				((ServerRemoteException)e).log();
+			}
+
+			// show game
+			final Intent intent =
+				new Intent(GameListActivity.this, GameActivity.class);
+			intent.putExtra(Game.PARCEL_NAME, game);
+			startActivity(intent);
+
+			return true;
+		}
 		}
 
 		return false;
@@ -178,14 +202,14 @@ public class GameListActivity extends FragmentActivity
 		Intent intent = new Intent(GameListActivity.this, Client.class);
 		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, getString(R.string.error_binding_client_failed));
+			Log.e(TAG, getString(R.string.error_binding_client));
 			return;
 		}
 
 		intent = new Intent(GameListActivity.this, Server.class);
 		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, getString(R.string.error_binding_server_failed));
+			Log.e(TAG, getString(R.string.error_binding_server));
 			return;
 		}
 
@@ -274,8 +298,7 @@ public class GameListActivity extends FragmentActivity
 					try {
 						return client.getService().getAnnouncedGames();
 					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						((ClientRemoteException)e).log();
 					}
 
 					return null;
@@ -302,8 +325,7 @@ public class GameListActivity extends FragmentActivity
 					try {
 						return client.getService().getRunningGames();
 					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						((ClientRemoteException)e).log();
 					}
 
 					return null;
@@ -402,8 +424,7 @@ public class GameListActivity extends FragmentActivity
 							((GameListActivity)getActivity()).server.getService()
 								.initiateGame(game);
 						} catch (final RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							((ServerRemoteException)e).log();
 						}
 
 						// close dialog before Activity gets destroyed
