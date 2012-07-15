@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +64,7 @@ public class Server extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		implementation.loadGameList();
+		implementation.loadPlayerMap();
 
 		dtn = new DTNService.Connection();
 		final Intent intent = new Intent(Server.this, DTNService.class);
@@ -91,7 +89,7 @@ public class Server extends Service {
 			Log.e(TAG, "Interrupted while processing executor queue!", e);
 		}
 
-		implementation.saveGameList();
+		implementation.savePlayerMap();
 
 		super.onDestroy();
 	}
@@ -156,9 +154,10 @@ public class Server extends Service {
 		{
 			Log.d(TAG, pPlayer.getName() + " joins "+pGame.getName());
 
-			if(!hostedGames.contains(pGame))
-			{
-				Log.e(TAG, getString(R.string.error_not_hosted, pGame));
+			// we already joined this game
+			if(!pGame.isInState(Server.this, GameState.JOINED)) {
+				Log.e(TAG, getString(R.string.error_wrong_state,
+				                     pGame, pGame.getState(Server.this)));
 				return;
 			}
 
@@ -219,12 +218,13 @@ public class Server extends Service {
 				final Game game =
 					gson.fromJson(json.get(Game.JSON_TAG), Game.class);
 
+				// are we the server?
 				if(!game.isServer(getSettings().getPlayer()))
 				{
 					return false;
 				}
 
-				if(!hostedGames.contains(game))
+				if(game.isInState(Server.this, GameState.UNKNOWN))
 				{
 					Log.e(TAG, getString(R.string.error_not_hosted, game));
 					return false;
@@ -257,6 +257,7 @@ public class Server extends Service {
 						Log.e(TAG,
 						      getString(R.string.error_incomplete_decisions,
 						                game, player));
+						return true;
 					}
 
 					final JsonElement soldiers =
@@ -283,7 +284,7 @@ public class Server extends Service {
 		@Override
 		public void initiateGame(final Game pGame)
 		{
-			if(hostedGames.contains(pGame))
+			if(!pGame.isInState(Server.this, GameState.UNKNOWN))
 			{
 				Log.e(TAG, getString(R.string.error_game_exists, pGame));
 				return;
@@ -308,80 +309,39 @@ public class Server extends Service {
 				final Message message = new AnnouncementMessage(pGame, map);
 
 				dtn.getService().sendToClients(message.saveToFile(Server.this));
-
-				hostedGames.add(pGame);
 			} catch (final Exception e) {
-				Log.e(TAG, "Could not announcement!", e);
+				Log.e(TAG, "Could not announce!", e);
 			}
 		}
 
 		@Override
-		public void loadGameList() {
-
-			final Gson gson = CustomGSON.getInstance();
-			final JsonReader reader = CustomGSON.getReader(Server.this,
-			                                               getListFileName());
-
-			// file does not exist
-			if(reader == null) {
-				return;
-			}
-
+		public void loadPlayerMap() {
+			JsonReader reader;
 			try {
-				reader.beginObject();
-
-				synchronized (hostedGames) {
-					hostedGames.clear();
-
-					CustomGSON.assertElement(reader, "games");
-					reader.beginArray();
-					while (reader.hasNext()) {
-						final Game game =
-							(Game) gson.fromJson(reader, Game.class);
-						hostedGames.add(game);
-					}
-					reader.endArray();
-				}
-
-				reader.endObject();
-
-				reader.close();
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not read JSON file!", e);
+				reader = CustomGSON.getReader(Server.this, getListFileName());
+			} catch (final FileNotFoundException e) {
+				// file does not exist
 				return;
+			}
+
+			synchronized (playerMap) {
+				final Gson gson = CustomGSON.getInstance();
+				playerMap = gson.fromJson(reader, playerMap.getClass());
 			}
 		}
 
 		@Override
-		public void saveGameList() {
-
-			final Gson gson = CustomGSON.getInstance();
-			final JsonWriter writer = CustomGSON.getWriter(Server.this,
-			                                               getListFileName());
+		public void savePlayerMap() {
+			final JsonWriter writer =
+				CustomGSON.getWriter(Server.this, getListFileName());
 
 			if(writer == null) {
 				return;
 			}
 
-			try {
-				writer.beginObject();
-
-				synchronized (hostedGames) {
-
-					writer.name("games");
-					writer.beginArray();
-					for(final Game game : hostedGames) {
-						gson.toJson(game, Game.class, writer);
-					}
-					writer.endArray();
-				}
-
-				writer.endObject();
-
-				writer.close();
-			} catch (final Exception e) {
-				Log.e(TAG, "Could not write JSON file!", e);
-				return;
+			synchronized(playerMap) {
+				final Gson gson = CustomGSON.getInstance();
+				gson.toJson(playerMap, playerMap.getClass(), writer);
 			}
 		}
 
@@ -441,11 +401,7 @@ public class Server extends Service {
 		 * @}
 		 */
 
-		/** game container */
-		private final Set<Game> hostedGames =
-				Collections.synchronizedSet(new HashSet<Game>());
-
-		private final PlayerMap playerMap = new PlayerMap();
+		private PlayerMap playerMap = new PlayerMap();
 
 		private String getListFileName() {
 			return getFilesDir() + "/hosted_games.json";
@@ -461,24 +417,14 @@ public class Server extends Service {
 		private void onReceiveDecisions(final Game pGame, final Player pPlayer,
 		                                final String pSoldiers)
 		{
-			if(!hostedGames.contains(pGame))
-			{
-				Log.e(TAG, getString(R.string.error_not_hosted,
-						pGame.toString()));
-				return;
-			}
-
-			final GameInfo info = GameInfo.fromFile(Server.this, pGame);
-
-			if(!info.isInState(GameState.PLANNING_PHASE))
+			if(!pGame.isInState(Server.this, GameState.PLANNING_PHASE))
 			{
 				Log.e(TAG, getString(R.string.error_wrong_state,
-				                     pGame, info.getState()));
+				                     pGame, pGame.getState(Server.this)));
 				return;
 			}
 
 			// TODO handle decisions
-			distributeOutcome(pGame, new OutcomeContainer());
 		}
 
 		/**
@@ -491,19 +437,15 @@ public class Server extends Service {
 		{
 			Log.d(TAG, "Starting planning phase...");
 
-			final GameInfo info = GameInfo.fromFile(Server.this, pGame);
-
-			if(!info.isInState(GameState.JOINED))
+			if(!pGame.isInState(Server.this, GameState.JOINED))
 			{
 				Log.e(TAG, getString(R.string.error_wrong_state,
-						pGame.toString(), info.getState().toString()));
+				                     pGame, pGame.getState(Server.this)));
 				return;
 			}
 
-			info.setState(GameState.PLANNING_PHASE);
-
 			try {
-				info.saveToFile(Server.this, pGame);
+				pGame.setState(Server.this, GameState.PLANNING_PHASE);
 			} catch (final IOException e) {
 				Log.e(TAG, "Could not store game info!", e);
 				return;

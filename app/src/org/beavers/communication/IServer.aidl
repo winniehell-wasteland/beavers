@@ -36,12 +36,12 @@ interface IServer {
 	void initiateGame(in Game pGame);
 	
 	/**
-	 * load the running games from file
+	 * load players of running games from file
 	 */
-	 void loadGameList();
+	 void loadPlayerMap();
 	
 	/**
-	 * save the running games to file
+	 * save players of running games to file
 	 */
-	 void saveGameList();
+	 void savePlayerMap();
 }
