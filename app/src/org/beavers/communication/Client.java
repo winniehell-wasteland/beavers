@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +79,7 @@ public class Client extends Service {
 		super.onCreate();
 
 		implementation.loadGameList();
+		implementation.addDummyGames();
 
 		dtn = new DTNService.Connection();
 		final Intent intent = new Intent(Client.this, DTNService.class);
@@ -163,6 +165,24 @@ public class Client extends Service {
 	private final Implementation implementation = new Implementation();
 
 	private class Implementation extends IClient.Stub {
+
+		/** just for debugging */
+		@Override
+		public void addDummyGames() {
+			final Game game = new Game(new Player(UUID.randomUUID(), "playa"), UUID.randomUUID(), "foooooooo");
+
+			game.getDirectory(Client.this).mkdirs();
+
+			final GameInfo info = new GameInfo("test", 0);
+			try {
+				info.saveToFile(Client.this, game);
+			} catch (final IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			announcedGames.add(game);
+		}
 
 		@Override
 		public void abortGame(final Game pGame) {
@@ -308,17 +328,6 @@ public class Client extends Service {
 				return;
 			}
 
-			info.setState(GameState.JOINED);
-
-			try {
-				info.saveToFile(Client.this, pGame);
-			} catch (final IOException e) {
-				Log.e(TAG, "Could not store game info!", e);
-				return;
-			}
-
-			broadcastGameInfo(pGame);
-
 			final Message message =
 				new ClientMessage(pGame, getSettings().getPlayer(),
 				                  GameState.JOINED);
@@ -330,6 +339,17 @@ public class Client extends Service {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
+			info.setState(GameState.JOINED);
+
+			try {
+				info.saveToFile(Client.this, pGame);
+			} catch (final IOException e) {
+				Log.e(TAG, "Could not store game info!", e);
+				return;
+			}
+
+			broadcastGameInfo(pGame);
 		}
 
 		@Override

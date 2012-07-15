@@ -154,7 +154,7 @@ public class Server extends Service {
 		@Override
 		public synchronized void addPlayer(final Game pGame, final Player pPlayer)
 		{
-			Log.d(TAG, "Somebody joins "+pGame.toString());
+			Log.d(TAG, pPlayer.getName() + " joins "+pGame.getName());
 
 			if(!hostedGames.contains(pGame))
 			{
@@ -212,7 +212,7 @@ public class Server extends Service {
 				e.printStackTrace();
 			}
 
-			if(json.has(GameInfo.JSON_TAG) && json.has(Player.JSON_TAG))
+			if(json.has(Game.JSON_TAG) && json.has(Player.JSON_TAG))
 			{
 				final Gson gson = CustomGSON.getInstance();
 
@@ -233,9 +233,17 @@ public class Server extends Service {
 				final Player player =
 					gson.fromJson(json.get(Player.JSON_TAG), Player.class);
 
-				final GameInfo info = GameInfo.fromFile(Server.this, game);
+				if(!json.has(GameState.JSON_TAG))
+				{
+					Log.e(TAG, "JSON object does not contain game state!");
+					return false;
+				}
 
-				switch (info.getState()) {
+				final GameState state =
+					gson.fromJson(json.get(GameState.JSON_TAG), GameState.class);
+
+
+				switch (state) {
 				case JOINED:
 				{
 					addPlayer(game, player);
@@ -481,9 +489,11 @@ public class Server extends Service {
 		 */
 		private void startPlanningPhase(final Game pGame)
 		{
+			Log.d(TAG, "Starting planning phase...");
+
 			final GameInfo info = GameInfo.fromFile(Server.this, pGame);
 
-			if(!info.isInState(GameState.ANNOUNCED))
+			if(!info.isInState(GameState.JOINED))
 			{
 				Log.e(TAG, getString(R.string.error_wrong_state,
 						pGame.toString(), info.getState().toString()));

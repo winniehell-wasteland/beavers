@@ -16,6 +16,7 @@ import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
+import org.beavers.gameplay.Player;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -87,19 +88,34 @@ public class GameListActivity extends FragmentActivity
 	}
 	@Override
 	public boolean onMenuItemClick(final MenuItem pItem) {
+		if(listView.getSelectedItemPosition() == -1) {
+			return false;
+		}
+
+		final Game game = listView.getSelectedItem();
+		listView.setSelection(-1);
+
 		switch(pItem.getItemId())
 		{
 		case R.id.context_menu_join:
 		{
-			assert listView.getCheckedItemIds().length == 1;
-			final Game game = (Game) listView.getItemAtPosition(
-				listView.getCheckedItemPosition()
-			);
-
 			Log.d(TAG, "Trying to join "+game+"...");
 
 			try {
 				client.getService().joinGame(game);
+			} catch (final RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			return true;
+		}
+		case R.id.context_menu_add_player:
+		{
+			Log.d(TAG, "Adding dummy player...");
+
+			try {
+				server.getService().addPlayer(game, new Player(UUID.randomUUID(), "dummy player"));
 			} catch (final RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -6,13 +6,14 @@ import java.util.UUID;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.widget.Checkable;
 
 /**
  * class to uniquely identify a game
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public final class Game extends UniqueID {
+public final class Game extends UniqueID implements Checkable {
 	/**
 	 * @name public constants
 	 * @{
@@ -96,5 +97,22 @@ public final class Game extends UniqueID {
 	public File getDirectory(final Context pContext) {
 		return new File(pContext.getFilesDir().getAbsolutePath()
 		                + "/" + this);
+	}
+
+	private boolean is_checked = false;
+
+	@Override
+	public boolean isChecked() {
+		return is_checked;
+	}
+
+	@Override
+	public void setChecked(final boolean checked) {
+		is_checked = checked;
+	}
+
+	@Override
+	public void toggle() {
+		is_checked = !is_checked;
 	}
 }

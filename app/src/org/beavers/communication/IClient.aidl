@@ -13,6 +13,8 @@ import org.beavers.gameplay.Player;
  */
 interface IClient {
 
+	void addDummyGames();
+
 	/**
 	 * quit game
 	 *
