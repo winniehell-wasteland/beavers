@@ -110,6 +110,16 @@ public class GameListActivity extends FragmentActivity
 
 			return true;
 		}
+		case R.id.context_menu_load_game:
+		{
+			// show game
+			final Intent intent =
+				new Intent(GameListActivity.this, GameActivity.class);
+			intent.putExtra(Game.PARCEL_NAME, game);
+			startActivity(intent);
+
+			return true;
+		}
 		case R.id.context_menu_add_player:
 		{
 			Log.d(TAG, "Adding dummy player...");
@@ -129,7 +139,7 @@ public class GameListActivity extends FragmentActivity
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_join_game:
+		case R.id.menu_announced_games:
 		{
 			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
 			intent.setAction(ANNOUNCED);
@@ -182,7 +192,7 @@ public class GameListActivity extends FragmentActivity
 
 	@Override
 	public boolean onPrepareOptionsMenu(final Menu menu) {
-		menu.findItem(R.id.menu_join_game).setVisible(!getIntent().getAction().equals(ANNOUNCED));
+		menu.findItem(R.id.menu_announced_games).setVisible(!getIntent().getAction().equals(ANNOUNCED));
 		menu.findItem(R.id.menu_running_games).setVisible(!getIntent().getAction().equals(RUNNING));
 
 		return super.onPrepareOptionsMenu(menu);

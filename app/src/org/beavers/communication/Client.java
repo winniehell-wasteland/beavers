@@ -1,7 +1,6 @@
 package org.beavers.communication;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.anddev.andengine.util.StreamUtils;
 import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
@@ -452,12 +450,14 @@ public class Client extends Service {
 
 		@Override
 		public void loadGameList() throws ClientRemoteException {
+			/*
 			try {
 				Log.d(TAG, "loading: "+StreamUtils.readFully(new FileInputStream(getListFileName())));
 			} catch (final Exception e) {
 				Log.e(TAG, e.getMessage());
 				return;
 			}
+			*/
 
 			JsonReader reader;
 			try {

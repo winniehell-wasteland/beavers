@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/context_menu_join" android:title="@string/menu_join"></item>
-    <item android:id="@+id/context_menu_add_player" android:title="Add another Player (debug)"></item>
+	<item android:id="@+id/context_menu_join" android:title="@string/context_menu_join_game"></item>
+	<item android:id="@+id/context_menu_add_player" android:title="Add another Player (debug)"></item>
 </menu>

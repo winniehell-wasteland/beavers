@@ -647,6 +647,12 @@ public class GameActivity extends BaseGameActivity
 		super.onPause();
 
 		unregisterReceiver(updateReceiver);
+
+		try {
+			storage.saveToFile();
+		} catch (final FileNotFoundException e) {
+			Log.e(TAG, "Could not write game storage!", e);
+		}
 	}
 
 	@Override
