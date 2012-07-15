@@ -31,8 +31,19 @@ public class Settings {
 	public Player getPlayer() {
 		final String id =
 			settings.getString(PLAYER_ID_KEY, PLAYER_ID_DEFAULT);
+
+		// store default
+		if(id == PLAYER_ID_DEFAULT) {
+			settings.edit().putString(PLAYER_ID_KEY, id).commit();
+		}
+
 		final String name =
 			settings.getString(PLAYER_NAME_KEY, PLAYER_NAME_DEFAULT);
+
+		// store default
+		if(name == PLAYER_NAME_DEFAULT) {
+			settings.edit().putString(PLAYER_NAME_KEY, name).commit();
+		}
 
 		return new Player(UUID.fromString(id), name);
 	}
