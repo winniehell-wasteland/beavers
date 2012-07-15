@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.anddev.andengine.util.StreamUtils;
 import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
@@ -283,7 +284,17 @@ public class GameStorage {
 	                      JsonSyntaxException, UnexpectedTileContentException {
 
 		if(!(new File(getFileName())).exists()) {
-			copyMap();
+			final GameInfo info = GameInfo.fromFile(context, game);
+
+			Log.d(TAG, "Copying maps/" + info.getMapName() + "/setup.json");
+
+			final InputStream src = context.getAssets().open(
+				"maps/" + info.getMapName() + "/setup.json"
+			);
+
+			final FileOutputStream dest = new FileOutputStream(getFileName());
+
+			StreamUtils.copyAndClose(src, dest);
 		}
 
 		final Gson gson = CustomGSON.getInstance();
@@ -301,31 +312,6 @@ public class GameStorage {
 		}
 
 		reader.close();
-	}
-
-	private void copyMap() throws IOException {
-		final GameInfo info = GameInfo.fromFile(context, game);
-
-		Log.d(TAG, "Copying maps/" + info.getMapName() + "/setup.json");
-
-		final InputStream src = context.getAssets().open(
-			"maps/" + info.getMapName() + "/setup.json"
-		);
-
-		final FileOutputStream dest = new FileOutputStream(getFileName());
-
-		final byte[] buffer = new byte[1024];
-		int numBytes;
-
-		while((numBytes = src.read(buffer)) > 0) {
-			dest.write(buffer, 0, numBytes);
-		}
-
-        src.close();
-
-        Log.d(TAG, "Wrote " + dest.getChannel().size() + " bytes!");
-
-        dest.close();
 	}
 
 	public static class Setup {
