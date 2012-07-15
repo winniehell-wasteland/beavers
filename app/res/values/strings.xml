@@ -1,53 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Battle Beavers</string>
-    <string name="button_cancel">Cancel</string>
-    <string name="button_ok">OK</string>
-    <string name="context_menu_add_aim">Aim at</string>
-    <string name="context_menu_empty_tile">Empty Tile</string>
-    <string name="context_menu_move">Move</string>
-    <string name="context_menu_remove_aim">Remove aim</string>
-    <string name="context_menu_shoot">Shoot</string>
-    <string name="context_menu_waypoint_remove">Remove</string>
-    <string name="context_menu_waypoint">Waypoint</string>
-    
-    <string name="error_already_announced">Game %1$s was already announced!</string>
-    <string name="error_binding_client">Could not bind client service!</string>
-    <string name="error_binding_server">Could not bind server service!</string>
-    <string name="error_dtn_receiving">Could not handle DTN message!</string>
-    <string name="error_dtn_sending">Could not send DTN message!</string>
-    <string name="error_game_dir_exists">Directory for game %1$s already exists!</string>
-    <string name="error_game_exists">Game %1$s already exists!</string>
-    <string name="error_game_not_announced">Game %1$s was not announced!</string>
-    <string name="error_game_not_hosted">Could not find game %1$s!</string>
-    <string name="error_game_not_running">Game %1$s is not running!</string>
-    <string name="error_game_save_state">State of game %1$s could not be saved!</string>
-    <string name="error_game_wrong_state">Game %1$s is in wrong state! (%2$s)</string>
-    <string name="error_json_missing_element">JSON data does not contain "%1$s"!</string>
-    <string name="error_json_reading">Could not read JSON!</string>
-    <string name="error_json_writing">Could not write JSON!</string>
-    <!-- string name="error_sending_decisions_failed">Could send decisions to server!</string-->
-    
-    <string name="menu_execute">Execute</string>
-    <string name="menu_help">Help</string>
-    <string name="menu_join_game">Join game</string>
-    <string name="menu_join">Join</string>
-    <string name="menu_options">Options</string>
-    <string name="menu_quit">Quit</string>
-    <string name="menu_running_games">Running games</string>
-    <string name="menu_start_game">Start game</string>
-    <string name="state_aborted">Aborted</string>
-    <string name="state_announced">Announced</string>
-    <string name="state_execution">Execution Phase</string>
-    <string name="state_joined">Joined</string>
-    <string name="state_lost">Lost</string>
-    <string name="state_planning">Planning Phase</string>
-    <string name="state_started">Started</string>
-    <string name="state">State</string>
-    <string name="state_unknown">Unknown</string>
-    <string name="state_won">Won</string>
-    <string name="title_start_game">Start game</string>
-    <string name="context_menu_ignore_attacks">Disable shooting</string>
-    <string name="context_menu_react_on_attacks">Enable shooting</string>
-    <string name="context_menu_wait">Wait</string>
+	<string name="app_name">Battle Beavers</string>
+	
+	<string name="button_cancel">Cancel</string>
+	<string name="button_ok">OK</string>
+	
+	<!-- context menu items -->
+	<string name="context_menu_add_aim">Aim at</string>
+	<string name="context_menu_ignore_attacks">Disable shooting</string>
+	<string name="context_menu_join_game">Join</string>
+	<string name="context_menu_load_game">Load</string>
+	<string name="context_menu_move">Move</string>
+	<string name="context_menu_react_on_attacks">Enable shooting</string>
+	<string name="context_menu_remove_aim">Remove aim</string>
+	<string name="context_menu_shoot">Shoot</string>
+	<string name="context_menu_wait">Wait</string>
+	<string name="context_menu_waypoint_remove">Remove</string>
+	<string name="context_menu_waypoint">Waypoint</string>
+	
+	<!-- error messages -->
+	<string name="error_already_announced">Game %1$s was already announced!</string>
+	<string name="error_binding_client">Could not bind client service!</string>
+	<string name="error_binding_server">Could not bind server service!</string>
+	<string name="error_dtn_receiving">Could not handle DTN message!</string>
+	<string name="error_dtn_sending">Could not send DTN message!</string>
+	<string name="error_game_dir_exists">Directory for game %1$s already exists!</string>
+	<string name="error_game_exists">Game %1$s already exists!</string>
+	<string name="error_game_not_announced">Game %1$s was not announced!</string>
+	<string name="error_game_not_hosted">Could not find game %1$s!</string>
+	<string name="error_game_not_running">Game %1$s is not running!</string>
+	<string name="error_game_save_state">State of game %1$s could not be saved!</string>
+	<string name="error_game_wrong_state">Game %1$s is in wrong state! (%2$s)</string>
+	<string name="error_json_missing_element">JSON data does not contain "%1$s"!</string>
+	<string name="error_json_reading">Could not read JSON!</string>
+	<string name="error_json_writing">Could not write JSON!</string>
+	
+	<!-- option menu items -->
+	<string name="menu_announced_games">Annouced games</string>
+	<string name="menu_execute">Execute</string>
+	<string name="menu_help">Help</string>
+	<string name="menu_options">Options</string>
+	<string name="menu_quit">Quit</string>
+	<string name="menu_running_games">Running games</string>
+	<string name="menu_start_game">Start game</string>
+	
+	<!-- game states -->
+	<string name="state">State</string>
+	<string name="state_aborted">Aborted</string>
+	<string name="state_announced">Announced</string>
+	<string name="state_execution">Execution Phase</string>
+	<string name="state_joined">Joined</string>
+	<string name="state_lost">Lost</string>
+	<string name="state_planning">Planning Phase</string>
+	<string name="state_started">Started</string>
+	<string name="state_unknown">Unknown</string>
+	<string name="state_won">Won</string>
+	
+	<!-- dialog titles -->
+	<string name="title_start_game">Start game</string>
 </resources>
