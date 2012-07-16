@@ -53,11 +53,13 @@ import org.beavers.communication.Client;
 import org.beavers.communication.Client.ClientRemoteException;
 import org.beavers.communication.Server;
 import org.beavers.ingame.IGameObject;
+import org.beavers.ingame.IMenuDialogListener;
 import org.beavers.ingame.IMovableObject;
 import org.beavers.ingame.IRemoveObjectListener;
 import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
+import org.beavers.ingame.WaitTimeDialog;
 import org.beavers.ingame.WayPoint;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
@@ -95,7 +97,8 @@ public class GameActivity extends BaseGameActivity
 		IOnSceneTouchListener,
 		IHoldDetectorListener,
 		IScrollDetectorListener,
-		IRemoveObjectListener
+		IRemoveObjectListener,
+		IMenuDialogListener
 {
 	/**
 	 * @name z-index constants
@@ -443,6 +446,7 @@ public class GameActivity extends BaseGameActivity
 		try {
 			storage = new GameStorage(this, currentGame);
 			storage.setRemoveObjectListener(this);
+			storage.setMenuDialogListener(this);
 		} catch (final Exception e) {
 			Log.e(TAG, "Could not create game storage!", e);
 			finish();
@@ -1013,6 +1017,12 @@ public class GameActivity extends BaseGameActivity
 
 			updateHUD();
 		}
+	}
+
+	@Override
+	public void onDialogSelected(final WayPoint waypoint) {
+		new WaitTimeDialog(this, waypoint);
+		
 	}
 
 }

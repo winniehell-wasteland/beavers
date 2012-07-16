@@ -17,6 +17,7 @@ import org.beavers.Settings;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.ingame.IGameObject;
+import org.beavers.ingame.IMenuDialogListener;
 import org.beavers.ingame.IRemoveObjectListener;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
@@ -75,6 +76,7 @@ public class GameStorage {
 
 		gameObjects.put(pWaypoint.getTile(), pWaypoint);
 		pWaypoint.setRemoveObjectListener(removeListener);
+		pWaypoint.setMenuDialogListener(menuListener);
 	}
 
 	public Soldier getSoldierByTile(final Tile pTile)
@@ -188,7 +190,11 @@ public class GameStorage {
 			}
 		}
 	}
-
+	
+	public void setMenuDialogListener(final IMenuDialogListener mListener){
+		menuListener=mListener;
+	}
+	
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
 	{
 		removeListener = pListener;
@@ -222,7 +228,7 @@ public class GameStorage {
 	private final ArrayList<SoldierList> teams;
 
 	private IRemoveObjectListener removeListener;
-
+	private IMenuDialogListener menuListener;
 	private void addSoldier(final Soldier pSoldier)
 	             throws UnexpectedTileContentException {
 

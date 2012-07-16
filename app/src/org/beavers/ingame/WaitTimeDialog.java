@@ -20,9 +20,10 @@ public class WaitTimeDialog {
 	private SeekBar seeker;
 	private int wait;
 	/** default constructor */
-	public WaitTimeDialog(final GameActivity activity)
+	public WaitTimeDialog(final GameActivity activity, final WayPoint wp)
 	{
 		this.activity=activity;
+		waypoint=wp;
 		createWaitDialog();
 	}
 
@@ -31,7 +32,7 @@ public class WaitTimeDialog {
 		final LayoutInflater inflater= LayoutInflater.from(activity);
 		final View seekView = inflater.inflate(R.layout.dialog, null);
 		seeker=(SeekBar)seekView.findViewById(R.id.seekBar1);
-	
+		seeker.setProgress(waypoint.getWait()*10);
 		final TextView text=(TextView)seekView.findViewById(R.id.textView1);
 		final AlertDialog.Builder dialog = new AlertDialog.Builder(activity);
 		dialog.setView(seekView);
@@ -43,7 +44,7 @@ public class WaitTimeDialog {
 					@Override
 					public void onClick(final DialogInterface dialog, final int which) {
 						if(waypoint!=null){
-						//	waypoint.setWait(wait);
+							waypoint.setWait(wait);
 						}
 						dialog.dismiss();
 					}
@@ -76,8 +77,8 @@ public class WaitTimeDialog {
 						@Override
 						public void onProgressChanged(final SeekBar seekBar, final int progress,
 								final boolean fromUser) {
-							wait=seeker.getProgress();
-							text.setText("Wartezeit: "+seeker.getProgress()/10);
+							wait=seeker.getProgress()/10;
+							text.setText("Wartezeit: "+seeker.getProgress()/10+" Sekunden");
 						}
 					});
 			    
@@ -91,7 +92,7 @@ public class WaitTimeDialog {
 		public void show(/*final WayPoint waypoint*/){
 			waypoint=waypoint;
 			//waypoint.setWaiting(false);
-			seeker.setProgress(waypoint.getWait());
+			
 			dialog.show();
 		}
 			   

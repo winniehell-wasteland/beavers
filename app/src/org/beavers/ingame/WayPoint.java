@@ -22,6 +22,8 @@ import android.view.MenuItem;
  */
 public class WayPoint extends Sprite implements IGameObject {
 
+	
+
 	/**
 	 * default constructor
 	 * @param pSoldier soldier this waypoint belongs to
@@ -97,6 +99,10 @@ public class WayPoint extends Sprite implements IGameObject {
 	public int getWait(){
 		return wait;
 	}
+	
+	public void setWait(final int sec){
+		wait=sec;
+	}
 
 	public void onMenuCreated(final ContextMenu pMenu) {
 		pMenu.setHeaderTitle(R.string.context_menu_waypoint);
@@ -153,7 +159,7 @@ public class WayPoint extends Sprite implements IGameObject {
 			ignoreShots= false;
 			return true;
 		case R.id.context_menu_wait:
-			wait=5;
+			menuListener.onDialogSelected(this);
 			return true;
 		default:
 			return false;
@@ -214,7 +220,11 @@ public class WayPoint extends Sprite implements IGameObject {
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener) {
 		removeListener = pListener;
 	}
-
+	
+	public void setMenuDialogListener(final IMenuDialogListener mListener){
+		menuListener = mListener;
+	}
+	
 	private final Soldier soldier;
 	private final Tile tile;
 
@@ -236,6 +246,7 @@ public class WayPoint extends Sprite implements IGameObject {
 	private int wait;
 
 	private IRemoveObjectListener removeListener;
+	private IMenuDialogListener menuListener;
 
 	private void drawPath() {
 		final int TILE_HEIGHT = getTile().getTileHeight();
