@@ -130,7 +130,7 @@ public class WayPoint extends Sprite implements IGameObject {
 		case R.id.context_menu_waypoint_remove:
 			if(isLast())
 			{
-				soldier.changeAP(getPath().getCost()/10);
+				soldier.changeAP(getPath().getCost());
 				soldier.removeLastWayPoint();
 
 				remove();

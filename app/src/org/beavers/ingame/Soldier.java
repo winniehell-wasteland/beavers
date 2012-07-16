@@ -158,7 +158,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	@Override
 	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
 		try {
-			return pPathFinder.findPath(this, (int) (getAP() * 10),
+			return pPathFinder.findPath(this, getAP(),
 			                            getLastWaypoint().getTile().getColumn(),
 			                            getLastWaypoint().getTile().getRow(),
 			                            pTarget.getColumn(), pTarget.getRow());
@@ -235,15 +235,15 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			if(pMap.isTileBlocked(this, pFrom.getColumn(), pTo.getRow())
 					|| pMap.isTileBlocked(this, pTo.getColumn(), pFrom.getRow()))
 			{
-				return Integer.MAX_VALUE;
+				return Float.POSITIVE_INFINITY;
 			}
 			else
 			{
-				return 15;
+				return 1.5f;
 			}
 		}
 
-		return 10;
+		return 1.0f;
 	}
 
 	/**

@@ -334,7 +334,7 @@ public class GameActivity extends BaseGameActivity
 
 					mainScene.attachChild(waypoint);
 
-					selectedSoldier.changeAP(-waypoint.getPath().getCost()/10);
+					selectedSoldier.changeAP(-waypoint.getPath().getCost());
 				}
 			}
 			else
