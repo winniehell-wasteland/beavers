@@ -15,7 +15,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.beavers.App;
 import org.beavers.Settings;
-import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
 
@@ -30,6 +31,9 @@ import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.RemoteException;
 import android.util.Log;
+
+import com.google.gson.annotations.SerializedName;
+
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
@@ -80,21 +84,11 @@ public class DTNService extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		executor = Executors.newSingleThreadExecutor();
-
 		dtnClient = new CustomDTNClient();
 		dataHandler = new CustomDataHandler();
 
 		dtnClient.setDataHandler(dataHandler);
 		dtnClient.initialize();
-
-		client = new Client.Connection();
-		Intent intent = new Intent(DTNService.this, Client.class);
-		bindService(intent, client, BIND_AUTO_CREATE);
-
-		server = new Server.Connection();
-		intent = new Intent(DTNService.this, Server.class);
-		bindService(intent, server, BIND_AUTO_CREATE);
 
 		final Timer timer = new Timer();
 
@@ -120,18 +114,9 @@ public class DTNService extends Service {
 
 	@Override
 	public void onDestroy() {
+		Log.d(TAG, "onDestroy()");
 
 		dtnClient.unregister();
-
-		if(client != null)
-		{
-			unbindService(client);
-		}
-
-		if(server != null)
-		{
-			unbindService(server);
-		}
 
 		try {
 			// stop executor
@@ -156,17 +141,15 @@ public class DTNService extends Service {
 
 		if(pIntent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
-        	final int stopId = pStartId;
-
 			executor.execute(new Runnable() {
 
 				@Override
 				public void run() {
 					queryTask.run();
-
-					stopSelfResult(stopId);
 				}
 			});
+
+			stopSelfResult(pStartId);
 
         	return START_STICKY;
 		}
@@ -194,21 +177,21 @@ public class DTNService extends Service {
 		private IDTNService service;
 	}
 
-	@SuppressWarnings("unused")
 	public static class Message
 	{
-		public Message(final Context pContext, final GameInfo pGame)
+		public Message(final Game pGame, final GameState pState)
 		{
-			context = pContext;
 			game = pGame;
+			state = pState;
 		}
 
-		public ParcelFileDescriptor getFile()
+		/** @return file name */
+		public String saveToFile(final Context pContext)
 		{
 			try {
-				final File file = File.createTempFile("outgoing-", ".msg",
-				                                context.getExternalCacheDir());
-
+				final File file =
+					File.createTempFile("outgoing-", ".msg",
+				                        pContext.getExternalCacheDir());
 
 				Log.d(TAG, "writing message to file "+file.getAbsolutePath());
 
@@ -218,25 +201,18 @@ public class DTNService extends Service {
 
 				Log.d(TAG, "File content: "+CustomGSON.getInstance().toJson(this));
 
-				length = file.length();
-
-				return ParcelFileDescriptor.open(
-					file, ParcelFileDescriptor.MODE_READ_ONLY
-				);
+				return file.getAbsolutePath();
 			} catch (final IOException e) {
 				Log.e(TAG, "Error writing message!", e);
 				return null;
 			}
 		}
 
-		public long getLength()
-		{
-			return length;
-		}
+		@SerializedName(Game.JSON_TAG)
+		private final Game game;
 
-		private transient final Context context;
-		private final GameInfo game;
-		private transient long length;
+		@SerializedName(GameState.JSON_TAG)
+		private final GameState state;
 	}
 
 	/**
@@ -259,59 +235,49 @@ public class DTNService extends Service {
 		}
 	}
 
-	/**
-	 * @name higher level services
-	 * @{
-	 */
-	private Client.Connection client;
-	private Server.Connection server;
-	/**
-	 * @}
-	 */
-
 	private CustomDTNClient dtnClient;
 	private CustomDataHandler dataHandler;
-	private ExecutorService executor;
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
 	private final IDTNService.Stub stub = new IDTNService.Stub() {
 
 		@Override
 		public void sendToServer(final Player pServer,
-		                         final ParcelFileDescriptor pData) {
-
-			// send to our server
+		                         final String pFileName) {
 			try {
-				server.getService().handleData(pData);
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Server could not handle loopback packet!", e);
-				return;
-			}
+				final ParcelFileDescriptor data = ParcelFileDescriptor.open(
+					new File(pFileName),
+					ParcelFileDescriptor.MODE_READ_ONLY
+				);
 
-			Log.d(TAG, "Sending to server...");
-			try {
-				sendFileDescriptor(SERVER_EID, pData);
+				Log.d(TAG, "Sending to server...");
+
+				sendFileDescriptor(SERVER_EID, data);
 			} catch (final Exception e) {
 				Log.e(TAG, "Could not send DTN packet!", e);
 			}
+
+			// send to our server
+			notifyServer(pFileName);
 		}
 
 		@Override
-		public void sendToClients(final ParcelFileDescriptor pData) {
-
-			// send to our client
+		public void sendToClients(final String pFileName) {
 			try {
-				client.getService().handleData(pData);
-			} catch (final RemoteException e) {
-				Log.e(TAG, "Client could not handle loopback packet!", e);
-				return;
-			}
+				final ParcelFileDescriptor data = ParcelFileDescriptor.open(
+						new File(pFileName),
+						ParcelFileDescriptor.MODE_READ_ONLY
+					);
 
-			Log.d(TAG, "Sending to client...");
-			try {
-				sendFileDescriptor(CLIENT_EID, pData);
+				Log.d(TAG, "Sending to client...");
+
+				sendFileDescriptor(CLIENT_EID, data);
 			} catch (final Exception e) {
 				Log.e(TAG, "Could not send DTN packet!", e);
 			}
+
+			// send to our client
+			notifyClient(pFileName);
 		}
 	};
 
@@ -406,35 +372,28 @@ public class DTNService extends Service {
 			if(file != null)
 			{
 				final String destination = bundle.destination;
-				final File input = file;
+				final String fileName = file.getAbsolutePath();
 
 				executor.execute(new Runnable() {
 
 					@Override
 					public void run() {
 						try {
-							final ParcelFileDescriptor fileDesc =
-								ParcelFileDescriptor.open(
-									input,
-									ParcelFileDescriptor.MODE_READ_ONLY
-								);
-
 							if(destination.equals(SERVER_EID.toString()))
 							{
-								server.getService().handleData(fileDesc);
+								notifyServer(fileName);
 							}
 							else if(destination.equals(CLIENT_EID.toString()))
 							{
-								client.getService().handleData(fileDesc);
+								notifyClient(fileName);
 							}
 							else
 							{
 								Log.w(TAG, "Got stuff that we don't want: "
 								      + "destination="+destination);
-							}
 
-							fileDesc.close();
-							input.delete();
+								(new File(fileName)).delete();
+							}
 						} catch (final Exception e) {
 							Log.e(TAG,
 								"Could not forward payload to other services!",
@@ -499,7 +458,7 @@ public class DTNService extends Service {
 
 		public void initialize() {
 	        try {
-	        	final Registration registration = new Registration("game/beavers");
+	        	final Registration registration = new Registration(null);
 
 	        	registration.add(SERVER_EID);
 	        	registration.add(CLIENT_EID);
@@ -568,5 +527,23 @@ public class DTNService extends Service {
 		{
 			return null;
 		}
+	}
+
+	private void notifyClient(final String pFileName) {
+		final Intent intent = new Intent(DTNService.this, Client.class);
+
+		intent.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+		intent.putExtra("file", pFileName);
+
+		startService(intent);
+	}
+
+	private void notifyServer(final String pFileName) {
+		final Intent intent = new Intent(DTNService.this, Server.class);
+
+		intent.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+		intent.putExtra("file", pFileName);
+
+		startService(intent);
 	}
 }

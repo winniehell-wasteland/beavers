@@ -2,9 +2,8 @@ package org.beavers.communication;
 
 import android.os.ParcelFileDescriptor;
 
-import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.Player;
-import org.beavers.gameplay.DecisionContainer;
 
 /**
  * client service interface
@@ -14,65 +13,46 @@ import org.beavers.gameplay.DecisionContainer;
  */
 interface IClient {
 
+	void addDummyGames();
+
 	/**
 	 * quit game
 	 *
 	 * @param pGame game
 	 */
-	void abortGame(in GameInfo pGame);
-	
-	
-	/**
-	 * @return announced game with given key
-	 */
-	GameInfo getAnnouncedGame(in String pKey);
+	void abortGame(in Game pGame);
 	
 	/**
-	 * @return keys of announced games
+	 * @return announced games
 	 */
-	String[] getAnnouncedGames();
-	
-	/**
-	 * @return number of announced games
-	 */
-	int getAnnouncedGamesCount();
-	
-	/**
-	 * @return running game with given key
-	 */
-	GameInfo getRunningGame(in String pKey);
+	Game[] getAnnouncedGames();
 	
 	/**
 	 * @return keys of running games
 	 */
-	String[] getRunningGames();
-	
-	/**
-	 * @return number of running games
-	 */
-	int getRunningGamesCount();
-
-	/**
-	 * receive a DTN message
-	 *
-	 * @param pData file descriptor of payload file
-	 * @return true if handled
-	 */
-	boolean handleData(in ParcelFileDescriptor pData);
-	
+	Game[] getRunningGames();
 
 	/**
 	 * join a game
 	 *
 	 * @param pGame announced game
 	 */
-	void joinGame(in GameInfo pGame);
+	void joinGame(in Game pGame);
+	
+	/**
+	 * load the running games from file
+	 */
+	 void loadGameList();
+	
+	/**
+	 * save the running games to file
+	 */
+	 void saveGameList();
 	
 	/**
 	 * send decisions to server
 	 *
 	 * @param pGame running game
-	 * @param decisions
 	 */
-	void sendDecisions(in GameInfo pGame, in DecisionContainer pDecisions);
+	void sendDecisions(in Game pGame);
 }

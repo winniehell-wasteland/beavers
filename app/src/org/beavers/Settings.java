@@ -19,16 +19,31 @@ public class Settings {
 		return DTN_LIFETIME_DEFAULT;
 	}
 
-	public String getMapName()
+	public String getDefaultMapName()
 	{
 		return MAP_NAME_DEFAULT;
+	}
+
+	public int getMaxPlayers() {
+		return MAX_PLAYERS_DEFAULT;
 	}
 
 	public Player getPlayer() {
 		final String id =
 			settings.getString(PLAYER_ID_KEY, PLAYER_ID_DEFAULT);
+
+		// store default
+		if(id == PLAYER_ID_DEFAULT) {
+			settings.edit().putString(PLAYER_ID_KEY, id).commit();
+		}
+
 		final String name =
 			settings.getString(PLAYER_NAME_KEY, PLAYER_NAME_DEFAULT);
+
+		// store default
+		if(name == PLAYER_NAME_DEFAULT) {
+			settings.edit().putString(PLAYER_NAME_KEY, name).commit();
+		}
 
 		return new Player(UUID.fromString(id), name);
 	}
@@ -48,7 +63,8 @@ public class Settings {
 	 * @{
 	 */
 	private static int DTN_LIFETIME_DEFAULT = 100;
-	private static String MAP_NAME_DEFAULT = "map";
+	private static String MAP_NAME_DEFAULT = "test";
+	private static int MAX_PLAYERS_DEFAULT = 2;
 	private static String PLAYER_ID_DEFAULT = UUID.randomUUID().toString();
 	private static String PLAYER_NAME_DEFAULT =
 		"player"+(new Random()).nextInt(1000);

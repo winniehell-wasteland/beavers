@@ -1,34 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="button_cancel">Abbrechen</string>
-    <string name="button_ok">OK</string>
-    <string name="context_menu_add_aim">Anvisieren</string>
-    <string name="context_menu_empty_tile">Leeres Feld</string>
-    <string name="context_menu_move">Bewegen</string>
-    <string name="context_menu_remove_aim">Nicht anvisieren</string>
-    <string name="context_menu_shoot">Schießen</string>
-    <string name="context_menu_waypoint_remove">Entfernen</string>
-    <string name="context_menu_waypoint">Wegpunkt</string>
-    <string name="menu_execute">Ausführen</string>
-    <string name="menu_help">Hilfe</string>
-    <string name="menu_join_game">Spiel beitreten</string>
-    <string name="menu_join">Beitreten</string>
-    <string name="menu_options">Optionen</string>
-    <string name="menu_quit">Beenden</string>
-    <string name="menu_running_games">Laufende Spiele</string>
-    <string name="menu_start_game">Spiel beginnen</string>
-    <string name="state_aborted">Abgebrochen</string>
-    <string name="state_announced">Angekündigt</string>
-    <string name="state_execution">Ausführungsphase</string>
-    <string name="state_joined">Beigetreten</string>
-    <string name="state_lost">Verloren</string>
-    <string name="state_planning">Planungsphase</string>
-    <string name="state_started">Gestartet</string>
-    <string name="state">Status</string>
-    <string name="state_unknown">Unbekannt</string>
-    <string name="state_won">Gewonnen</string>
-    <string name="title_start_game">Spiel starten</string>
-    <string name="context_menu_ignore_attacks">Nicht schießen</string>
-    <string name="context_menu_react_on_attacks">Schießen</string>
-    <string name="context_menu_wait">Warten</string>
+	<string name="app_name">Battle Beavers</string>
+	
+	<string name="button_cancel">Abbrechen</string>
+	<string name="button_ok">OK</string>
+	
+	<!-- context menu items -->
+	<string name="context_menu_add_aim">Anvisieren</string>
+	<string name="context_menu_ignore_attacks">Feinde ignorieren</string>
+	<string name="context_menu_join_game">Beitreten</string>
+	<string name="context_menu_load_game">Laden</string>
+	<string name="context_menu_move">Bewegen</string>
+	<string name="context_menu_react_on_attacks">Feuer erwidern</string>
+	<string name="context_menu_remove_aim">Nicht anvisieren</string>
+	<string name="context_menu_shoot">Schießen</string>
+	<string name="context_menu_wait">Warten</string>
+	<string name="context_menu_waypoint_remove">Entfernen</string>
+	<string name="context_menu_waypoint">Wegpunkt</string>
+
+	<!-- option menu items -->
+	<string name="menu_announced_games">Angekündigte Spiele</string>
+	<string name="menu_execute">Ausführen</string>
+	<string name="menu_help">Hilfe</string>
+	<string name="menu_options">Optionen</string>
+	<string name="menu_quit">Beenden</string>
+	<string name="menu_running_games">Laufende Spiele</string>
+	<string name="menu_start_game">Spiel beginnen</string>
+	
+	<!-- game states -->
+	<string name="state">Status</string>
+	<string name="state_aborted">Abgebrochen</string>
+	<string name="state_announced">Angekündigt</string>
+	<string name="state_execution">Ausführungsphase</string>
+	<string name="state_joined">Warte auf Spielbeginn</string>
+	<string name="state_lost">Verloren</string>
+	<string name="state_planning">Planungsphase</string>
+	<string name="state_started">Gestartet</string>
+	<string name="state_unknown">Unbekannt</string>
+	<string name="state_waiting">Warte auf Mitspieler</string>
+	<string name="state_won">Gewonnen</string>
+	
+	<!-- dialog titles -->
+	<string name="title_start_game">Spiel starten</string>
 </resources>

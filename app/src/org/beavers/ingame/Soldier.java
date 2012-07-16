@@ -17,6 +17,7 @@ import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
+import org.anddev.andengine.util.path.NegativeStepCostException;
 import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
@@ -96,21 +97,22 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return hp;
 
 	}
-	
+
 	public void ignoreShots(final boolean ignore){
 		ignoreShots=ignore;
 	}
-	
+
 	public boolean getIgnore(){
 		return ignoreShots;
 	}
-	
+
 	public void die(){
 		Log.e(Soldier.class.getName(), "die!!!");
 
 		if(hasParent()){
 			removeListener.onRemoveObject(this);
 			detachSelf();
+
 			if(isShooting()){
 				setShooting(false);
 				shot.stopShooting();
@@ -118,7 +120,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			for(final WayPoint waypoint : waypoints)
 			{
-				waypoint.detachSelf();
+				waypoint.remove();
 			}
 
 			waypoints.clear();
@@ -155,10 +157,15 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	@Override
 	public WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
-		return pPathFinder.findPath(this, (int) getAP() * 10,
-		                            getLastWaypoint().getTile().getColumn(),
-		                            getLastWaypoint().getTile().getRow(),
-		                            pTarget.getColumn(), pTarget.getRow());
+		try {
+			return pPathFinder.findPath(this, getAP(),
+			                            getLastWaypoint().getTile().getColumn(),
+			                            getLastWaypoint().getTile().getRow(),
+			                            pTarget.getColumn(), pTarget.getRow());
+		} catch (final NegativeStepCostException e) {
+			Log.e(getClass().getName(),"This should not happen!");
+			return null;
+		}
 	}
 
 	/**
@@ -228,15 +235,15 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			if(pMap.isTileBlocked(this, pFrom.getColumn(), pTo.getRow())
 					|| pMap.isTileBlocked(this, pTo.getColumn(), pFrom.getRow()))
 			{
-				return Integer.MAX_VALUE;
+				return Float.POSITIVE_INFINITY;
 			}
 			else
 			{
-				return 15;
+				return 1.5f;
 			}
 		}
 
-		return 10;
+		return 1.0f;
 	}
 
 	/**
@@ -352,17 +359,23 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 					final IEntity pItem) {
 				Soldier.this.registerEntityModifier(movement);
 				Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
-				
+
 				if(pAim != null)
 				{
 					final float angle =
 						calcViewAngle(pTarget.getCenterX(), pTarget.getCenterY(), pAim);
 					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
 					Soldier.this.registerEntityModifier(rotation);
-					
+
 				}
 			}
 		});
+	}
+
+	@Override
+	public void onAttached() {
+		super.onAttached();
+		getParent().sortChildren();
 	}
 
 	/**
@@ -490,7 +503,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				getWidth()/2 - selectionTexture.getWidth()/2-1,
 				getHeight()/2 - selectionTexture.getHeight()/2-1,
 				selectionTexture);
-			
+
 			waypoints = new ArrayDeque<WayPoint>();
 			waypoints.add(new WayPoint(this, null, pTile));
 

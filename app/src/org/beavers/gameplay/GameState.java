@@ -27,6 +27,9 @@ public enum GameState implements Parcelable {
 	/** lost the game */
 	LOST;
 
+	/** tag for JSON files */
+	public static final String JSON_TAG = "state";
+
 	@Override
 	public int describeContents() {
 		return 0;

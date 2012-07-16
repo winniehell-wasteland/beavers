@@ -1,7 +1,10 @@
 package org.beavers.ui;
 
+import org.beavers.gameplay.Game;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -45,9 +48,33 @@ public abstract class GameListView extends ListView
 	}
 
 	@Override
+	public Game getSelectedItem() {
+		return (Game) getItemAtPosition(selectedItem);
+	}
+
+	@Override
+	public long getSelectedItemId() {
+		return getItemIdAtPosition(selectedItem);
+	}
+
+	@Override
+	public int getSelectedItemPosition() {
+		return selectedItem;
+	}
+
+	@Override
+	public void setSelection(final int pPosition) {
+		selectedItem = pPosition;
+	}
+
+	@Override
 	public void onItemClick(final AdapterView<?> pParent, final View pView,
 	                        final int pPosition, final long pID) {
-		setItemChecked(pPosition, true);
+		Log.d(getClass().getSimpleName(), "selecting item "+pPosition);
+
+		setSelection(pPosition);
 		showContextMenu();
 	}
+
+	private int selectedItem = -1;
 }

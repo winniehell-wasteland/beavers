@@ -1,35 +1,46 @@
 package org.beavers.communication;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.lang.reflect.Type;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.DTNService.Message;
-import org.beavers.gameplay.DecisionContainer;
+import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
-import org.beavers.gameplay.GameList;
 import org.beavers.gameplay.GameState;
 import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.SoldierList;
 
 import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * client service for game communication
@@ -47,20 +58,10 @@ public class Client extends Service {
 	 * @}
 	 */
 
-	/**
-	 * @name intents
-	 * @{
-	 */
-	public static final String GAME_STATE_CHANGED_INTENT =
-		Client.class.getName() + ".GAME_STATE_CHANGED";
-	/**
-	 * @}
-	 */
-
 	@Override
 	public IBinder onBind(final Intent pIntent) {
 		Log.d(TAG, "onBind()");
-		return stub;
+		return implementation;
 	}
 
 	@Override
@@ -68,21 +69,76 @@ public class Client extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
-		dtn = new DTNService.Connection();
-		Intent intent = new Intent(Client.this, DTNService.class);
-		bindService(intent, dtn, Service.BIND_AUTO_CREATE);
+		try {
+			implementation.loadGameList();
+		} catch (final ClientRemoteException e) {
+			e.log();
+		}
 
-		server = new Server.Connection();
-		intent = new Intent(Client.this, Server.class);
-		bindService(intent, server, Service.BIND_AUTO_CREATE);
+		implementation.addDummyGames();
+
+		dtn = new DTNService.Connection();
+		final Intent intent = new Intent(Client.this, DTNService.class);
+		bindService(intent, dtn, Service.BIND_AUTO_CREATE);
 	}
 
 	@Override
 	public void onDestroy() {
+		Log.d(TAG, "onDestroy()");
+
 		unbindService(dtn);
-		unbindService(server);
+
+		try {
+			// stop executor
+			executor.shutdown();
+
+			// ... and wait until all jobs are done
+			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+				executor.shutdownNow();
+			}
+		} catch (final InterruptedException e) {
+			Log.e(TAG, "Interrupted while processing executor queue!", e);
+		}
+
+		try {
+			implementation.saveGameList();
+		} catch (final ClientRemoteException e) {
+			e.log();
+		}
 
 		super.onDestroy();
+	}
+
+	@Override
+	public int onStartCommand(final Intent pIntent, final int pFlags, final int pStartId) {
+
+		Log.d(TAG, "onStartCommand()");
+
+		if(pIntent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
+		{
+        	final int stopId = pStartId;
+        	final String fileName = pIntent.getStringExtra("file");
+
+			executor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						implementation.handleData(fileName);
+					} catch (final ClientRemoteException e) {
+						Log.e(TAG, getString(R.string.error_dtn_receiving), e);
+					}
+
+					(new File(fileName)).delete();
+				}
+			});
+
+			stopSelfResult(stopId);
+
+        	return START_STICKY;
+		}
+
+        return START_NOT_STICKY;
 	}
 
 	/**
@@ -108,114 +164,201 @@ public class Client extends Service {
 		private IClient service;
 	}
 
-	/**
-	 * @name service connections
-	 * @{
-	 */
-	private Server.Connection server;
-	private DTNService.Connection dtn;
-	/**
-	 * @}
-	 */
+	public class ClientRemoteException extends RemoteException {
 
-	private final IClient.Stub stub = new IClient.Stub() {
+		/** @see {@link Serializable} */
+		private static final long serialVersionUID = 5092163419629856671L;
 
-		@Override
-		public void abortGame(GameInfo pGame) {
-			if (!runningGames.contains(pGame)) {
-				Log.e(TAG, getString(R.string.error_not_running, pGame));
-				return;
+		public ClientRemoteException(final int pResId,
+		                             final Object... pFormatArgs) {
+			this(pResId, null, pFormatArgs);
+		}
+
+
+		public ClientRemoteException(final int pResId,
+		                             final Exception pInnerException,
+		                             final Object... pFormatArgs) {
+			if(pFormatArgs.length > 0) {
+				message = getString(pResId, pFormatArgs);
+			} else {
+				message = getString(pResId);
 			}
 
-			pGame = runningGames.find(pGame);
+			innerException = pInnerException;
+		}
+
+		public Exception getInnerException() {
+			return innerException;
+		}
+
+		@Override
+		public String getMessage() {
+			return message;
+		}
+
+		@Override
+		public StackTraceElement[] getStackTrace() {
+			final ArrayList<StackTraceElement> stack =
+				new ArrayList<StackTraceElement>();
+
+			stack.addAll(Arrays.asList(super.getStackTrace()));
+			stack.addAll(Arrays.asList(innerException.getStackTrace()));
+
+			return stack.toArray(new StackTraceElement[0]);
+		}
+
+		public void log() {
+			if(innerException == null) {
+				Log.e(TAG, message);
+			}
+			else {
+				Log.e(TAG, message, innerException);
+			}
+		}
+
+		@Override
+		public void printStackTrace() {
+			super.printStackTrace();
+			innerException.printStackTrace();
+		}
+
+		private final Exception innerException;
+		private final String message;
+	}
+
+	/** communication service connection */
+	private DTNService.Connection dtn;
+
+	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private final Implementation implementation = new Implementation();
+
+	private class Implementation extends IClient.Stub {
+
+		public Implementation() {
+			Log.d(TAG, "Creating game lists...");
+
+			announcedGames = Collections.synchronizedSet(new HashSet<Game>());
+			runningGames = Collections.synchronizedSet(new HashSet<Game>());
+		}
+
+		/** just for debugging */
+		@Override
+		public void addDummyGames() {
+			final Game game = new Game(new Player(UUID.randomUUID(), "playa"), UUID.randomUUID(), "foooooooo");
+
+			new File(game.getDirectory(Client.this)).mkdirs();
+
+			try {
+				final GameInfo info = new GameInfo("test", 0);
+				info.saveToFile(Client.this, game);
+			} catch (final IOException e) {
+				Log.e(TAG, "saving game info failed!", e);
+			}
+
+			announcedGames.add(game);
+		}
+
+		@Override
+		public void abortGame(final Game pGame) throws ClientRemoteException {
+			if (!runningGames.contains(pGame)) {
+				throw new ClientRemoteException(
+					R.string.error_game_not_running, pGame
+				);
+			}
 
 			runningGames.remove(pGame);
 			broadcastGameInfo(pGame);
 
 			final Message message =
-				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
+				new ClientMessage(pGame, getSettings().getPlayer(),
+				                  GameState.ABORTED);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              message.getFile());
+				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 
 		@Override
-		public GameInfo getAnnouncedGame(final String pKey) {
-			return announcedGames.get(pKey);
+		public Game[] getAnnouncedGames() {
+			return announcedGames.toArray(new Game[0]);
 		};
 
 		@Override
-		public String[] getAnnouncedGames() {
-			return announcedGames.getKeys();
+		public Game[] getRunningGames() {
+			return runningGames.toArray(new Game[0]);
 		};
 
-		@Override
-		public int getAnnouncedGamesCount() {
-			return announcedGames.size();
-		};
+		/**
+		 * receive a DTN message
+		 *
+		 * @param fileName file descriptor of payload file
+		 * @return true if handled
+		 * @throws ClientRemoteException
+		 */
+		public boolean handleData(final String pFileName)
+		               throws ClientRemoteException {
+			final File input = new File(pFileName);
 
-		@Override
-		public GameInfo getRunningGame(final String pKey) {
-			return runningGames.get(pKey);
-		};
-
-		@Override
-		public String[] getRunningGames() {
-			return runningGames.getKeys();
-		};
-
-		@Override
-		public int getRunningGamesCount() {
-			return runningGames.size();
-		};
-
-		@Override
-		public boolean handleData(final ParcelFileDescriptor pData) {
-			Log.i(TAG, "Processing "+pData.getStatSize()+" bytes...");
-
-			final JsonParser parser = new JsonParser();
-			final FileReader reader = new FileReader(pData.getFileDescriptor());
-
-			final JsonObject json = (JsonObject) parser.parse(reader);
-
-			if(!json.has("game"))
-			{
-				Log.e(TAG, "JSON object does not contain game info!");
-				return false;
-			}
+			Log.i(TAG, "Processing "+input.length()+" bytes...");
 
 			final Gson gson = CustomGSON.getInstance();
+			JsonObject json = new JsonObject();
 
-			final GameInfo game =
-				gson.fromJson(json.get("game"), GameInfo.class);
+			try {
+				final JsonParser parser = new JsonParser();
+				final FileReader reader = new FileReader(input);
+
+				json = (JsonObject) parser.parse(reader);
+			} catch (final FileNotFoundException e) {
+				throw new ClientRemoteException(
+					R.string.error_dtn_receiving, e
+				);
+			}
+
+			if(!json.has(Game.JSON_TAG))
+			{
+				throw new ClientRemoteException(
+					R.string.error_json_missing_element, Game.JSON_TAG
+				);
+			}
+
+			final Game game =
+				gson.fromJson(json.get(Game.JSON_TAG), Game.class);
 			Log.e(TAG, "game: "+game);
 
-			switch (game.getState()) {
-			case ABORTED:
+			if(!json.has(GameState.JSON_TAG))
 			{
-				if(runningGames.contains(game))
-				{
-					onReceiveNewServer(runningGames.find(game),
-					                   gson.fromJson(json.get("new_server"),
-					                                 Player.class));
-				}
-
-				return true;
+				throw new ClientRemoteException(
+					R.string.error_json_missing_element, GameState.JSON_TAG
+				);
 			}
+
+			final GameState state =
+				gson.fromJson(json.get(GameState.JSON_TAG), GameState.class);
+
+			switch (state) {
 			case ANNOUNCED:
 			{
 				if(announcedGames.contains(game)) {
-					Log.e(TAG, getString(R.string.error_already_announced,
-						                 game));
+					throw new ClientRemoteException(
+						R.string.error_already_announced, game
+					);
 				}
-				else
-				{
-					onReceiveGameInfo(game);
+				else {
+					if(!json.has(GameInfo.JSON_TAG_MAP)) {
+						throw new ClientRemoteException(
+							R.string.error_json_missing_element,
+							GameInfo.JSON_TAG_MAP
+						);
+					}
+
+					final String map =
+						json.get(GameInfo.JSON_TAG_MAP).getAsString();
+
+					onReceiveAnnouncedGame(game, map);
 				}
 
 				return true;
@@ -224,9 +367,17 @@ public class Client extends Service {
 			{
 				if(runningGames.contains(game))
 				{
-					onReceiveOutcome(runningGames.find(game),
-					                 gson.fromJson(json.get("outcome"),
-					                               OutcomeContainer.class));
+					if(!json.has(OutcomeContainer.JSON_TAG)) {
+						throw new ClientRemoteException(
+							R.string.error_json_missing_element,
+							OutcomeContainer.JSON_TAG
+						);
+					}
+
+					final OutcomeContainer outcome =
+						gson.fromJson(json.get(OutcomeContainer.JSON_TAG),
+						              OutcomeContainer.class);
+					onReceiveOutcome(game, outcome);
 				}
 
 				return true;
@@ -236,14 +387,19 @@ public class Client extends Service {
 
 				if(runningGames.contains(game) || announcedGames.contains(game))
 				{
-					final Type type =
-						new TypeToken<HashSet<Player>>() {}.getType();
+					if(!json.has(Player.JSON_TAG_COLLECTION)) {
+						throw new ClientRemoteException(
+							R.string.error_json_missing_element,
+							OutcomeContainer.JSON_TAG
+						);
+					}
 
-					final HashSet<Player> players =
-						gson.fromJson(json.get("players"), type);
+					final PlayerSet players =
+						gson.fromJson(json.get(Player.JSON_TAG_COLLECTION),
+						PlayerSet.class
+					);
 
-					onReceiveStartPlanningPhase(runningGames.find(game),
-					                            players);
+					onReceiveStartPlanningPhase(game, players);
 				}
 
 				return true;
@@ -256,64 +412,149 @@ public class Client extends Service {
 		}
 
 		@Override
-		public void joinGame(GameInfo pGame) {
+		public void joinGame(final Game pGame) throws ClientRemoteException {
 			if (!announcedGames.contains(pGame)) {
-				Log.e(TAG, getString(R.string.error_not_announced, pGame));
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_not_announced, pGame
+				);
 			}
 
-			pGame = announcedGames.find(pGame);
-
-			if (!pGame.isInState(GameState.ANNOUNCED)) {
-				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState()));
-				return;
+			if (!pGame.isInState(Client.this, GameState.ANNOUNCED)) {
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
 			}
-
-			pGame.setState(GameState.JOINED);
-			broadcastGameInfo(pGame);
 
 			final Message message =
-				new ClientMessage(Client.this, getSettings().getPlayer(), pGame);
-
-			final ParcelFileDescriptor file = message.getFile();
-			Log.d(TAG, "Should be sending "+message.getLength());
+				new ClientMessage(pGame, getSettings().getPlayer(),
+				                  GameState.JOINED);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              file);//message.getFile());
+				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(R.string.error_dtn_sending, e);
+			}
+
+			try {
+				pGame.setState(Client.this, GameState.JOINED);
+			} catch (final IOException e) {
+				throw new ClientRemoteException(
+					R.string.error_game_save_state, e, pGame
+				);
+			}
+
+			broadcastGameInfo(pGame);
+		}
+
+		@Override
+		public void loadGameList() throws ClientRemoteException {
+			/*
+			try {
+				Log.d(TAG, "loading: "+StreamUtils.readFully(new FileInputStream(getListFileName())));
+			} catch (final Exception e) {
+				Log.e(TAG, e.getMessage());
+				return;
+			}
+			*/
+
+			JsonReader reader;
+			try {
+				reader = CustomGSON.getReader(Client.this, getListFileName());
+			} catch (final FileNotFoundException e1) {
+				// file does not exist
+				return;
+			}
+
+			synchronized (runningGames) {
+				final Gson gson = CustomGSON.getInstance();
+				runningGames.clear();
+
+				try {
+					reader.beginArray();
+					while(reader.hasNext()) {
+						final Game game = gson.fromJson(reader, Game.class);
+						runningGames.add(game);
+					}
+					reader.endArray();
+				} catch (final Exception e) {
+					throw new ClientRemoteException(
+						R.string.error_json_reading, e
+					);
+				}
 			}
 		}
 
 		@Override
-		public void sendDecisions(GameInfo pGame,
-		                          final DecisionContainer pDecisions) {
-			if (!runningGames.contains(pGame)) {
-				Log.e(TAG, getString(R.string.error_not_running, pGame));
-				return;
+		public void saveGameList() throws ClientRemoteException {
+			JsonWriter writer;
+
+			try {
+				writer = CustomGSON.getWriter(Client.this, getListFileName());
+			} catch (final FileNotFoundException e) {
+				throw new ClientRemoteException(R.string.error_json_writing, e);
 			}
 
-			pGame = runningGames.find(pGame);
+			synchronized (runningGames) {
+				final Gson gson = CustomGSON.getInstance();
 
-			if (!pGame.isInState(GameState.PLANNING_PHASE)) {
-				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState()));
-				return;
+				try {
+					gson.toJson(runningGames, runningGames.getClass(), writer);
+				} catch (final Exception e) {
+					throw new ClientRemoteException(
+						R.string.error_json_writing, e
+					);
+				} finally {
+					try {
+						writer.close();
+					} catch (final IOException e) {
+						throw new ClientRemoteException(
+							R.string.error_json_writing, e
+						);
+					}
+				}
+			}
+		}
+
+		@Override
+		public void sendDecisions(final Game pGame)
+		            throws ClientRemoteException {
+			if (!runningGames.contains(pGame)) {
+				throw new ClientRemoteException(
+					R.string.error_game_not_running, pGame
+				);
+			}
+
+			if (!pGame.isInState(Client.this, GameState.PLANNING_PHASE)) {
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
+			}
+
+			SoldierList decisions;
+
+			try {
+				GameInfo info;
+				info = GameInfo.fromFile(Client.this, pGame);
+				decisions = pGame.getDecisions(Client.this, info.getTeam());
+			} catch (final IOException e) {
+				throw new ClientRemoteException(
+					R.string.error_game_load_decisions, e,
+					pGame
+				);
 			}
 
 			final Message message =
-				new DecissionMessage(Client.this, getSettings().getPlayer(),
-				                     pGame, pDecisions);
+				new DecissionMessage(getSettings().getPlayer(),
+				                     pGame, decisions);
 
 			try {
 				dtn.getService().sendToServer(pGame.getServer(),
-				                              message.getFile());
+				                              message.saveToFile(Client.this));
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new ClientRemoteException(R.string.error_dtn_sending, e);
 			}
 		}
 
@@ -322,31 +563,30 @@ public class Client extends Service {
 		 * @{
 		 */
 
-		@SuppressWarnings("unused")
 		class ClientMessage extends Message
 		{
-			public ClientMessage(final Context pContext, final Player pPlayer,
-			                     final GameInfo pGame) {
-				super(pContext, pGame);
+			public ClientMessage(final Game pGame, final Player pPlayer,
+			                     final GameState pState) {
+				super(pGame, pState);
 
 				player = pPlayer;
 			}
 
+			@SerializedName(Player.JSON_TAG)
 			private final Player player;
 		}
 
-		@SuppressWarnings("unused")
 		class DecissionMessage extends ClientMessage
 		{
-			public DecissionMessage(final Context pContext,
-									final Player pPlayer, final GameInfo pGame,
-			                        final DecisionContainer pDecisions) {
-				super(pContext, pPlayer, pGame);
+			public DecissionMessage(final Player pPlayer, final Game pGame,
+			                        final SoldierList pDecisions) {
+				super(pGame, pPlayer, GameState.PLANNING_PHASE);
 
 				decisions = pDecisions;
 			}
 
-			private final DecisionContainer decisions;
+			@SerializedName(SoldierList.JSON_TAG)
+			private final SoldierList decisions;
 		}
 		/**
 		 * @}
@@ -356,8 +596,8 @@ public class Client extends Service {
 		 * @name game containers
 		 * @{
 		 */
-		private final GameList announcedGames = new GameList();
-		private final GameList runningGames = new GameList();
+		private final Set<Game> announcedGames;
+		private final Set<Game> runningGames;
 		/**
 		 * @}
 		 */
@@ -367,60 +607,61 @@ public class Client extends Service {
 		 *
 		 * @param pGame changed game
 		 */
-		private void broadcastGameInfo(final GameInfo pGame) {
+		private void broadcastGameInfo(final Game pGame) {
 			Log.d(TAG, "Broadcasting new game info...");
 
-			final Intent update_intent = new Intent(GAME_STATE_CHANGED_INTENT);
+			final Intent update_intent = new Intent(Game.STATE_CHANGED_INTENT);
 
-			update_intent.putExtra(GameInfo.PARCEL_NAME, pGame);
+			update_intent.putExtra(Game.PARCEL_NAME, pGame);
 
 			sendBroadcast(update_intent);
 		}
 
-		/**
-		 * server has announced new game
-		 *
-		 * @param pGame new game
-		 */
-		private void onReceiveGameInfo(final GameInfo pGame) {
-			announcedGames.add(pGame);
-			broadcastGameInfo(pGame);
-
-			if(pGame.isServer(getSettings().getPlayer()))
-			{
-				// auto join own game
-				joinGame(pGame);
-			}
+		private String getListFileName() {
+			return getFilesDir() + "/running_games.json";
 		}
 
 		/**
-		 * server has quit, inform clients about new server
+		 * server has announced a new game
 		 *
-		 * @param pGame game
-		 * @param pNewServer new server
+		 * @param pGame new game
+		 * @param pMapName name of the game's map
+		 * @throws ClientRemoteException
 		 */
-		private void onReceiveNewServer(final GameInfo pGame,
-		                                final Player pNewServer) {
-			if (!pGame.isInState(GameState.PLANNING_PHASE)
-					&& !pGame.isInState(GameState.EXECUTION_PHASE)) {
-				Log.e(TAG, getString(R.string.error_wrong_state,
-						pGame.toString(), pGame.getState().toString()));
-				return;
-			}
+		private void onReceiveAnnouncedGame(final Game pGame,
+		                                    final String pMapName)
+		             throws ClientRemoteException {
+			if(!pGame.isServer(getSettings().getPlayer()))
+			{
+				final File dir = new File(pGame.getDirectory(Client.this));
 
-			pGame.setServer(pNewServer);
+				if(dir.exists()) {
+					throw new ClientRemoteException(
+						R.string.error_game_dir_exists, pGame
+					);
+				}
 
-			// we become server
-			if (getSettings().getPlayer().equals(pNewServer)) {
+				dir.mkdirs();
+
 				try {
-					server.getService().acquireGame(pGame);
-				} catch (final RemoteException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					final GameInfo info = new GameInfo(pMapName, 1);
+					info.setState(GameState.ANNOUNCED);
+					info.saveToFile(Client.this, pGame);
+				} catch (final IOException e) {
+					throw new ClientRemoteException(
+						R.string.error_game_save_state, e, pGame
+					);
 				}
 			}
 
+			announcedGames.add(pGame);
 			broadcastGameInfo(pGame);
+
+			// auto join own game
+			if(pGame.isServer(getSettings().getPlayer()))
+			{
+				joinGame(pGame);
+			}
 		}
 
 		/**
@@ -429,7 +670,7 @@ public class Client extends Service {
 		 * @param pGame game
 		 * @param pOutcome
 		 */
-		private void onReceiveOutcome(final GameInfo pGame,
+		private void onReceiveOutcome(final Game pGame,
 		                              final OutcomeContainer pOutcome) {
 			// TODO handle outcome
 		}
@@ -438,35 +679,44 @@ public class Client extends Service {
 		 * start planning phase
 		 *
 		 * @param pGame running game
+		 * @throws ClientRemoteException
 		 */
-		private void onReceiveStartPlanningPhase(
-			final GameInfo pGame, final HashSet<Player> players) {
+		private void onReceiveStartPlanningPhase(final Game pGame,
+		                                         final PlayerSet pPlayers)
+		             throws ClientRemoteException {
 
-			if(!pGame.isInState(GameState.JOINED)
-			   && !pGame.isInState(GameState.EXECUTION_PHASE)) {
+			if(!pGame.isInState(Client.this, GameState.JOINED,
+			                                 GameState.EXECUTION_PHASE)) {
 
-				Log.e(TAG, getString(R.string.error_wrong_state, pGame,
-				                     pGame.getState()));
-
-				return;
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
 			}
 
-			if(pGame.isInState(GameState.JOINED))
+			if(pGame.isInState(Client.this, GameState.JOINED))
 			{
 				announcedGames.remove(pGame);
 
-				if(players.contains(getSettings().getPlayer()))
+				if(pPlayers.contains(getSettings().getPlayer()))
 				{
 					runningGames.add(pGame);
 				}
 			}
-			else if(!players.contains(getSettings().getPlayer()))
+			else if(!pPlayers.contains(getSettings().getPlayer()))
 			{
 				// TODO do something, we got kicked out!
 			}
 
 			// start planning phase
-			pGame.setState(GameState.PLANNING_PHASE);
+			try {
+				pGame.setState(Client.this, GameState.PLANNING_PHASE);
+			} catch (final IOException e) {
+				throw new ClientRemoteException(
+					R.string.error_game_save_state, pGame, e
+				);
+			}
+
 			broadcastGameInfo(pGame);
 		}
 	};

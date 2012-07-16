@@ -1,9 +1,10 @@
 package org.beavers.gameplay;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.anddev.andengine.engine.Engine;
 import org.anddev.andengine.engine.camera.SmoothCamera;
@@ -12,7 +13,8 @@ import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
-import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.anddev.andengine.engine.options.resolutionpolicy.FixedResolutionPolicy;
+import org.anddev.andengine.engine.options.resolutionpolicy.IResolutionPolicy;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -20,6 +22,7 @@ import org.anddev.andengine.entity.layer.tiled.tmx.TMXProperties;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTile;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTileProperty;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXTiledMap;
+import org.anddev.andengine.entity.layer.tiled.tmx.TSXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.util.exception.TMXLoadException;
 import org.anddev.andengine.entity.primitive.Line;
 import org.anddev.andengine.entity.primitive.Rectangle;
@@ -42,9 +45,13 @@ import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
+import org.beavers.App;
 import org.beavers.R;
+import org.beavers.Settings;
 import org.beavers.Textures;
 import org.beavers.communication.Client;
+import org.beavers.communication.Client.ClientRemoteException;
+import org.beavers.communication.Server;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IMovableObject;
 import org.beavers.ingame.IRemoveObjectListener;
@@ -52,16 +59,19 @@ import org.beavers.ingame.PathWalker;
 import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WayPoint;
-import org.beavers.storage.CustomGSON;
-import org.beavers.ui.IContextMenuHandler;
+import org.beavers.storage.GameStorage;
+import org.beavers.storage.GameStorage.UnexpectedTileContentException;
 
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -73,8 +83,6 @@ import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
-
-import com.google.gson.Gson;
 
 /**
  * Activity for game display
@@ -103,46 +111,18 @@ public class GameActivity extends BaseGameActivity
 
 	/**
 	 * default constructor
-	 * @param pApp
 	 */
 	public GameActivity()
 	{
 		super();
 
+		// initialize communication services
+		client = new Client.Connection();
+		server = new Server.Connection();
+
 		// initialize detectors
 		scrollDetector = new SurfaceScrollDetector(10.0f, this);
 		holdDetector = new HoldDetector(200, 10.0f, 0.1f, this);
-
-		// initialize game object containers
-		gameObjects = new HashMap<Tile, IGameObject>();
-		soldiers = new ArrayList<HashSet<Soldier>>(getTeamCount());
-
-		for(int i = 0; i < getTeamCount(); ++i)
-		{
-			soldiers.add(new HashSet<Soldier>());
-		}
-	}
-
-	/**
-	 * insert a new game object on the map
-	 * @param pObject the object to insert
-	 */
-	public void addObject(final IGameObject pObject)
-	{
-		if(pObject != null)
-		{
-			gameObjects.put(pObject.getTile(), pObject);
-			pObject.setRemoveObjectListener(this);
-
-			mainScene.attachChild(pObject);
-			mainScene.sortChildren();
-
-			if(pObject instanceof Soldier)
-			{
-				final Soldier soldier = (Soldier) pObject;
-				soldiers.get(soldier.getTeam()).add(soldier);
-			}
-		}
 	}
 
 	public Scene getMainScene() {
@@ -161,17 +141,6 @@ public class GameActivity extends BaseGameActivity
 		return selectedSoldier;
 	}
 
-	public HashSet<Soldier> getSoldiers(final int pTeam) {
-		if(pTeam < getTeamCount())
-		{
-			return soldiers.get(pTeam);
-		}
-		else
-		{
-			throw new IndexOutOfBoundsException();
-		}
-	}
-
 	@Override
 	public float getStepCost(final IMovableObject pObject,
 		final int pFromTileColumn, final int pFromTileRow,
@@ -182,12 +151,8 @@ public class GameActivity extends BaseGameActivity
 			new Tile(pToTileColumn, pToTileRow));
 	}
 
-	/**
-	 *
-	 * @return
-	 */
-	public int getTeamCount() {
-		return 2;
+	public GameStorage getStorage() {
+		return storage;
 	}
 
 	@Override
@@ -214,31 +179,18 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		final TMXTile tile = collisionLayer.getTMXTile(pTileColumn, pTileRow);
-		//return tile!=null;
 
-		return ((tile == null) || (tile.getGlobalTileID()!=0)); // (tile.getTMXTileProperties(map) != null));
-	}
-
-	/**
-	 * move a {@link IGameObject} to a new tile
-	 * @param pObject moving object
-	 * @param pSourceTile old position
-	 * @param pTargetTile new position
-	 */
-	public void moveObject(final IGameObject pObject,
-	                       final Tile pSourceTile, final Tile pTargetTile) {
-		gameObjects.remove(pSourceTile);
-		gameObjects.put(pTargetTile, pObject);
+		return ((tile == null) || (tile.getGlobalTileID()!=0));
 	}
 
 	@Override
 	public void onCreateContextMenu(final ContextMenu pMenu, final View pView,
 			final ContextMenuInfo pInfo) {
 
-		if(contextMenuHandler != null)
+		if(selectedWaypoint != null)
 		{
 	        final MenuInflater inflater = getMenuInflater();
-	        inflater.inflate(contextMenuHandler.getMenuID(), pMenu);
+	        inflater.inflate(selectedWaypoint.getMenuID(), pMenu);
 
 			for(int i = 0; i < pMenu.size(); ++i)
 			{
@@ -246,13 +198,13 @@ public class GameActivity extends BaseGameActivity
 
 					@Override
 					public boolean onMenuItemClick(final MenuItem pItem) {
-						return contextMenuHandler.onMenuItemClick(GameActivity.this, pItem);
+						return selectedWaypoint.onMenuItemClick(GameActivity.this, pItem);
 					}
-					
+
 				});
 			}
 
-			contextMenuHandler.onMenuCreated(pMenu);
+			selectedWaypoint.onMenuCreated(pMenu);
 		}
 	}
 
@@ -277,12 +229,12 @@ public class GameActivity extends BaseGameActivity
 
 		if(tile != null)
 		{
-			Log.d(TAG, "Hold on tile ("+tile.getColumn()+","+tile.getRow()+")");
+			Log.d(TAG, "Hold on tile "+tile);
 
 			// create new Aim if necessary
-			if(contextMenuHandler instanceof WayPoint)
+			if(selectedWaypoint instanceof WayPoint)
 			{
-				final WayPoint selectedWayPoint = (WayPoint) contextMenuHandler;
+				final WayPoint selectedWayPoint = selectedWaypoint;
 
 				if(selectedWayPoint.isWaitingForAim())
 				{
@@ -296,50 +248,57 @@ public class GameActivity extends BaseGameActivity
 				}
 			}
 
-			contextMenuHandler = null;
+			selectedWaypoint = null;
 
-			// there is an GameObject on the tile
-			if(gameObjects.containsKey(tile))
+			// there is an something on the tile
+			if(storage.isTileOccupied(tile))
 			{
-				final IGameObject obj = gameObjects.get(tile);
-
-				if(obj instanceof Soldier)
+				if(storage.hasSoldierOnTile(tile))
 				{
-					final Soldier soldier = (Soldier) obj;
+					try {
+						final Soldier soldier = storage.getSoldierByTile(tile);
 
-					if(soldier.equals(selectedSoldier))
-					{
-						contextMenuHandler = soldier.getFirstWaypoint();
-					}
-					else
-					{
-						selectSoldier(soldier);
+						if(soldier.equals(selectedSoldier))
+						{
+							selectedWaypoint = soldier.getFirstWaypoint();
+						}
+						else
+						{
+							selectSoldier(soldier);
+						}
+					} catch (final UnexpectedTileContentException e) {
+						Log.e(TAG, e.getMessage());
 					}
 				}
-				else if(obj instanceof WayPoint)
+				else if(storage.hasWaypointOnTile(tile))
 				{
-					final WayPoint waypoint = (WayPoint) obj;
+					try {
+						final WayPoint waypoint =
+							storage.getWaypointByTile(tile);
 
-					if(waypoint.getSoldier() != selectedSoldier)
-					{
-						selectSoldier(waypoint.getSoldier());
-						runOnUiThread(new Runnable() {
+						if(!waypoint.getSoldier().equals(selectedSoldier))
+						{
+							selectSoldier(waypoint.getSoldier());
+							runOnUiThread(new Runnable() {
 
-							@Override
-							public void run() {
-								Toast.makeText(GameActivity.this,
-									"Selected soldier by waypoint",
-									Toast.LENGTH_SHORT).show();
-							}
-						});
-					}
-					else
-					{
-						contextMenuHandler = waypoint;
+								@Override
+								public void run() {
+									Toast.makeText(GameActivity.this,
+										"Selected soldier by waypoint...",
+										Toast.LENGTH_SHORT).show();
+								}
+							});
+						}
+						else
+						{
+							selectedWaypoint = waypoint;
+						}
+					} catch (final UnexpectedTileContentException e) {
+						Log.e(TAG, e.getMessage());
 					}
 				}
 
-				if(contextMenuHandler != null)
+				if(selectedWaypoint != null)
 				{
 					runOnUiThread(new Runnable() {
 						@Override
@@ -361,14 +320,21 @@ public class GameActivity extends BaseGameActivity
 						@Override
 						public void run() {
 							Toast.makeText(GameActivity.this,
-								"No AP left",
+								"Not enough AP left!",
 								Toast.LENGTH_SHORT).show();
 						}
 					});
-					}
+				}
 				else{
-					addObject(waypoint);
-					selectedSoldier.changeAP(-waypoint.getPath().getCost()/10);
+					try {
+						storage.addWaypoint(waypoint);
+					} catch (final UnexpectedTileContentException e) {
+						Log.e(TAG, "Could not add waypoint to storage!", e);
+					}
+
+					mainScene.attachChild(waypoint);
+
+					selectedSoldier.changeAP(-waypoint.getPath().getCost());
 				}
 			}
 			else
@@ -380,56 +346,45 @@ public class GameActivity extends BaseGameActivity
 
 	@Override
 	public void onLoadComplete() {
-		loadMap(currentGame.getMapName());
-		loadSoldiers();
+		final TimerHandler gameTimer =
+			new TimerHandler(0.2f, new ITimerCallback() {
 
-		if(map != null)
-		{
-			pathFinder = new AStarPathFinder<IMovableObject>(this, 1600, true);
-		}
-		else
-		{
-			pathFinder = null;
-		}
-		camera.setBounds(0, map.getTileColumns() * map.getTileWidth(),
-		                 0, map.getTileRows() * map.getTileHeight());
-		camera.setBoundsEnabled(true);
-		mainScene.registerUpdateHandler(holdDetector);
-		mainScene.setOnSceneTouchListener(this);
+				@Override
+				public void onTimePassed(final TimerHandler pTimerHandler) {
+					checkTargets(0,1);
+					checkTargets(1,0);
 
-
-final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
-
-
-			@Override
-			public void onTimePassed(final TimerHandler pTimerHandler) {
-				checkTargets(0,1);
-				checkTargets(1,0);
-				updateHUD();
-			}
+					updateHUD();
+				}
 		});
+
 		gameTimer.setAutoReset(true);
 		getEngine().registerUpdateHandler(gameTimer);
-
 	}
 
 	@Override
 	public Engine onLoadEngine() {
         final Display display = getWindowManager().getDefaultDisplay();
-
         ScreenOrientation orientation;
 
         final int rotation = display.getRotation();
-        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+        if (rotation == Surface.ROTATION_90
+            || rotation == Surface.ROTATION_270) {
         	orientation = ScreenOrientation.LANDSCAPE;
         } else {
         	orientation = ScreenOrientation.PORTRAIT;
         }
 
-		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
+		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(),
+			100*display.getWidth(), 100*display.getHeight(), 0
+		);
 
-		return new Engine(new EngineOptions(true, orientation,
-				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
+		final IResolutionPolicy policy =
+			new FixedResolutionPolicy(display.getWidth(), display.getHeight());
+
+		return new Engine(
+			new EngineOptions(true, orientation, policy, camera)
+		);
 	}
 
 
@@ -484,10 +439,45 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 	@Override
 	public Scene onLoadScene() {
+		// initialize storage
+		try {
+			storage = new GameStorage(this, currentGame);
+			storage.setRemoveObjectListener(this);
+		} catch (final Exception e) {
+			Log.e(TAG, "Could not create game storage!", e);
+			finish();
+		}
+
 		mEngine.registerUpdateHandler(new FPSLogger());
 		mainScene = new Scene();
 
+		loadMap();
+
+		if(map == null)
+		{
+			Log.e(TAG, "Map not initialized!");
+			finish();
+		}
+
+		pathFinder = new AStarPathFinder<IMovableObject>(this, getTileColumns()*getTileRows(), true);
+
+		camera.setBounds(0, map.getTileColumns() * map.getTileWidth(),
+		                 0, map.getTileRows() * map.getTileHeight());
+		camera.setBoundsEnabled(true);
+
+		mainScene.registerUpdateHandler(holdDetector);
+		mainScene.setOnSceneTouchListener(this);
+
         mRenderSurfaceView.setOnCreateContextMenuListener(this);
+
+		// show soldiers on mainScene
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team)
+		{
+			for(final Soldier soldier : storage.getSoldiersByTeam(team))
+			{
+				mainScene.attachChild(soldier);
+			}
+		}
 
 		return mainScene;
 	}
@@ -496,15 +486,80 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	public boolean onOptionsItemSelected(final MenuItem pItem) {
 		switch (pItem.getItemId()) {
 		case R.id.menu_execute:
-			final Gson gson = CustomGSON.getInstance();
-			//Log.e(TAG, gson.toJson(selectedSoldier));
+		{
+			try {
+				currentGame.saveDecisions(
+					this, currentGameInfo.getTeam(),
+					storage.getSoldiersByTeam(currentGameInfo.getTeam())
+				);
+			} catch (final IOException e) {
+				Log.e(TAG,
+					getString(R.string.error_game_write_decisions, currentGame),
+					e
+				);
+				return true;
+			}
 
-			final PathWalker walker = new PathWalker(this, selectedSoldier);
-			walker.start();
+			try {
+				client.getService().sendDecisions(currentGame);
+			} catch (final RemoteException e) {
+				((ClientRemoteException)e).log();
+				return true;
+			}
 
-			//Client.sendDecisions(this, currentGame, new DecisionContainer());
+			// deselect soldier
+			selectSoldier(null);
+
+			// disable user interaction
+			holdDetector.setEnabled(false);
 
 			return true;
+		}
+		case R.id.menu_reset_hold_detector:
+		{
+
+			holdDetector.setEnabled(true);
+
+			return true;
+		}
+		case R.id.menu_execute_second:
+		{
+			final int team = 1 - currentGameInfo.getTeam();
+
+			try {
+				currentGame.saveDecisions(
+					this, team,
+					storage.getSoldiersByTeam(team)
+				);
+			} catch (final IOException e) {
+				Log.e(TAG,
+					getString(R.string.error_game_write_decisions, currentGame),
+					e
+				);
+				return true;
+			}
+
+			try {
+				currentGame.setState(this, GameState.EXECUTION_PHASE);
+			} catch (final IOException e) {
+				Log.e(TAG,
+					getString(R.string.error_game_save_state, currentGame), e
+				);
+				return true;
+			}
+
+			final Intent update_intent = new Intent(Game.STATE_CHANGED_INTENT);
+			update_intent.putExtra(Game.PARCEL_NAME, currentGame);
+			sendBroadcast(update_intent);
+
+			// deselect soldier
+			selectSoldier(null);
+
+			// disable user interaction
+			holdDetector.setEnabled(false);
+
+			return true;
+		}
 		default:
 			return false;
 		}
@@ -518,25 +573,35 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			return;
 		}
 
-		if(pObject.equals(gameObjects.get(pObject.getTile())))
-		{
-			gameObjects.remove(pObject.getTile());
-		}
-
-		if(pObject.equals(contextMenuHandler))
-		{
-			contextMenuHandler = null;
-		}
-
 		if(pObject instanceof Soldier)
 		{
 			final Soldier soldier = (Soldier) pObject;
-			soldiers.get(soldier.getTeam()).remove(soldier);
+
+			try {
+				storage.removeSoldier(soldier);
+			} catch (final UnexpectedTileContentException e) {
+				Log.e(TAG, "Could not remove soldier from storage!", e);
+			}
 
 			if(soldier.equals(selectedSoldier))
 			{
 				updateHUD();
 				selectedSoldier = null;
+			}
+		}
+		else if(pObject instanceof WayPoint)
+		{
+			final WayPoint waypoint = (WayPoint) pObject;
+
+			try {
+				storage.removeWaypoint(waypoint);
+			} catch (final UnexpectedTileContentException e) {
+				Log.e(TAG, "Could not remove waypoint from game storage!", e);
+			}
+
+			if(waypoint.equals(selectedWaypoint))
+			{
+				selectedWaypoint = null;
 			}
 		}
 	}
@@ -558,7 +623,6 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
 		camera.offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
-
 	}
 
 	@Override
@@ -574,14 +638,53 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	@Override
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
 
-		currentGame = getIntent().getParcelableExtra(GameInfo.PARCEL_NAME);
+		Intent intent = new Intent(GameActivity.this, Client.class);
+		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
+		{
+			Log.e(TAG, getString(R.string.error_binding_client));
+			return;
+		}
+
+		intent = new Intent(GameActivity.this, Server.class);
+		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
+		{
+			Log.e(TAG, getString(R.string.error_binding_server));
+			return;
+		}
+
+		currentGame = getIntent().getParcelableExtra(Game.PARCEL_NAME);
+
+		try {
+			currentGameInfo = GameInfo.fromFile(this, currentGame);
+		} catch (final FileNotFoundException e) {
+			finish();
+		}
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
 		{
 			finish();
 		}
+
+		holdDetector.setEnabled(
+			currentGame.isInState(this, GameState.PLANNING_PHASE)
+			&& !currentGame.hasDecisions(this, currentGameInfo.getTeam())
+		);
+
+		if(currentGame.isInState(this, GameState.PLANNING_PHASE)
+		   && currentGame.hasDecisions(this, currentGameInfo.getTeam())) {
+			Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
+		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		unbindService(client);
+		unbindService(server);
+
+		super.onDestroy();
 	}
 
 	@Override
@@ -589,17 +692,50 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		super.onPause();
 
 		unregisterReceiver(updateReceiver);
+
+		try {
+			if(storage != null) {
+				storage.saveToFile();
+			}
+		} catch (final FileNotFoundException e) {
+			Log.e(TAG, "Could not write game storage!", e);
+		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 
-		registerReceiver(updateReceiver, new IntentFilter(Client.GAME_STATE_CHANGED_INTENT));
+		registerReceiver(updateReceiver, new IntentFilter(Game.STATE_CHANGED_INTENT));
 	}
 
+	/**
+	 * @name constants
+	 * @{
+	 */
 	private final static float CAMERA_SPEED = 1.50f;
+	/**
+	 * @}
+	 */
+
+	/**
+	 * @name debug
+	 * @{
+	 */
 	private static final String TAG = "GameScene";
+	/**
+	 * @}
+	 */
+
+	/**
+	 * @name communication
+	 * @{
+	 */
+	private final Client.Connection client;
+	private final Server.Connection server;
+	/**
+	 * @}
+	 */
 
 	/**
 	 * @name detectors
@@ -622,15 +758,8 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	 * @}
 	 */
 
-	/**
-	 * @name game object containers
-	 * @{
-	 */
-	private final HashMap<Tile, IGameObject> gameObjects;
-	private final ArrayList<HashSet<Soldier>> soldiers;
-	/**
-	 * @}
-	 */
+	/** game object container */
+	private GameStorage storage;
 
 	/**
 	 * @name scenery
@@ -647,8 +776,8 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 	 * @name active entities
 	 * @{
 	 */
-	private IContextMenuHandler contextMenuHandler;
 	private Soldier selectedSoldier;
+	private WayPoint selectedWaypoint;
 	/**
 	 * @}
 	 */
@@ -656,20 +785,38 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 	private Line parallelA,parallelB,lineA,lineB;
 
-	private GameInfo currentGame;
+	private Game currentGame;
+	private GameInfo currentGameInfo;
 	private AStarPathFinder<IMovableObject> pathFinder;
 
 	private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
-			final GameInfo game =
-				pIntent.getParcelableExtra(GameInfo.PARCEL_NAME);
+			final Game game =
+				pIntent.getParcelableExtra(Game.PARCEL_NAME);
 
-			// TODO update GameActivity
+			if(game.isInState(GameActivity.this, GameState.EXECUTION_PHASE)) {
+				recordOutcome();
+			}
+
+			// TODO handle other states
 		}
 	};
 
-	private void loadMap(final String pMapName)
+	/** @return application settings */
+	private Settings getSettings()
+	{
+		if(getApplication() instanceof App)
+		{
+			return ((App) getApplication()).getSettings();
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	private void loadMap()
 	{
 		try {
 			final TMXLoader tmxLoader = new TMXLoader(this, getTextureManager(), TextureOptions.BILINEAR_PREMULTIPLYALPHA, new ITMXTilePropertiesListener() {
@@ -678,14 +825,20 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 
 				}
 			});
-			map = tmxLoader.loadFromAsset(this, "tmx/"+pMapName+".tmx");
+
+			TMXLoader.setAssetBasePath("maps/" + currentGameInfo.getMapName() + "/");
+			TSXLoader.setAssetBasePath("maps/" + currentGameInfo.getMapName() + "/");
+
+			map = tmxLoader.loadFromAsset(this, "map.tmx");
+
 		} catch (final TMXLoadException tmxle) {
 			Debug.e(tmxle);
 			return;
 		}
 
 		collisionLayer = map.getTMXLayers().get(0);
-		floorLayer =map.getTMXLayers().get(1);
+		floorLayer = map.getTMXLayers().get(1);
+
 		mainScene.attachChild(collisionLayer);
 		mainScene.attachChild(floorLayer);
 	}
@@ -699,79 +852,75 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			{
 				// ignore
 			}
-		}
-		else {
-			health_bar.setWidth(getSelectedSoldier().getHP());
-			apText.detachSelf();
-			apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
-					getSelectedSoldier().getmaxAP());
-			apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
-			hud.attachChild(apText);
-			redText.detachSelf();
-			blueText.detachSelf();
-			redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
-			blueText=new Text(0 ,0, bluefont,""+soldiers.get(0).size() );
-			redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
-			blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
-			hud.attachChild(blueText);
-			hud.attachChild(redText);
 
-			camera.setHUD(hud);
+			return;
 		}
+
+		if(hud == null)
+		{
+			hud=new HUD();
+			hud.setPosition(0, 0);
+
+			final Rectangle hud_back = new Rectangle(0,0, camera.getWidth(),30);
+			hud_back.setColor(0.2f,0.2f,0.2f);
+			hud_back.setAlpha(0.5f);
+			hud.attachChild(hud_back);
+
+			final Rectangle missing_health = new Rectangle(10,10,100,8);
+			hud.attachChild(missing_health);
+
+			health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
+			health_bar.setColor(1,0,0);
+			hud.attachChild(health_bar);
+
+			separator = new Text(0 ,0, mfont,":" );
+			separator.setPosition(getEngine().getCamera().getWidth()/2-2,4);
+			hud.attachChild(separator);
+		}
+		else
+		{
+			apText.detachSelf();
+			blueText.detachSelf();
+			redText.detachSelf();
+		}
+
+		health_bar.setWidth(getSelectedSoldier().getHP());
+
+		apText = new Text(0 ,0, mfont,
+		                  "AP " + getSelectedSoldier().getAP() + "/" +
+		                  getSelectedSoldier().getmaxAP());
+		apText.setPosition(getEngine().getCamera().getWidth()
+		                   - apText.getWidth()-5, 4);
+		hud.attachChild(apText);
+
+
+		blueText=new Text(0 ,0, bluefont, "" + storage.getSoldiersByTeam(0).size() );
+		blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
+		hud.attachChild(blueText);
+
+		redText=new Text(0 ,0, redfont, "" + storage.getSoldiersByTeam(1).size() );
+		redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
+		hud.attachChild(redText);
+
+		camera.setHUD(hud);
+		//mainScene.sortChildren();
 	}
 
 	private Rectangle health_bar;
 	private Text apText,redText,blueText, separator;
 
-	private void loadHUD(){
-		hud=new HUD();
-		hud.setPosition(0, 0);
-
-		final Rectangle hud_back = new Rectangle(0,0, camera.getWidth(),30);
-		final Rectangle missing_health = new Rectangle(10,10,100,8);
-		health_bar = new Rectangle(10,10,getSelectedSoldier().getHP() ,8);
-
-		separator = new Text(0 ,0, mfont,":" );
-		separator.setPosition(getEngine().getCamera().getWidth()/2-2,4);
-		redText=new Text(0 ,0, redfont,""+soldiers.get(1).size() );
-		blueText=new Text(0 ,0, bluefont,""+soldiers.get(0).size() );
-		redText.setPosition(getEngine().getCamera().getWidth()/2+5, 4);
-		blueText.setPosition(getEngine().getCamera().getWidth()/2-blueText.getWidth()-5, 4);
-		apText= new Text(0 ,0, mfont, "AP "+getSelectedSoldier().getAP()+"/"+
-		getSelectedSoldier().getmaxAP());
-		apText.setPosition(getEngine().getCamera().getWidth()-apText.getWidth()-5, 4);
-		health_bar.setColor(1,0,0);
-		hud_back.setColor(0.2f,0.2f,0.2f);
-		hud_back.setAlpha(0.5f);
-		hud.attachChild(hud_back);
-		hud.attachChild(missing_health);
-		hud.attachChild(health_bar);
-		hud.attachChild(apText);
-		hud.attachChild(blueText);
-		hud.attachChild(redText);
-		hud.attachChild(separator);
-		camera.setHUD(hud);
-
-	}
-
-	private void loadSoldiers(){
-		addObject(new Soldier(0, new Tile(0, 0)));
-		addObject(new Soldier(0, new Tile(2, 0)));
-		addObject(new Soldier(1, new Tile(6, 9)));
-		addObject(new Soldier(1, new Tile(8, 9)));
-	}
-/**
- *
- * @param attacking das angreifende Team
- * @param targets das angegriffene Team
- */
-	public void checkTargets(final int attacking, final int targets){
-		final Iterator<Soldier> itr=getSoldiers(attacking).iterator();
+	/**
+	 *
+	 * @param attacking das angreifende Team
+	 * @param targets das angegriffene Team
+	 */
+	private void checkTargets(final int attacking, final int targets){
+		final Iterator<Soldier> itr = storage.getSoldiersByTeam(attacking).iterator();
 		while(itr.hasNext()){  //durchläuft Liste des ersten Teams
 			final Soldier s=itr.next();
 
-			final Iterator<Soldier> itr2=getSoldiers(targets).iterator();
-			
+			final Iterator<Soldier> itr2= storage.getSoldiersByTeam(targets).iterator();
+
 			if(s.isShooting())
 			{
 				if(s.getShot().findPath(getPathFinder(), s.getShot().getTarget().getTile()) == null)
@@ -779,7 +928,7 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 					s.getShot().stopShooting();
 				}
 			}
-			
+
 			if(!s.isShooting() && !s.getIgnore()){   //Abbruch, falls der Soldat schon schießt
 				while(itr2.hasNext()){  //durchläuft Liste des zweiten Teams
 
@@ -820,6 +969,33 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 		}
 	}
 
+	private void recordOutcome() {
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+			// TODO load decisions
+		}
+
+		final ExecutorService executor = Executors.newCachedThreadPool();
+
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+			for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
+				for(final WayPoint waypoint : soldier.getWaypoints())
+				{
+					mainScene.attachChild(waypoint);
+				}
+
+				executor.execute(new Runnable() {
+
+					@Override
+					public void run() {
+						final PathWalker walker =
+							new PathWalker(GameActivity.this, soldier);
+						walker.start();
+					}
+				});
+			}
+		}
+	}
+
 	private synchronized void selectSoldier(final Soldier pSoldier) {
 		if(selectedSoldier != pSoldier)
 		{
@@ -829,21 +1005,14 @@ final TimerHandler gameTimer = new TimerHandler(0.2f, new ITimerCallback() {
 			}
 
 			selectedSoldier = pSoldier;
-			selectedSoldier.markSelected();
 
-			if(hud == null)
+			if(selectedSoldier != null)
 			{
-				loadHUD();
-			}
-			else
-			{
-				updateHUD();
+				selectedSoldier.markSelected();
 			}
 
-			mainScene.sortChildren();
+			updateHUD();
 		}
-
 	}
-
 
 }

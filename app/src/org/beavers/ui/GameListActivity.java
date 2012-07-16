@@ -11,11 +11,13 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.communication.Client;
+import org.beavers.communication.Client.ClientRemoteException;
 import org.beavers.communication.Server;
+import org.beavers.communication.Server.ServerRemoteException;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameActivity;
-import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
+import org.beavers.gameplay.Player;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -70,6 +72,14 @@ public class GameListActivity extends FragmentActivity
 	 * @}
 	 */
 
+	public GameListActivity()
+	{
+		super();
+
+		client = new Client.Connection();
+		server = new Server.Connection();
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(final Menu menu) {
 	    final MenuInflater inflater = getMenuInflater();
@@ -79,23 +89,44 @@ public class GameListActivity extends FragmentActivity
 	}
 	@Override
 	public boolean onMenuItemClick(final MenuItem pItem) {
+		if(listView.getSelectedItemPosition() == -1) {
+			return false;
+		}
+
+		final Game game = listView.getSelectedItem();
+		listView.setSelection(-1);
+
 		switch(pItem.getItemId())
 		{
 		case R.id.context_menu_join:
 		{
-			assert listView.getCheckedItemIds().length == 1;
-			final GameInfo game = (GameInfo) listView.getItemAtPosition(
-				listView.getCheckedItemPosition()
-			);
-
 			Log.d(TAG, "Trying to join "+game+"...");
 
 			try {
 				client.getService().joinGame(game);
 			} catch (final RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				((ClientRemoteException)e).log();
 			}
+
+			return true;
+		}
+		case R.id.context_menu_load_game:
+		{
+			showGame(game);
+
+			return true;
+		}
+		case R.id.context_menu_add_player:
+		{
+			Log.d(TAG, "Adding dummy player...");
+
+			try {
+				server.getService().addPlayer(game, new Player(UUID.randomUUID(), "dummy player"));
+			} catch (final RemoteException e) {
+				((ServerRemoteException)e).log();
+			}
+
+			showGame(game);
 
 			return true;
 		}
@@ -106,25 +137,41 @@ public class GameListActivity extends FragmentActivity
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_join_game:
+		case R.id.menu_announced_games:
 		{
-			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-			intent.setAction(ANNOUNCED);
-			startActivity(intent);
+			showAnnouncedGames();
 
 			return true;
 		}
 		case R.id.menu_running_games:
 		{
-			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-			intent.setAction(RUNNING);
-			startActivity(intent);
+			showRunningGames();
 
 			return true;
 		}
 		case R.id.menu_start_game:
 		{
 			showGameStartDialog();
+
+			return true;
+		}
+		case R.id.menu_start_dummy_game:
+		{
+	        final Settings settings = ((App)getApplication()).getSettings();
+
+			// create new game
+			final Game game = new Game(settings.getPlayer(),
+			                           UUID.randomUUID(),
+			                           "created dummy game");
+
+			try {
+				// announce to clients
+				server.getService().initiateGame(game);
+			} catch (final RemoteException e) {
+				((ServerRemoteException)e).log();
+			}
+
+			showAnnouncedGames();
 
 			return true;
 		}
@@ -135,7 +182,7 @@ public class GameListActivity extends FragmentActivity
 
 	@Override
 	public boolean onPrepareOptionsMenu(final Menu menu) {
-		menu.findItem(R.id.menu_join_game).setVisible(!getIntent().getAction().equals(ANNOUNCED));
+		menu.findItem(R.id.menu_announced_games).setVisible(!getIntent().getAction().equals(ANNOUNCED));
 		menu.findItem(R.id.menu_running_games).setVisible(!getIntent().getAction().equals(RUNNING));
 
 		return super.onPrepareOptionsMenu(menu);
@@ -152,19 +199,17 @@ public class GameListActivity extends FragmentActivity
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		client = new Client.Connection();
 		Intent intent = new Intent(GameListActivity.this, Client.class);
 		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, "Could not bind client!");
+			Log.e(TAG, getString(R.string.error_binding_client));
 			return;
 		}
 
-		server = new Server.Connection();
 		intent = new Intent(GameListActivity.this, Server.class);
 		if(!bindService(intent, server, Service.BIND_AUTO_CREATE))
 		{
-			Log.e(TAG, "Could not bind server!");
+			Log.e(TAG, getString(R.string.error_binding_server));
 			return;
 		}
 
@@ -208,9 +253,7 @@ public class GameListActivity extends FragmentActivity
 
 		if(isFinishing() && !getIntent().getAction().equals(RUNNING))
 		{
-			final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-			intent.setAction(RUNNING);
-			startActivity(intent);
+			showRunningGames();
 		}
 	}
 
@@ -219,26 +262,19 @@ public class GameListActivity extends FragmentActivity
 		super.onResume();
 
 		registerReceiver(updateReceiver,
-			new IntentFilter(Client.GAME_STATE_CHANGED_INTENT));
+			new IntentFilter(Game.STATE_CHANGED_INTENT));
+
+		// update game list
+		if(listView != null) {
+			listView.getAdapter().notifyDataSetChanged();
+		}
 	}
 
 	private GameListView listView;
 	private BroadcastReceiver updateReceiver;
 
-	void showGameStartDialog() {
-	    final FragmentTransaction transaction =
-	    	getSupportFragmentManager().beginTransaction();
-	    final Fragment old =
-	    	getSupportFragmentManager().findFragmentByTag("dialog");
-
-	    if (old != null) {
-	    	transaction.remove(old);
-	    }
-	    transaction.addToBackStack(null);
-
-	    final DialogFragment dialog = new GameStartDialog();
-	    dialog.show(transaction, "dialog");
-	}
+	private final Client.Connection client;
+	private final Server.Connection server;
 
 	private void loadList()
 	{
@@ -249,36 +285,11 @@ public class GameListActivity extends FragmentActivity
 			adapter = new GameListAdapter() {
 
 				@Override
-				protected String[] fetchKeys() {
+				protected Game[] fetchList() {
 					try {
 						return client.getService().getAnnouncedGames();
 					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return null;
-				}
-
-				@Override
-				public int getCount() {
-					try {
-						return client.getService().getAnnouncedGamesCount();
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return 0;
-				}
-
-				@Override
-				protected GameInfo getItem(final String pKey) {
-					try {
-						return client.getService().getAnnouncedGame(pKey);
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						((ClientRemoteException)e).log();
 					}
 
 					return null;
@@ -301,36 +312,11 @@ public class GameListActivity extends FragmentActivity
 			adapter = new GameListAdapter() {
 
 				@Override
-				protected String[] fetchKeys() {
+				protected Game[] fetchList() {
 					try {
 						return client.getService().getRunningGames();
 					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return null;
-				}
-
-				@Override
-				public int getCount() {
-					try {
-						return client.getService().getRunningGamesCount();
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-					return 0;
-				}
-
-				@Override
-				protected GameInfo getItem(final String pKey) {
-					try {
-						return client.getService().getRunningGame(pKey);
-					} catch (final RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						((ClientRemoteException)e).log();
 					}
 
 					return null;
@@ -347,7 +333,7 @@ public class GameListActivity extends FragmentActivity
 		listView = new GameListView(this, adapter) {
 			@Override
 			protected void onCreateContextMenu(final ContextMenu menu) {
-				final GameInfo game = (GameInfo) getItemAtPosition(getCheckedItemPosition());
+				final Game game = (Game) getItemAtPosition(getCheckedItemPosition());
 
 				if(game == null)
 				{
@@ -359,10 +345,13 @@ public class GameListActivity extends FragmentActivity
 
 				if(getIntent().getAction().equals(ANNOUNCED))
 				{
-			        inflater.inflate(R.menu.context_announced_game, menu);
+					inflater.inflate(R.menu.context_announced_game, menu);
 
-			        menu.findItem(R.id.context_menu_join).setVisible(
-			        	game.getState().equals(GameState.ANNOUNCED));
+					menu.findItem(R.id.context_menu_join)
+					.setVisible(
+						game.isInState(GameListActivity.this,
+						               GameState.ANNOUNCED)
+					);
 				}
 				else if(getIntent().getAction().equals(RUNNING))
 				{
@@ -380,10 +369,47 @@ public class GameListActivity extends FragmentActivity
 		setContentView(listView);
 	}
 
+	private void showAnnouncedGames() {
+		final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
+		intent.setAction(ANNOUNCED);
+		startActivity(intent);
+	}
+
+	private void showGame(final Game game) {
+		showRunningGames();
+
+		final Intent intent =
+			new Intent(GameListActivity.this, GameActivity.class);
+		intent.putExtra(Game.PARCEL_NAME, game);
+		startActivity(intent);
+	}
+
+	private void showGameStartDialog() {
+	    final FragmentTransaction transaction =
+	    	getSupportFragmentManager().beginTransaction();
+	    final Fragment old =
+	    	getSupportFragmentManager().findFragmentByTag("dialog");
+
+	    if (old != null) {
+	    	transaction.remove(old);
+	    }
+	    transaction.addToBackStack(null);
+
+	    final DialogFragment dialog = new GameStartDialog();
+	    dialog.show(transaction, "dialog");
+	}
+
+	private void showRunningGames() {
+		final Intent intent =
+			new Intent(GameListActivity.this, GameListActivity.class);
+		intent.setAction(RUNNING);
+		startActivity(intent);
+	}
+
 	/**
 	 * gets opened when presses "start game"
 	 */
-	public static class GameStartDialog extends DialogFragment {
+	private static class GameStartDialog extends DialogFragment {
 
 		/** default constructor */
 		public GameStartDialog()
@@ -393,13 +419,15 @@ public class GameListActivity extends FragmentActivity
 
 		@Override
 		public Dialog onCreateDialog(final Bundle savedInstanceState) {
-			final LayoutInflater inflater = LayoutInflater.from(getActivity());
+			final GameListActivity activity =  (GameListActivity)getActivity();
+
+			final LayoutInflater inflater = LayoutInflater.from(activity);
 	        final View layout = inflater.inflate(R.layout.start_game_dialog, null);
 
 	        final Settings settings = ((App)getActivity().getApplication())
 	        	.getSettings();
 
-	        return new AlertDialog.Builder(getActivity())
+	        return new AlertDialog.Builder(activity)
 	        .setView(layout)
 			.setTitle(R.string.title_start_game)
             .setCancelable(true)
@@ -417,29 +445,21 @@ public class GameListActivity extends FragmentActivity
 						}
 
 						// create new game
-						final GameInfo game = new GameInfo(
-							settings.getPlayer(),
-							new Game(UUID.randomUUID(),
-								input.getText().toString()),
-							settings.getMapName());
+						final Game game = new Game(settings.getPlayer(),
+						                           UUID.randomUUID(),
+						                           input.getText().toString());
 
 						try {
 							// announce to clients
-							((GameListActivity)getActivity()).server.getService()
-								.initiateGame(game);
+							activity.server.getService().initiateGame(game);
 						} catch (final RemoteException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							((ServerRemoteException)e).log();
 						}
 
 						// close dialog before Activity gets destroyed
 						dismiss();
 
-						// show game
-						final Intent intent =
-							new Intent(getActivity(), GameActivity.class);
-						intent.putExtra(GameInfo.PARCEL_NAME, game);
-						startActivity(intent);
+						activity.showAnnouncedGames();
 					}
 				}
 			)
@@ -453,7 +473,4 @@ public class GameListActivity extends FragmentActivity
 			).create();
 		}
 	}
-
-	private Client.Connection client;
-	private Server.Connection server;
 }

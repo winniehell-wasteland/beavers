@@ -12,6 +12,7 @@ import org.anddev.andengine.util.modifier.IModifier.IModifierListener;
 import org.anddev.andengine.util.path.Direction;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
+import org.anddev.andengine.util.path.NegativeStepCostException;
 import org.anddev.andengine.util.path.WeightedPath;
 import org.beavers.Textures;
 import org.beavers.gameplay.GameActivity;
@@ -38,8 +39,13 @@ public class Shot implements IMovableObject {
 		targetLine.setColor(1, 0, 0);
 		//activity.getMainScene().attachChild(targetLine);
 
-		return pPathFinder.findPath(this, distance, soldier.getTile().getColumn(),
-			soldier.getTile().getRow(), pTarget.getColumn(), pTarget.getRow());
+		try {
+			return pPathFinder.findPath(this, distance, soldier.getTile().getColumn(),
+				soldier.getTile().getRow(), pTarget.getColumn(), pTarget.getRow());
+		} catch (final NegativeStepCostException e) {
+			// should not happen
+			return null;
+		}
 	}
 
 	@Override
@@ -69,7 +75,7 @@ public class Shot implements IMovableObject {
 			return Integer.MAX_VALUE;
 		}
 	}
-	
+
    public void fire(final Soldier targetSoldier){
 	   target=targetSoldier;
 		final Tile pTarget=targetSoldier.getTile();
@@ -93,7 +99,7 @@ public class Shot implements IMovableObject {
 				flash.setPosition(soldier.getWidth()/2,soldier.getHeight()/2-31);
 				soldier.attachChild(flash);
 				*/
-			
+
 				final float distx=Math.abs(shot.getX() - targetSoldier.getCenter()[0]);
 				final float disty=Math.abs(shot.getY() - targetSoldier.getCenter()[1]);
 				final MoveModifier moveMod= new MoveModifier((float) (Math.sqrt(distx*distx+disty*disty)/SPEED), shot.getX(), (float) (targetSoldier.getCenter()[0]-10+Math.random()*20), shot.getY(), (float) (targetSoldier.getCenter()[1]-10+Math.random()*20));
@@ -126,7 +132,7 @@ public class Shot implements IMovableObject {
 								if(findPath(activity.getPathFinder(),targetSoldier.getTile())!=null){
 									targetSoldier.changeHP(-damage);
 									damage=0;
-								
+
 									//target soldier defends himself
 									if(!targetSoldier.isShooting() && !targetSoldier.isDead() &&targetSoldier.getIgnore()!=true) {
 										targetSoldier.fireShot(soldier, activity);
@@ -144,9 +150,9 @@ public class Shot implements IMovableObject {
 
 					shot.registerEntityModifier(moveMod);
 					//spriteExpire(flash);
-					
+
 					delay=(float) (0.1+Math.random()*0.4);
-					
+
 					shootTimer.setTimerSeconds(delay);
 					shootTimer.reset();
 			}
@@ -158,9 +164,9 @@ public class Shot implements IMovableObject {
 	public Soldier getTarget(){
 		 return target;
 	}
-	 
+
 	public void stopShooting(){
-	
+
 		 activity.getEngine().unregisterUpdateHandler(shootTimer);
 		 shootTimer=null;
 		 soldier.setShooting(false);
@@ -177,7 +183,7 @@ public class Shot implements IMovableObject {
 
 	private float delay=(float) (0.1+Math.random()*0.4);
 	private TimerHandler shootTimer;
-	
+
 	private Sprite currentShot;
 	private int damage=0;
 	private Soldier target;

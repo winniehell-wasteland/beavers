@@ -6,7 +6,7 @@ import java.util.Arrays;
 import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
-import org.beavers.gameplay.GameInfo;
+import org.beavers.gameplay.Game;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,19 +17,17 @@ import android.widget.TextView;
 public abstract class GameListAdapter extends BaseAdapter {
 
 	public GameListAdapter() {
-		keys = new ArrayList<String>(Arrays.asList(fetchKeys()));
+		games = new ArrayList<Game>(Arrays.asList(fetchList()));
+	}
+
+	@Override
+	public int getCount() {
+		return games.size();
 	}
 
 	@Override
 	public Object getItem(final int pPosition) {
-		if((0 <= pPosition) && (pPosition < keys.size()))
-		{
-			return getItem(keys.get(pPosition));
-		}
-		else
-		{
-			return null;
-		}
+		return games.get(pPosition);
 	}
 
 	@Override
@@ -59,9 +57,9 @@ public abstract class GameListAdapter extends BaseAdapter {
 			holder = (ViewHolder) pConvertView.getTag();
 		}
 
-		final GameInfo item = (GameInfo) getItem(pPosition);
+		final Game item = (Game) getItem(pPosition);
 
-		holder.txtName.setText(item.getGame().getName());
+		holder.txtName.setText(item.getName());
 
 		if(item.isServer(settings.getPlayer()))
 		{
@@ -72,23 +70,22 @@ public abstract class GameListAdapter extends BaseAdapter {
 
 		holder.txtState.setText(
 			app.getString(R.string.state) + ": "
-			+ app.getString(item.getState().getResId()));
+			+ app.getString(item.getState(app).getResId()));
 
 		return pConvertView;
 	}
 
 	@Override
 	public void notifyDataSetChanged() {
-		keys = new ArrayList<String>(Arrays.asList(fetchKeys()));
+		games = new ArrayList<Game>(Arrays.asList(fetchList()));
 
 		super.notifyDataSetChanged();
 	}
 
-	protected abstract String[] fetchKeys();
-	protected abstract GameInfo getItem(String pKey);
+	protected abstract Game[] fetchList();
 	protected abstract LayoutInflater getLayoutInflater();
 
-	private ArrayList<String> keys;
+	private ArrayList<Game> games;
 
 	private TextView findTextView(final View pParent, final int pID)
 	{

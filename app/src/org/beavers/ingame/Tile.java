@@ -137,7 +137,7 @@ public class Tile {
 
 	@Override
 	public int hashCode() {
-		return 101*((column << 16) | row);
+		return ((column << 16) | row);
 	}
 
 	/**
@@ -145,6 +145,11 @@ public class Tile {
 	 */
 	public static Tile fromCoordinates(final float pX, final float pY) {
 		return new Tile((int) Math.floor(pX/TILE_WIDTH), (int) Math.floor(pY/TILE_HEIGHT));
+	}
+
+	@Override
+	public String toString() {
+		return "(" + column + ", " + row + ")";
 	}
 
 	/**

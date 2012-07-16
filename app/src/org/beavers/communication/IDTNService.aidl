@@ -11,6 +11,6 @@ import org.beavers.gameplay.Player;
  * @see @{link DTNService}
  */
 interface IDTNService {
-	void sendToServer(in Player pServer, in ParcelFileDescriptor pData);
-	void sendToClients(in ParcelFileDescriptor pData);
+	void sendToServer(in Player pServer, in String pFileName);
+	void sendToClients(in String pFileName);
 }
