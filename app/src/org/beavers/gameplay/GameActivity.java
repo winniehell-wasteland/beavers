@@ -13,7 +13,8 @@ import org.anddev.andengine.engine.handler.timer.ITimerCallback;
 import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.engine.options.EngineOptions;
 import org.anddev.andengine.engine.options.EngineOptions.ScreenOrientation;
-import org.anddev.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
+import org.anddev.andengine.engine.options.resolutionpolicy.FixedResolutionPolicy;
+import org.anddev.andengine.engine.options.resolutionpolicy.IResolutionPolicy;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLayer;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader;
 import org.anddev.andengine.entity.layer.tiled.tmx.TMXLoader.ITMXTilePropertiesListener;
@@ -66,6 +67,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -363,20 +365,26 @@ public class GameActivity extends BaseGameActivity
 	@Override
 	public Engine onLoadEngine() {
         final Display display = getWindowManager().getDefaultDisplay();
-
         ScreenOrientation orientation;
 
         final int rotation = display.getRotation();
-        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+        if (rotation == Surface.ROTATION_90
+            || rotation == Surface.ROTATION_270) {
         	orientation = ScreenOrientation.LANDSCAPE;
         } else {
         	orientation = ScreenOrientation.PORTRAIT;
         }
 
-		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(), 2*display.getWidth(), 2*display.getHeight(),0);
+		camera = new SmoothCamera(0, 0, display.getWidth(), display.getHeight(),
+			100*display.getWidth(), 100*display.getHeight(), 0
+		);
 
-		return new Engine(new EngineOptions(true, orientation,
-				new RatioResolutionPolicy(display.getWidth(), display.getHeight()), camera));
+		final IResolutionPolicy policy =
+			new FixedResolutionPolicy(display.getWidth(), display.getHeight());
+
+		return new Engine(
+			new EngineOptions(true, orientation, policy, camera)
+		);
 	}
 
 
@@ -615,7 +623,6 @@ public class GameActivity extends BaseGameActivity
 	public void onScroll(final ScrollDetector pScollDetector, final TouchEvent pTouchEvent,
 			final float pDistanceX, final float pDistanceY) {
 		camera.offsetCenter(-pDistanceX*CAMERA_SPEED, -pDistanceY*CAMERA_SPEED);
-
 	}
 
 	@Override
@@ -631,6 +638,7 @@ public class GameActivity extends BaseGameActivity
 	@Override
 	protected void onCreate(final Bundle pSavedInstanceState) {
 		super.onCreate(pSavedInstanceState);
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
 
 		Intent intent = new Intent(GameActivity.this, Client.class);
 		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
@@ -686,7 +694,9 @@ public class GameActivity extends BaseGameActivity
 		unregisterReceiver(updateReceiver);
 
 		try {
-			storage.saveToFile();
+			if(storage != null) {
+				storage.saveToFile();
+			}
 		} catch (final FileNotFoundException e) {
 			Log.e(TAG, "Could not write game storage!", e);
 		}
