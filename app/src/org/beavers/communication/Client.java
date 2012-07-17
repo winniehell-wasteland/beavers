@@ -299,7 +299,7 @@ public class Client extends Service {
 				final FileReader reader = new FileReader(input);
 
 				json = (JsonObject) parser.parse(reader);
-			} catch (final FileNotFoundException e) {
+			} catch (final Exception e) {
 				throw new ClientRemoteException(
 					R.string.error_dtn_receiving, e
 				);
