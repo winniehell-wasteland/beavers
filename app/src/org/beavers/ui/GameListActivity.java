@@ -175,6 +175,17 @@ public class GameListActivity extends FragmentActivity
 
 			return true;
 		}
+		case R.id.menu_debug_delete_games:
+		{
+			try {
+				Game.deleteAll(this);
+
+				client.getService().deleteGames();
+				server.getService().deleteGames();
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Could not delete games!", e);
+			}
+		}
 		}
 
 		return false;

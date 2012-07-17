@@ -263,6 +263,11 @@ public class Server extends Service {
 		}
 
 		@Override
+		public void deleteGames() throws RemoteException {
+			playerMap.clear();
+		}
+
+		@Override
 		public void distributeOutcome(final Game pGame,
 		                              final OutcomeContainer pOutcome)
 		            throws ServerRemoteException
