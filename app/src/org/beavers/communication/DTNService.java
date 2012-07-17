@@ -67,9 +67,9 @@ public class DTNService extends Service {
 	 * @{
 	 */
 	public static final GroupEndpoint CLIENT_EID =
-		new GroupEndpoint("dtn://beavergame.dtn/client");
+		new GroupEndpoint("dtn://battlebeavers.dtn/client");
 	public static final GroupEndpoint SERVER_EID =
-		new GroupEndpoint("dtn://beavergame.dtn/server");
+		new GroupEndpoint("dtn://battlebeavers.dtn/server");
 	/**
 	 * @}
 	 */
