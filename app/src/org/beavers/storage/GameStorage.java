@@ -16,6 +16,7 @@ import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
+import org.beavers.ingame.IGameEventsListener;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IMenuDialogListener;
 import org.beavers.ingame.IRemoveObjectListener;
@@ -195,6 +196,10 @@ public class GameStorage {
 		menuListener=mListener;
 	}
 	
+	public void setGameEventsListener(final IGameEventsListener eListener){
+		gameListener=eListener;
+	}
+	
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
 	{
 		removeListener = pListener;
@@ -229,6 +234,7 @@ public class GameStorage {
 
 	private IRemoveObjectListener removeListener;
 	private IMenuDialogListener menuListener;
+	private IGameEventsListener gameListener;
 	private void addSoldier(final Soldier pSoldier)
 	             throws UnexpectedTileContentException {
 
@@ -240,6 +246,7 @@ public class GameStorage {
 		gameObjects.put(pSoldier.getTile(), pSoldier);
 		teams.get(pSoldier.getTeam()).add(pSoldier);
 		pSoldier.setRemoveObjectListener(removeListener);
+		pSoldier.setGameEventsListener(gameListener);
 	}
 
 	private String getFileName() {

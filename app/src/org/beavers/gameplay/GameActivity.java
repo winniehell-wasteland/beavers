@@ -52,6 +52,7 @@ import org.beavers.Textures;
 import org.beavers.communication.Client;
 import org.beavers.communication.Client.ClientRemoteException;
 import org.beavers.communication.Server;
+import org.beavers.ingame.IGameEventsListener;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IMenuDialogListener;
 import org.beavers.ingame.IMovableObject;
@@ -63,6 +64,7 @@ import org.beavers.ingame.WaitTimeDialog;
 import org.beavers.ingame.WayPoint;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
+import org.beavers.storage.Outcome;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -98,7 +100,8 @@ public class GameActivity extends BaseGameActivity
 		IHoldDetectorListener,
 		IScrollDetectorListener,
 		IRemoveObjectListener,
-		IMenuDialogListener
+		IMenuDialogListener,
+		IGameEventsListener
 {
 	/**
 	 * @name z-index constants
@@ -447,6 +450,7 @@ public class GameActivity extends BaseGameActivity
 			storage = new GameStorage(this, currentGame);
 			storage.setRemoveObjectListener(this);
 			storage.setMenuDialogListener(this);
+			storage.setGameEventsListener(this);
 		} catch (final Exception e) {
 			Log.e(TAG, "Could not create game storage!", e);
 			finish();
@@ -523,7 +527,7 @@ public class GameActivity extends BaseGameActivity
 		{
 
 			holdDetector.setEnabled(true);
-
+			outcome.printEvents();
 			return true;
 		}
 		case R.id.menu_execute_second:
@@ -764,7 +768,8 @@ public class GameActivity extends BaseGameActivity
 
 	/** game object container */
 	private GameStorage storage;
-
+	/** outcome container */
+	private Outcome outcome;
 	/**
 	 * @name scenery
 	 * @{
@@ -919,6 +924,9 @@ public class GameActivity extends BaseGameActivity
 	 * @param targets das angegriffene Team
 	 */
 	private void checkTargets(final int attacking, final int targets){
+		//timer controls attacks in replay phase
+		//if(currentGame.getState(this).getResId()==R.string.state_replay)return;
+		
 		final Iterator<Soldier> itr = storage.getSoldiersByTeam(attacking).iterator();
 		while(itr.hasNext()){  //durchläuft Liste des ersten Teams
 			final Soldier s=itr.next();
@@ -994,6 +1002,7 @@ public class GameActivity extends BaseGameActivity
 						final PathWalker walker =
 							new PathWalker(GameActivity.this, soldier);
 						walker.start();
+						outcome = new Outcome(System.currentTimeMillis(), storage);
 					}
 				});
 			}
@@ -1022,6 +1031,24 @@ public class GameActivity extends BaseGameActivity
 	@Override
 	public void onDialogSelected(final WayPoint waypoint) {
 		new WaitTimeDialog(this, waypoint);
+		
+	}
+
+	@Override
+	public void onGameStart(final long timestamp) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onHPEvent(final long timestamp, final Soldier soldier, final int hp) {
+		outcome.hpEvent(timestamp, soldier, hp);
+		
+	}
+
+	@Override
+	public void onShootEvent(final long timestamp, final Soldier soldier, final Soldier target) {
+		outcome.shootEvent(timestamp, soldier, target);
 		
 	}
 
