@@ -91,7 +91,7 @@ public final class Game extends UniqueID {
 
 	/** @return game directory */
 	public String getDirectory(final Context pContext) {
-		return pContext.getFilesDir().getAbsolutePath() + "/" + this;
+		return pContext.getFilesDir().getAbsolutePath() + "/games/" + this;
 	}
 
 	/** @return server of the game */
