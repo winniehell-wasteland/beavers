@@ -504,7 +504,7 @@ public class DTNService extends Service {
 			final MappedByteBuffer buf = channel.map(
 				FileChannel.MapMode.READ_ONLY, 0, channel.size());
 
-			if(!session.send(SERVER_EID, getSettings().getDTNLifetime(),
+			if(!session.send(pEndpoint, getSettings().getDTNLifetime(),
 				             Charset.defaultCharset().decode(buf).toString()))
 			{
 				// could not send
