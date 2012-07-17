@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/main_menu">
     <item android:visible="true" android:id="@+id/menu_start_game" android:titleCondensed="@string/menu_start_game" android:title="@string/menu_start_game"></item>
-    <item android:visible="true" android:id="@+id/menu_start_dummy_game" android:title="Start dummy game (debug)"></item>
     <item android:visible="true" android:id="@+id/menu_announced_games" android:titleCondensed="@string/menu_announced_games" android:title="@string/menu_announced_games"></item>
     <item android:visible="true" android:id="@+id/menu_running_games" android:titleCondensed="@string/menu_running_games" android:title="@string/menu_running_games"></item>    
     <item android:visible="false" android:id="@+id/menu_options" android:titleCondensed="@string/menu_options" android:title="@string/menu_options"></item>
 	<item android:visible="false" android:id="@+id/menu_help" android:titleCondensed="@string/menu_help" android:title="@string/menu_help"></item>
     <item android:visible="true" android:id="@+id/menu_quit" android:titleCondensed="@string/menu_quit" android:title="@string/menu_quit"></item>
+    <item android:title="Debug">
+        <menu>
+    		<item android:visible="true" android:id="@+id/menu_debug_dummy_game" android:title="Start dummy game"></item>
+    		<item android:visible="true" android:id="@+id/menu_debug_delete_games" android:title="Delete all games"></item>
+        </menu>
+    </item>
 </menu>

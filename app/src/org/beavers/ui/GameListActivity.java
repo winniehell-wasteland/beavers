@@ -155,7 +155,7 @@ public class GameListActivity extends FragmentActivity
 
 			return true;
 		}
-		case R.id.menu_start_dummy_game:
+		case R.id.menu_debug_dummy_game:
 		{
 	        final Settings settings = ((App)getApplication()).getSettings();
 
