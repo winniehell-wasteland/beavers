@@ -200,9 +200,10 @@ public class GameStorage {
 		gameListener=eListener;
 		for(final IGameObject object : gameObjects.values())
 		{
+			Log.e("GameListener", ""+gameListener.toString()+" is set");
 			if(object instanceof Soldier)((Soldier)object).setGameEventsListener(gameListener);
 		}
-		//Log.e("GameListener", ""+gameListener.toString());
+		Log.e("GameListener", ""+gameListener.toString());
 	}
 	
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)

@@ -982,6 +982,7 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	private void recordOutcome() {
+		outcome = new Outcome(System.currentTimeMillis(), storage);
 		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 			// TODO load decisions
 		}
@@ -1002,7 +1003,7 @@ public class GameActivity extends BaseGameActivity
 						final PathWalker walker =
 							new PathWalker(GameActivity.this, soldier);
 						walker.start();
-						outcome = new Outcome(System.currentTimeMillis(), storage);
+						
 					}
 				});
 			}
