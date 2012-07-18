@@ -87,8 +87,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	public int changeHP(final int pOffset){
 		hp += pOffset;
-		Log.e(null, ""+gameListener.toString());
-		//gameListener.onHPEvent(System.currentTimeMillis(), this, pOffset);
+		try{
+			if(gameListener!=null)gameListener.onHPEvent(System.currentTimeMillis(), this, pOffset);
+			}catch(final Exception e){
+				Log.e(null, "no gameListener");
+			}
+	
 		if(hp>100)hp=100;
 		if(hp<=0){
 			hp=0;
@@ -176,7 +180,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	public void fireShot(final Soldier target, final GameActivity pActivity){
 		if(target.getHP()<=0)return;
-	//	gameListener.onShootEvent(System.currentTimeMillis(), this, target);
 		final Tile pTarget=target.getTile();
 		final Shot tmpshot = new Shot(this, pActivity);
 		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
@@ -185,7 +188,11 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		}
 		shot = tmpshot;
 		stop();
-
+		try{
+			gameListener.onShootEvent(System.currentTimeMillis(), this, target);
+			}catch(final Exception e){
+				Log.e(null, "no gameListener");
+			}
 		faceTarget(pTarget, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
@@ -194,6 +201,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+				
 				shot.fire(target);
 				shooting=true;
 			}
@@ -405,6 +413,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	
 	public void setGameEventsListener(final IGameEventsListener eListener){
 		gameListener = eListener;
+		Log.e(null, ""+eListener.toString());
 	}
 
 	/**

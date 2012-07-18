@@ -198,6 +198,11 @@ public class GameStorage {
 	
 	public void setGameEventsListener(final IGameEventsListener eListener){
 		gameListener=eListener;
+		for(final IGameObject object : gameObjects.values())
+		{
+			if(object instanceof Soldier)((Soldier)object).setGameEventsListener(gameListener);
+		}
+		//Log.e("GameListener", ""+gameListener.toString());
 	}
 	
 	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
@@ -246,7 +251,7 @@ public class GameStorage {
 		gameObjects.put(pSoldier.getTile(), pSoldier);
 		teams.get(pSoldier.getTeam()).add(pSoldier);
 		pSoldier.setRemoveObjectListener(removeListener);
-		pSoldier.setGameEventsListener(gameListener);
+	//	pSoldier.setGameEventsListener(gameListener);
 	}
 
 	private String getFileName() {
