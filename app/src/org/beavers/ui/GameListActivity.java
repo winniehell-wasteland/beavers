@@ -35,21 +35,25 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TabHost;
+import android.widget.TabHost.OnTabChangeListener;
+import android.widget.TabHost.TabContentFactory;
+import android.widget.TextView;
 
 /**
  * activity for displaying a game list
  *
  * @author <a href="https://github.com/winniehell/">winniehell</a>
  */
-public class GameListActivity extends FragmentActivity
-	implements OnMenuItemClickListener {
+public class GameListActivity extends FragmentActivity {
 
 	/**
 	 * @name debug
@@ -61,13 +65,13 @@ public class GameListActivity extends FragmentActivity
 	 */
 
 	/**
-	 * @name intents
+	 * @name tabs
 	 * @{
 	 */
-	public static final String ANNOUNCED =
-			GameListActivity.class.getName() + ".ANNOUNCED";
-	public static final String RUNNING =
-		GameListActivity.class.getName() + ".RUNNING";
+	private static final String TAB_ANNOUNCED = "ANNOUNCED";
+	private static final String TAB_RUNNING = "RUNNING";
+
+	private TabHost tabHost;
 	/**
 	 * @}
 	 */
@@ -87,68 +91,10 @@ public class GameListActivity extends FragmentActivity
 
 	    return true;
 	}
-	@Override
-	public boolean onMenuItemClick(final MenuItem pItem) {
-		if(listView.getSelectedItemPosition() == -1) {
-			return false;
-		}
-
-		final Game game = listView.getSelectedItem();
-		listView.setSelection(-1);
-
-		switch(pItem.getItemId())
-		{
-		case R.id.context_menu_join:
-		{
-			Log.d(TAG, "Trying to join "+game+"...");
-
-			try {
-				client.getService().joinGame(game);
-			} catch (final RemoteException e) {
-				((ClientRemoteException)e).log();
-			}
-
-			return true;
-		}
-		case R.id.context_menu_load_game:
-		{
-			showGame(game);
-
-			return true;
-		}
-		case R.id.context_menu_add_player:
-		{
-			Log.d(TAG, "Adding dummy player...");
-
-			try {
-				server.getService().addPlayer(game, new Player(UUID.randomUUID(), "dummy player"));
-			} catch (final RemoteException e) {
-				((ServerRemoteException)e).log();
-			}
-
-			showGame(game);
-
-			return true;
-		}
-		}
-		return false;
-	}
 
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.menu_announced_games:
-		{
-			showAnnouncedGames();
-
-			return true;
-		}
-		case R.id.menu_running_games:
-		{
-			showRunningGames();
-
-			return true;
-		}
 		case R.id.menu_start_game:
 		{
 			showGameStartDialog();
@@ -171,7 +117,7 @@ public class GameListActivity extends FragmentActivity
 				((ServerRemoteException)e).log();
 			}
 
-			showAnnouncedGames();
+			tabHost.setCurrentTabByTag(TAB_ANNOUNCED);
 
 			return true;
 		}
@@ -192,23 +138,13 @@ public class GameListActivity extends FragmentActivity
 	}
 
 	@Override
-	public boolean onPrepareOptionsMenu(final Menu menu) {
-		menu.findItem(R.id.menu_announced_games).setVisible(!getIntent().getAction().equals(ANNOUNCED));
-		menu.findItem(R.id.menu_running_games).setVisible(!getIntent().getAction().equals(RUNNING));
-
-		return super.onPrepareOptionsMenu(menu);
-	}
-
-	@Override
-	protected void onNewIntent(final Intent intent) {
-		super.onNewIntent(intent);
-		setIntent(intent);
-		loadList();
-	}
-
-	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		setContentView(R.layout.game_list_activity);
+
+		final Settings settings = ((App) getApplication()).getSettings();
+		Log.d(TAG, "This is player " + settings.getPlayer().getId());
 
 		Intent intent = new Intent(GameListActivity.this, Client.class);
 		if(!bindService(intent, client, Service.BIND_AUTO_CREATE))
@@ -224,28 +160,209 @@ public class GameListActivity extends FragmentActivity
 			return;
 		}
 
-		(new Timer()).schedule(
-			new TimerTask() {
-				@Override
-				public void run() {
-					runOnUiThread(new Runnable() {
+		announcedGames = new GameListView(this) {
 
-						@Override
-						public void run() {
-							loadList();
-						}
-					});
+			@Override
+			protected void onPrepareContextMenu(final MenuInflater pInflater,
+				final ContextMenu pMenu, final Game pGame) {
+
+				pInflater.inflate(R.menu.context_announced_game, pMenu);
+
+				pMenu.findItem(R.id.context_menu_join)
+				.setVisible(
+					pGame.isInState(GameListActivity.this, GameState.ANNOUNCED)
+					&& !pGame.isServer(getSettings().getPlayer())
+				);
+			}
+
+			@Override
+			public boolean onMenuItemClick(final MenuItem pItem) {
+				final Game game = getSelectedItem();
+
+				if(game == null) {
+					return false;
 				}
-			}, 1000);
+
+				setSelection(-1);
+
+				switch(pItem.getItemId())
+				{
+				case R.id.context_menu_join:
+				{
+					Log.d(TAG, "Trying to join "+game+"...");
+
+					try {
+						client.getService().joinGame(game);
+					} catch (final RemoteException e) {
+						((ClientRemoteException)e).log();
+					}
+
+					return true;
+				}
+				case R.id.context_menu_add_player:
+				{
+					Log.d(TAG, "Adding dummy player...");
+
+					try {
+						final Player dummyPlayer =
+							new Player(UUID.randomUUID(), "dummy player");
+
+						server.getService().addPlayer(game, dummyPlayer);
+					} catch (final RemoteException e) {
+						((ServerRemoteException)e).log();
+					}
+
+					showGame(game);
+
+					return true;
+				}
+				default:
+					return false;
+				}
+			}
+		};
+
+		announcedGames.setAdapter(new GameListAdapter() {
+
+			@Override
+			protected Game[] fetchList() {
+				try {
+					return client.getService().getAnnouncedGames();
+				} catch (final RemoteException e) {
+					((ClientRemoteException)e).log();
+				}
+
+				return null;
+			}
+		});
+
+		runningGames = new GameListView(this) {
+
+			@Override
+			protected void onPrepareContextMenu(final MenuInflater pInflater,
+				final ContextMenu pMenu, final Game pGame) {
+
+				pInflater.inflate(R.menu.context_running_game, pMenu);
+			}
+
+			@Override
+			public boolean onMenuItemClick(final MenuItem pItem) {
+				final Game game = getSelectedItem();
+
+				if(game == null) {
+					return false;
+				}
+
+				setSelection(-1);
+
+				switch(pItem.getItemId())
+				{
+				case R.id.context_menu_load_game:
+				{
+					showGame(game);
+
+					return true;
+				}
+				default:
+					return false;
+				}
+			}
+		};
+
+		runningGames.setAdapter(new GameListAdapter() {
+
+			@Override
+			protected Game[] fetchList() {
+				try {
+					return client.getService().getRunningGames();
+				} catch (final RemoteException e) {
+					((ClientRemoteException)e).log();
+				}
+
+				return null;
+			}
+		});
+
+		tabHost = (TabHost) findViewById(android.R.id.tabhost);
+		tabHost.setup();
+
+		addTab(TAB_RUNNING, R.string.menu_running_games, runningGames);
+		addTab(TAB_ANNOUNCED, R.string.menu_announced_games, announcedGames);
+
+		tabHost.setOnTabChangedListener(new OnTabChangeListener() {
+
+			@Override
+			public void onTabChanged(final String tabId) {
+				updateGameList();
+			}
+
+		});
+
+		tabHost = (TabHost) findViewById(android.R.id.tabhost);
 
 		updateReceiver = new BroadcastReceiver() {
 
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
-				// update game list
-				listView.getAdapter().notifyDataSetChanged();
+				updateGameList();
 			}
 		};
+
+		Log.d(TAG, "onCreate() finished");
+	}
+
+	private void addTab(final String pTag, final int pIndicator,
+	                    final View pContent) {
+
+		tabHost.addTab(tabHost.newTabSpec(pTag)
+			.setIndicator(getString(pIndicator))
+			.setContent(new TabContentFactory() {
+
+				@Override
+				public View createTabContent(final String tag) {
+					return pContent;
+				}
+
+			})
+		);
+
+		final View view = tabHost.getTabWidget().getChildTabViewAt(
+			tabHost.getTabWidget().getTabCount() - 1
+		);
+
+		view.getLayoutParams().height *= 0.66;
+
+		final TextView tabTitle =
+			(TextView) view.findViewById(android.R.id.title);
+
+		tabTitle.setGravity(Gravity.CENTER);
+		tabTitle.setSingleLine(false);
+
+		tabTitle.getLayoutParams().height = ViewGroup.LayoutParams.FILL_PARENT;
+		tabTitle.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+	}
+
+	private void updateGameList() {
+		if(tabHost == null) {
+			return;
+		}
+
+		runOnUiThread(new Runnable() {
+
+			@Override
+			public void run() {
+				if(tabHost.getCurrentTabTag().equals(TAB_ANNOUNCED)) {
+					if(announcedGames != null) {
+						announcedGames.getAdapter().notifyDataSetChanged();
+					}
+				}
+				else if(tabHost.getCurrentTabTag().equals(TAB_RUNNING)) {
+					if(runningGames != null) {
+						runningGames.getAdapter().notifyDataSetChanged();
+					}
+				}
+			}
+		});
 	}
 
 	@Override
@@ -261,136 +378,57 @@ public class GameListActivity extends FragmentActivity
 		super.onPause();
 
 		unregisterReceiver(updateReceiver);
-
-		if(isFinishing() && !getIntent().getAction().equals(RUNNING))
-		{
-			showRunningGames();
-		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 
-		final Settings settings = ((App) getApplication()).getSettings();
-		Log.d(TAG, "This is player " + settings.getPlayer().getId());
-
 		registerReceiver(updateReceiver,
 			new IntentFilter(Game.STATE_CHANGED_INTENT));
 
-		// update game list
-		if(listView != null) {
-			listView.getAdapter().notifyDataSetChanged();
-		}
+		(new Timer()).schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				updateGameList();
+			}
+		}, 1000);
 	}
 
-	private GameListView listView;
+	/**
+	 * @name list views
+	 * @{
+	 */
+	private GameListView announcedGames;
+	private GameListView runningGames;
+	/**
+	 * @}
+	 */
+
 	private BroadcastReceiver updateReceiver;
 
+	/**
+	 * @name service connections
+	 * @{
+	 */
 	private final Client.Connection client;
 	private final Server.Connection server;
+	/**
+	 * @}
+	 */
 
-	private void loadList()
-	{
-		GameListAdapter adapter = null;
-
-		if(getIntent().getAction().equals(ANNOUNCED))
-		{
-			adapter = new GameListAdapter() {
-
-				@Override
-				protected Game[] fetchList() {
-					try {
-						return client.getService().getAnnouncedGames();
-					} catch (final RemoteException e) {
-						((ClientRemoteException)e).log();
-					}
-
-					return null;
-				}
-
-				@Override
-				protected LayoutInflater getLayoutInflater() {
-					return GameListActivity.this.getLayoutInflater();
-				}
-
-			};
+	private Settings getSettings() {
+		if(getApplication() instanceof App) {
+			return ((App) getApplication()).getSettings();
 		}
-		else
-		{
-			if(!getIntent().getAction().equals(RUNNING))
-			{
-				setIntent(new Intent(RUNNING));
-			}
-
-			adapter = new GameListAdapter() {
-
-				@Override
-				protected Game[] fetchList() {
-					try {
-						return client.getService().getRunningGames();
-					} catch (final RemoteException e) {
-						((ClientRemoteException)e).log();
-					}
-
-					return null;
-				}
-
-				@Override
-				protected LayoutInflater getLayoutInflater() {
-					return GameListActivity.this.getLayoutInflater();
-				}
-
-			};
+		else {
+			return null;
 		}
-
-		listView = new GameListView(this, adapter) {
-			@Override
-			protected void onCreateContextMenu(final ContextMenu menu) {
-				final Game game = (Game) getItemAtPosition(getCheckedItemPosition());
-
-				if(game == null)
-				{
-					menu.clear();
-					return;
-				}
-
-		        final MenuInflater inflater = getMenuInflater();
-
-				if(getIntent().getAction().equals(ANNOUNCED))
-				{
-					inflater.inflate(R.menu.context_announced_game, menu);
-
-					menu.findItem(R.id.context_menu_join)
-					.setVisible(
-						game.isInState(GameListActivity.this,
-						               GameState.ANNOUNCED)
-					);
-				}
-				else if(getIntent().getAction().equals(RUNNING))
-				{
-			        inflater.inflate(R.menu.context_running_game, menu);
-				}
-
-		        for(int i = 0; i < menu.size(); ++i)
-		        {
-		        	menu.getItem(i).setOnMenuItemClickListener(GameListActivity.this);
-		        }
-			}
-
-		};
-
-		setContentView(listView);
-	}
-
-	private void showAnnouncedGames() {
-		final Intent intent = new Intent(GameListActivity.this, GameListActivity.class);
-		intent.setAction(ANNOUNCED);
-		startActivity(intent);
 	}
 
 	private void showGame(final Game game) {
-		showRunningGames();
+		tabHost.setCurrentTabByTag(TAB_RUNNING);
 
 		final Intent intent =
 			new Intent(GameListActivity.this, GameActivity.class);
@@ -411,13 +449,6 @@ public class GameListActivity extends FragmentActivity
 
 	    final DialogFragment dialog = new GameStartDialog();
 	    dialog.show(transaction, "dialog");
-	}
-
-	private void showRunningGames() {
-		final Intent intent =
-			new Intent(GameListActivity.this, GameListActivity.class);
-		intent.setAction(RUNNING);
-		startActivity(intent);
 	}
 
 	/**
@@ -473,7 +504,7 @@ public class GameListActivity extends FragmentActivity
 						// close dialog before Activity gets destroyed
 						dismiss();
 
-						activity.showAnnouncedGames();
+						activity.tabHost.setCurrentTabByTag(TAB_ANNOUNCED);
 					}
 				}
 			)

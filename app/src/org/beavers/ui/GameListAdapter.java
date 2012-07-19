@@ -18,7 +18,7 @@ import android.widget.TextView;
 public abstract class GameListAdapter extends BaseAdapter {
 
 	public GameListAdapter() {
-		games = new ArrayList<Game>(Arrays.asList(fetchList()));
+		games = new ArrayList<Game>();
 	}
 
 	@Override
@@ -39,14 +39,13 @@ public abstract class GameListAdapter extends BaseAdapter {
 	@Override
 	public View getView(final int pPosition, View pConvertView,
 	                    final ViewGroup pParent) {
-
 		final App app = ((App) pParent.getContext().getApplicationContext());
 		final Settings settings = app.getSettings();
 
 		ViewHolder holder;
 		if (pConvertView == null) {
-			pConvertView = getLayoutInflater()
-				.inflate(R.layout.custom_row_view, null);
+			pConvertView = LayoutInflater.from(pParent.getContext())
+				.inflate(R.layout.game_list_row, null);
 
 			holder = new ViewHolder();
 			holder.txtName = findTextView(pConvertView, R.id.name);
@@ -90,7 +89,6 @@ public abstract class GameListAdapter extends BaseAdapter {
 	}
 
 	protected abstract Game[] fetchList();
-	protected abstract LayoutInflater getLayoutInflater();
 
 	private ArrayList<Game> games;
 
