@@ -82,6 +82,14 @@ public final class Game extends UniqueID {
 		}
 	}
 
+	public void deleteDecisions(final Context pContext, final int pTeam) {
+		if(!hasDecisions(pContext, pTeam)) {
+			return ;
+		}
+
+		new File(getDecisionsFile(pContext, pTeam)).delete();
+	}
+
 	@Override
 	public boolean equals(final Object other) {
 		if(other instanceof Game)
