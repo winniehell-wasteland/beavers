@@ -4,10 +4,10 @@
 	{
 		"server":
 		{
-			"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-			"name":"test message"
+			"id":"$SERVER",
+			"name":"test server"
 		},
-		"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+		"id":"$GAME",
 		"name":"test game"
 	},
 	"state":"ANNOUNCED"

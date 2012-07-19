@@ -2,22 +2,22 @@
 	"players":
 	[
 		{
-			"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-			"name":"test message"
+			"id":"$SERVER",
+			"name":"test server"
 		},
 		{
-			"id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-			"name":"test server"
+			"id":"$CLIENT",
+			"name":"test client"
 		}
 	],
 	"game":
 	{
 		"server":
 		{
-			"id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+			"id":"$SERVER",
 			"name":"test server"
 		},
-		"id":"cccccccc-cccc-cccc-cccc-cccccccccccc",
+		"id":"$GAME",
 		"name":"test game"
 	},
 	"state":"PLANNING_PHASE"
