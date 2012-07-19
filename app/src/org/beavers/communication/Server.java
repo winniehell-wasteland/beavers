@@ -67,6 +67,8 @@ public class Server extends Service {
 		Log.d(TAG, "onCreate()");
 		super.onCreate();
 
+		executor = Executors.newSingleThreadExecutor();
+
 		try {
 			implementation.loadPlayerMap();
 		} catch (final ServerRemoteException e) {
@@ -115,11 +117,13 @@ public class Server extends Service {
         	final int stopId = pStartId;
         	final String fileName = pIntent.getStringExtra("file");
 
+        	Log.d(TAG, "scheduling handleData()");
 			executor.execute(new Runnable() {
 
 				@Override
 				public void run() {
 					try {
+			        	Log.d(TAG, "running handleData()");
 						implementation.handleData(fileName);
 					} catch (final ServerRemoteException e) {
 						Log.e(TAG, getString(R.string.error_dtn_receiving), e);
@@ -201,6 +205,7 @@ public class Server extends Service {
 		}
 
 		public void log() {
+			Log.e(TAG, this.getClass().getSimpleName());
 			if(innerException == null) {
 				Log.e(TAG, message);
 			}
@@ -222,7 +227,7 @@ public class Server extends Service {
 	/** communication service connection */
 	private DTNService.Connection dtn;
 
-	private final ExecutorService executor = Executors.newSingleThreadExecutor();
+	private ExecutorService executor;
 	private final Implementation implementation = new Implementation();
 
 	/** implementation of the {@link IServer} interface */
