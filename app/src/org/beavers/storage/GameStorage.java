@@ -60,6 +60,19 @@ public class GameStorage {
 		//saveToFile();
 	}
 
+	public void addSoldier(final Soldier pSoldier)
+	             throws UnexpectedTileContentException {
+
+		if(isTileOccupied(pSoldier.getTile()))
+		{
+			throw new UnexpectedTileContentException("Tile is not empty!");
+		}
+
+		gameObjects.put(pSoldier.getTile(), pSoldier);
+		teams.get(pSoldier.getTeam()).add(pSoldier);
+		pSoldier.setRemoveObjectListener(removeListener);
+	}
+
 	/**
 	 * add waypoint to container
 	 * @param pWaypoint a waypoint
@@ -222,19 +235,6 @@ public class GameStorage {
 	private final ArrayList<SoldierList> teams;
 
 	private IRemoveObjectListener removeListener;
-
-	private void addSoldier(final Soldier pSoldier)
-	             throws UnexpectedTileContentException {
-
-		if(isTileOccupied(pSoldier.getTile()))
-		{
-			throw new UnexpectedTileContentException("Tile is not empty!");
-		}
-
-		gameObjects.put(pSoldier.getTile(), pSoldier);
-		teams.get(pSoldier.getTeam()).add(pSoldier);
-		pSoldier.setRemoveObjectListener(removeListener);
-	}
 
 	private String getFileName() {
 		return game.getDirectory(context) + "/setup.json";
