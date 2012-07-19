@@ -3,83 +3,66 @@ package org.beavers.storage;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.beavers.ingame.IGameEventsListener;
 import org.beavers.ingame.Soldier;
 
 import android.util.Log;
 
-public class Outcome {
+public class Outcome implements IGameEventsListener{
 
 	private final long startTime;
 	private final GameStorage storage;
-	ArrayList<EventContainer> eventList;
+	private final ArrayList<EventContainer> eventList;
+	private final SoldierList team0,team1;
 	
 	public Outcome(final long startT, final GameStorage store){
 		startTime = startT;
 		storage = store;
 		eventList= new ArrayList<EventContainer>();
+		team0 = store.getSoldiersByTeam(0);
+		team1 = store.getSoldiersByTeam(1);
+		//final OutcomeSerializer serializer = new OutcomeSerializer();
+		//serializer.serialize(this, Outcome.class, null );
 	}
 	
-	public void hpEvent(final long time, final Soldier s, final int hp){
-		eventList.add(new EventContainer(time-startTime,s,hp));
+	public SoldierList getTeam0() {
+		return team0;
+	}
+	
+	public SoldierList getTeam1() {
+		return team1;
+	}
+
+	@Override
+	public void onHPEvent(final long timestamp, final Soldier soldier, final int hp) {
+		eventList.add(new EventContainer(timestamp-startTime,soldier,hp));
+		
+	}
+
+	@Override
+	public void onShootEvent(final long timestamp, final Soldier soldier, final Soldier target) {
+		eventList.add(new EventContainer(timestamp-startTime,soldier,target));
 		
 	}
 	
-	public void shootEvent(final long time, final Soldier s, final Soldier t){
-		eventList.add(new EventContainer(time-startTime,s,t));
-	}
 	
 	public ArrayList<EventContainer> getEventList() {
 		return eventList;
 	}
 	
-	public EventContainer getFirstEvent(){
-	  return eventList.remove(0);
-	}
 	
 	public void printEvents(){
 		final Iterator i =eventList.iterator();
 		while(i.hasNext()){
 			final EventContainer e=(EventContainer)i.next();
-			Log.d(null, "Time: "+e.getTimestamp()+" | Team: "+e.getS().getTeam());
-			
+			if(e.getHp()!=0)Log.e("HP Event", "Time: "+e.getTimestamp()+" | Team: "+e.getS().getTeam()+" | HP lost: "+ e.getHp());
+			else Log.e("Shoot Event","Time: "+e.getTimestamp()+" | Soldier: "+e.getS().getTeam()+" | Target " +e.getT().getTeam());
 		}
 
 	}
 	
-	private class EventContainer{
-		
-		long timestamp;
-		int hp;
-		Soldier s;
-		Soldier t;
-		
-		public EventContainer(final long timestamp, final Soldier s, final Soldier t){
-			this.timestamp=timestamp;
-			this.s=s;
-			this.t=t;
-		}
-		
-		public EventContainer(final long timestamp, final Soldier s, final int hp){
-			this.timestamp=timestamp;
-			this.s=s;
-			this.hp=hp;
-		}
+
 	
-		
-		public int getHp() {
-			return hp;
-		}
-		
-		public Soldier getS() {
-			return s;
-		}
-		
-		public Soldier getT() {
-			return t;
-		}
-		
-		public long getTimestamp() {
-			return timestamp;
-		}
-	}
+
+
 }

@@ -413,7 +413,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	
 	public void setGameEventsListener(final IGameEventsListener eListener){
 		gameListener = eListener;
-		Log.e(null, ""+eListener.toString());
+		//Log.e(null, ""+eListener.toString());
 	}
 
 	/**

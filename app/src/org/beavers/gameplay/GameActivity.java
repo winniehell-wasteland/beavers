@@ -52,7 +52,6 @@ import org.beavers.Textures;
 import org.beavers.communication.Client;
 import org.beavers.communication.Client.ClientRemoteException;
 import org.beavers.communication.Server;
-import org.beavers.ingame.IGameEventsListener;
 import org.beavers.ingame.IGameObject;
 import org.beavers.ingame.IMenuDialogListener;
 import org.beavers.ingame.IMovableObject;
@@ -100,8 +99,7 @@ public class GameActivity extends BaseGameActivity
 		IHoldDetectorListener,
 		IScrollDetectorListener,
 		IRemoveObjectListener,
-		IMenuDialogListener,
-		IGameEventsListener
+		IMenuDialogListener
 {
 	/**
 	 * @name z-index constants
@@ -450,7 +448,7 @@ public class GameActivity extends BaseGameActivity
 			storage = new GameStorage(this, currentGame);
 			storage.setRemoveObjectListener(this);
 			storage.setMenuDialogListener(this);
-			storage.setGameEventsListener(this);
+			
 		} catch (final Exception e) {
 			Log.e(TAG, "Could not create game storage!", e);
 			finish();
@@ -983,6 +981,7 @@ public class GameActivity extends BaseGameActivity
 
 	private void recordOutcome() {
 		outcome = new Outcome(System.currentTimeMillis(), storage);
+		storage.setGameEventsListener(outcome);
 		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 			// TODO load decisions
 		}
@@ -1035,22 +1034,5 @@ public class GameActivity extends BaseGameActivity
 		
 	}
 
-	@Override
-	public void onGameStart(final long timestamp) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onHPEvent(final long timestamp, final Soldier soldier, final int hp) {
-		outcome.hpEvent(timestamp, soldier, hp);
-		
-	}
-
-	@Override
-	public void onShootEvent(final long timestamp, final Soldier soldier, final Soldier target) {
-		outcome.shootEvent(timestamp, soldier, target);
-		
-	}
 
 }
