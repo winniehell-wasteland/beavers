@@ -7,6 +7,7 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameState;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -64,13 +65,19 @@ public abstract class GameListAdapter extends BaseAdapter {
 		if(item.isServer(settings.getPlayer()))
 		{
 			holder.txtServer.setText("");
+
+			holder.txtState.setText(
+				app.getString(R.string.state) + ": "
+				+ (item.isInState(app, GameState.JOINED)?
+				  app.getString(R.string.state_waiting):
+				  app.getString(item.getState(app).getResId())));
 		} else {
 			holder.txtServer.setText(item.getServer().getName());
-		}
 
-		holder.txtState.setText(
-			app.getString(R.string.state) + ": "
-			+ app.getString(item.getState(app).getResId()));
+			holder.txtState.setText(
+				app.getString(R.string.state) + ": "
+				+ app.getString(item.getState(app).getResId()));
+		}
 
 		return pConvertView;
 	}

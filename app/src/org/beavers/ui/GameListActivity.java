@@ -272,6 +272,9 @@ public class GameListActivity extends FragmentActivity
 	protected void onResume() {
 		super.onResume();
 
+		final Settings settings = ((App) getApplication()).getSettings();
+		Log.d(TAG, "This is player " + settings.getPlayer().getId());
+
 		registerReceiver(updateReceiver,
 			new IntentFilter(Game.STATE_CHANGED_INTENT));
 
