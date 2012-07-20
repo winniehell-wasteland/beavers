@@ -1007,6 +1007,9 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	private void recordOutcome() {
+		outcome = new Outcome(System.currentTimeMillis());
+		storage.setGameEventsListener(outcome);
+		
 		try {
 			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 				final SoldierList oldPositions =
@@ -1023,15 +1026,13 @@ public class GameActivity extends BaseGameActivity
 					storage.addSoldier(soldier);
 				}
 
+				outcome.addDecisions(decisions);
 				currentGame.deleteDecisions(this, team);
 			}
 		} catch(final Exception e) {
 			Log.e(TAG, "Could not load decisions!", e);
 			return;
 		}
-		
-		outcome = new Outcome(System.currentTimeMillis());
-		storage.setGameEventsListener(outcome);
 
 		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 			for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
@@ -1051,13 +1052,6 @@ public class GameActivity extends BaseGameActivity
 					}
 				});
 			}
-		}
-
-		try {
-			currentGame.setState(this, GameState.PLANNING_PHASE);
-		} catch (final IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 

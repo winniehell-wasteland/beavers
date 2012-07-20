@@ -273,12 +273,22 @@ public class Server extends Service {
 		}
 
 		@Override
-		public void distributeOutcome(final Game pGame,
-		                              final OutcomeContainer pOutcome)
+		public void distributeOutcome(final Game pGame)
 		            throws ServerRemoteException
 		{
 			final Message message = new OutcomeMessage(pGame, pOutcome);
 
+			if(!pGame.hasOutcome(Server.this)) {
+				return;
+			}
+			
+			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+				if(!pGame.hasDecisions(Server.this, team)) {
+					// wait for the rest
+					return;
+				}
+			}
+			
 			try {
 				dtn.getService().sendToClients(message.saveToFile(Server.this));
 			} catch (final RemoteException e) {
@@ -555,13 +565,13 @@ public class Server extends Service {
 		class OutcomeMessage extends Message
 		{
 			public OutcomeMessage(final Game pGame,
-			                      final OutcomeContainer pOutcome) {
+			                      final Outcome pOutcome) {
 				super(pGame, GameState.EXECUTION_PHASE);
 				outcome = pOutcome;
 			}
 
-			@SerializedName(OutcomeContainer.JSON_TAG)
-			private final OutcomeContainer outcome;
+			@SerializedName(Outcome.JSON_TAG)
+			private final Outcome outcome;
 		}
 
 		class PlanningPhaseMessage extends Message

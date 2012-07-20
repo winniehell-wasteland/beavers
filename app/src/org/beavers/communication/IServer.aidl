@@ -31,7 +31,7 @@ interface IServer {
 	/**
 	 * distribute outcome to clients
 	 */
-	void distributeOutcome(in Game pGame, in OutcomeContainer pOutcome);
+	void distributeOutcome(in Game pGame);
 	
 	/**
 	 * level select, inform possible clients

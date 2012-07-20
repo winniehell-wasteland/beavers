@@ -12,16 +12,27 @@ import android.util.Log;
 
 public class Outcome implements IGameEventsListener{
 
+	/** tag for collection in JSON files */
+	public static final String JSON_TAG = "outcome";
+
 	private final transient long startTime;
+	private final ArrayList<SoldierList> decisions;
 	private final ArrayList<EventContainer> eventList;
 	
 	
 	public Outcome(final long startT){
 		startTime = startT;
+		decisions = new ArrayList<SoldierList>();
 		eventList= new ArrayList<EventContainer>();
 	}
 	
-
+	public void addDecisions(final SoldierList pDecisions) {
+		decisions.add(pDecisions);
+	}
+	
+	public void getDecisions(final int pTeam) {
+		return decisions.get(pTeam);
+	}
 
 	@Override
 	public void onHPEvent(final long timestamp, final Soldier soldier, final int hp) {
