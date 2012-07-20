@@ -99,7 +99,7 @@ public class CustomGSON {
 					Step.class,
 					Tile.class,
 					WayPoint.class,
-					//EventContainer.class
+					EventContainer.class
 				};
 
 				for(final Class<?> c : classes)
