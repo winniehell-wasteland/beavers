@@ -980,7 +980,7 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	private void recordOutcome() {
-		outcome = new Outcome(System.currentTimeMillis(), storage);
+		outcome = new Outcome(System.currentTimeMillis());
 		storage.setGameEventsListener(outcome);
 		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 			// TODO load decisions

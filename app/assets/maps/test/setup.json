@@ -1,6 +1,6 @@
 [
-	{"team":0,"tile":[2,0],"view_angle":180.0},
-	{"team":0,"tile":[5,1],"view_angle":225.0},
-	{"team":1,"tile":[8,9],"view_angle":0.0},
-	{"team":1,"tile":[6,9],"view_angle":0.0}
+	{"id":1,"team":0,"tile":[2,0],"view_angle":180.0},
+	{"id":2,"team":0,"tile":[5,1],"view_angle":225.0},
+	{"id":3,"team":1,"tile":[8,9],"view_angle":0.0},
+	{"id":4,"team":1,"tile":[6,9],"view_angle":0.0}
 ]

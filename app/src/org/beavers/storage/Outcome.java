@@ -5,43 +5,33 @@ import java.util.Iterator;
 
 import org.beavers.ingame.IGameEventsListener;
 import org.beavers.ingame.Soldier;
+import org.beavers.storage.EventContainer.HPEvent;
+import org.beavers.storage.EventContainer.ShootEvent;
 
 import android.util.Log;
 
 public class Outcome implements IGameEventsListener{
 
-	private final long startTime;
-	private final GameStorage storage;
+	private final transient long startTime;
 	private final ArrayList<EventContainer> eventList;
-	private final SoldierList team0,team1;
 	
-	public Outcome(final long startT, final GameStorage store){
+	
+	public Outcome(final long startT){
 		startTime = startT;
-		storage = store;
 		eventList= new ArrayList<EventContainer>();
-		team0 = store.getSoldiersByTeam(0);
-		team1 = store.getSoldiersByTeam(1);
-		//final OutcomeSerializer serializer = new OutcomeSerializer();
-		//serializer.serialize(this, Outcome.class, null );
 	}
 	
-	public SoldierList getTeam0() {
-		return team0;
-	}
-	
-	public SoldierList getTeam1() {
-		return team1;
-	}
+
 
 	@Override
 	public void onHPEvent(final long timestamp, final Soldier soldier, final int hp) {
-		eventList.add(new EventContainer(timestamp-startTime,soldier,hp));
+		eventList.add(new HPEvent(timestamp-startTime,soldier.getId(),hp));
 		
 	}
 
 	@Override
 	public void onShootEvent(final long timestamp, final Soldier soldier, final Soldier target) {
-		eventList.add(new EventContainer(timestamp-startTime,soldier,target));
+		eventList.add(new ShootEvent(timestamp-startTime,soldier.getId(),target.getId()));
 		
 	}
 	
@@ -55,10 +45,14 @@ public class Outcome implements IGameEventsListener{
 		final Iterator i =eventList.iterator();
 		while(i.hasNext()){
 			final EventContainer e=(EventContainer)i.next();
-			if(e.getHp()!=0)Log.e("HP Event", "Time: "+e.getTimestamp()+" | Team: "+e.getS().getTeam()+" | HP lost: "+ e.getHp());
-			else Log.e("Shoot Event","Time: "+e.getTimestamp()+" | Soldier: "+e.getS().getTeam()+" | Target " +e.getT().getTeam());
+			Log.e("EventContainer", e.toString());
 		}
 
+		Log.d("EventContainer", "size: "+eventList.size());
+		final String json = CustomGSON.getInstance().toJson(eventList);
+		Log.d("EventContainer", json);
+		final ArrayList<EventContainer> test = CustomGSON.getInstance().fromJson(json, eventList.getClass());
+		Log.d("EventContainer", "size: "+test.size());
 	}
 	
 

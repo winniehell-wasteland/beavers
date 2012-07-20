@@ -278,6 +278,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public float getAP(){
 		return ap;
 	}
+	
+	public int getId() {
+		return id;
+	}
 
 	public float getmaxAP(){
 		return maxAP;
@@ -302,6 +306,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	public boolean isShooting(){
 		return shooting;
+	}
+	
+	public void setId(final int id) {
+		this.id = id;
 	}
 
 	public void setShooting(final boolean shoot){
@@ -479,6 +487,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @}
 	 */
 
+	private int id;
+	
 	private final float maxAP=20;
 	private float ap=maxAP;
 	private int hp=100;

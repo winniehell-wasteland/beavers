@@ -25,6 +25,7 @@ class SoldierSerializer implements JsonSerializer<Soldier> {
 
 		final JsonObject object = new JsonObject();
 
+		object.add("id", pContext.serialize(pSrc.getId()));
 		object.add("team", pContext.serialize(pSrc.getTeam()));
 		object.add("tile", pContext.serialize(pSrc.getTile()));
 		object.add("view_angle", pContext.serialize(pSrc.getRotation()));

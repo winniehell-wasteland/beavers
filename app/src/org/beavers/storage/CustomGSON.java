@@ -98,7 +98,8 @@ public class CustomGSON {
 					Soldier.class,
 					Step.class,
 					Tile.class,
-					WayPoint.class
+					WayPoint.class,
+					//EventContainer.class
 				};
 
 				for(final Class<?> c : classes)
@@ -139,17 +140,22 @@ public class CustomGSON {
 
 	/** setup serialization/deserialization for given class */
 	private static void setupSerialization(final GsonBuilder pBuilder,
-	                                       final Class<?> pClass)
-	                    throws ClassNotFoundException,
-                               InstantiationException,
-                               IllegalAccessException {
+	                                       final Class<?> pClass) {
 		final String prefix = CustomGSON.class.getPackage().getName() + "."
 	                          + pClass.getSimpleName();
 
-		pBuilder.registerTypeAdapter(
-			pClass, Class.forName(prefix+"Serializer").newInstance());
-		pBuilder.registerTypeAdapter(
-			pClass, Class.forName(prefix+"Deserializer").newInstance());
+		try {
+			pBuilder.registerTypeAdapter(
+				pClass, Class.forName(prefix+"Serializer").newInstance());
+		} catch (final Exception e) {
+			Log.w(CustomGSON.class.getName(), "Could not load serializer for class "+pClass.getSimpleName());
+		}
+		try {
+			pBuilder.registerTypeAdapter(
+				pClass, Class.forName(prefix+"Deserializer").newInstance());
+		} catch (final Exception e) {
+			Log.w(CustomGSON.class.getName(), "Could not load deserializer for class "+pClass.getSimpleName());
+		}
 	}
 
 	/** singleton */
