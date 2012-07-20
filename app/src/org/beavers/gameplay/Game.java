@@ -61,6 +61,35 @@ public final class Game extends UniqueID {
 		server = pServer;
 	}
 
+	/** delete all game directories */
+	public static void deleteAll(final Context pContext) {
+		final File basedir = new File(getBasePath(pContext));
+
+		if(!basedir.exists()) {
+			return;
+		}
+
+		for(final File serverdir : basedir.listFiles()) {
+			for(final File gamedir : serverdir.listFiles()) {
+				for(final File file : gamedir.listFiles()) {
+					file.delete();
+				}
+
+				gamedir.delete();
+			}
+
+			serverdir.delete();
+		}
+	}
+
+	public void deleteDecisions(final Context pContext, final int pTeam) {
+		if(!hasDecisions(pContext, pTeam)) {
+			return ;
+		}
+
+		new File(getDecisionsFile(pContext, pTeam)).delete();
+	}
+
 	@Override
 	public boolean equals(final Object other) {
 		if(other instanceof Game)
@@ -91,7 +120,7 @@ public final class Game extends UniqueID {
 
 	/** @return game directory */
 	public String getDirectory(final Context pContext) {
-		return pContext.getFilesDir().getAbsolutePath() + "/" + this;
+		return getBasePath(pContext) + this;
 	}
 
 	/** @return server of the game */
@@ -197,6 +226,10 @@ public final class Game extends UniqueID {
 	{
 		super(pParcel);
     	server = pParcel.readParcelable(Player.class.getClassLoader());
+	}
+
+	private static String getBasePath(final Context pContext) {
+		return pContext.getFilesDir().getAbsolutePath() + "/games/";
 	}
 
 	private String getDecisionsFile(final Context pContext, final int pTeam) {

@@ -67,9 +67,9 @@ public class DTNService extends Service {
 	 * @{
 	 */
 	public static final GroupEndpoint CLIENT_EID =
-		new GroupEndpoint("dtn://beavergame.dtn/client");
+		new GroupEndpoint("dtn://battlebeavers.dtn/client");
 	public static final GroupEndpoint SERVER_EID =
-		new GroupEndpoint("dtn://beavergame.dtn/server");
+		new GroupEndpoint("dtn://battlebeavers.dtn/server");
 	/**
 	 * @}
 	 */
@@ -504,7 +504,7 @@ public class DTNService extends Service {
 			final MappedByteBuffer buf = channel.map(
 				FileChannel.MapMode.READ_ONLY, 0, channel.size());
 
-			if(!session.send(SERVER_EID, getSettings().getDTNLifetime(),
+			if(!session.send(pEndpoint, getSettings().getDTNLifetime(),
 				             Charset.defaultCharset().decode(buf).toString()))
 			{
 				// could not send

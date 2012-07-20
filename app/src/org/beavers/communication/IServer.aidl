@@ -24,6 +24,11 @@ interface IServer {
 	void addPlayer(in Game pGame, in Player pPlayer);
 	
 	/**
+	 * remove all games from list
+	 */
+	 void deleteGames();
+	
+	/**
 	 * distribute outcome to clients
 	 */
 	void distributeOutcome(in Game pGame, in OutcomeContainer pOutcome);

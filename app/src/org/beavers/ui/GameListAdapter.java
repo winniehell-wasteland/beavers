@@ -7,6 +7,7 @@ import org.beavers.App;
 import org.beavers.R;
 import org.beavers.Settings;
 import org.beavers.gameplay.Game;
+import org.beavers.gameplay.GameState;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,7 @@ import android.widget.TextView;
 public abstract class GameListAdapter extends BaseAdapter {
 
 	public GameListAdapter() {
-		games = new ArrayList<Game>(Arrays.asList(fetchList()));
+		games = new ArrayList<Game>();
 	}
 
 	@Override
@@ -38,14 +39,13 @@ public abstract class GameListAdapter extends BaseAdapter {
 	@Override
 	public View getView(final int pPosition, View pConvertView,
 	                    final ViewGroup pParent) {
-
 		final App app = ((App) pParent.getContext().getApplicationContext());
 		final Settings settings = app.getSettings();
 
 		ViewHolder holder;
 		if (pConvertView == null) {
-			pConvertView = getLayoutInflater()
-				.inflate(R.layout.custom_row_view, null);
+			pConvertView = LayoutInflater.from(pParent.getContext())
+				.inflate(R.layout.game_list_row, null);
 
 			holder = new ViewHolder();
 			holder.txtName = findTextView(pConvertView, R.id.name);
@@ -64,13 +64,19 @@ public abstract class GameListAdapter extends BaseAdapter {
 		if(item.isServer(settings.getPlayer()))
 		{
 			holder.txtServer.setText("");
+
+			holder.txtState.setText(
+				app.getString(R.string.state) + ": "
+				+ (item.isInState(app, GameState.JOINED)?
+				  app.getString(R.string.state_waiting):
+				  app.getString(item.getState(app).getResId())));
 		} else {
 			holder.txtServer.setText(item.getServer().getName());
-		}
 
-		holder.txtState.setText(
-			app.getString(R.string.state) + ": "
-			+ app.getString(item.getState(app).getResId()));
+			holder.txtState.setText(
+				app.getString(R.string.state) + ": "
+				+ app.getString(item.getState(app).getResId()));
+		}
 
 		return pConvertView;
 	}
@@ -83,7 +89,6 @@ public abstract class GameListAdapter extends BaseAdapter {
 	}
 
 	protected abstract Game[] fetchList();
-	protected abstract LayoutInflater getLayoutInflater();
 
 	private ArrayList<Game> games;
 

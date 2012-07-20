@@ -12,8 +12,10 @@ public class App extends Application {
 
 	@Override
 	public void onCreate() {
-		Log.d(App.class.getSimpleName(), "App created...");
+		Log.d(App.class.getSimpleName(), "onCreate()");
+		super.onCreate();
 		settings = new Settings(this);
+		Log.d(App.class.getSimpleName(), "created...");
 	}
 
 	@Override

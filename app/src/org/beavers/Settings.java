@@ -62,7 +62,7 @@ public class Settings {
 	 * @name defaults
 	 * @{
 	 */
-	private static int DTN_LIFETIME_DEFAULT = 100;
+	private static int DTN_LIFETIME_DEFAULT = 300;
 	private static String MAP_NAME_DEFAULT = "test";
 	private static int MAX_PLAYERS_DEFAULT = 2;
 	private static String PLAYER_ID_DEFAULT = UUID.randomUUID().toString();

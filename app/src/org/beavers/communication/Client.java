@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -74,8 +73,6 @@ public class Client extends Service {
 		} catch (final ClientRemoteException e) {
 			e.log();
 		}
-
-		implementation.addDummyGames();
 
 		dtn = new DTNService.Connection();
 		final Intent intent = new Intent(Client.this, DTNService.class);
@@ -241,21 +238,11 @@ public class Client extends Service {
 			runningGames = Collections.synchronizedSet(new HashSet<Game>());
 		}
 
-		/** just for debugging */
+
 		@Override
-		public void addDummyGames() {
-			final Game game = new Game(new Player(UUID.randomUUID(), "playa"), UUID.randomUUID(), "foooooooo");
-
-			new File(game.getDirectory(Client.this)).mkdirs();
-
-			try {
-				final GameInfo info = new GameInfo("test", 0);
-				info.saveToFile(Client.this, game);
-			} catch (final IOException e) {
-				Log.e(TAG, "saving game info failed!", e);
-			}
-
-			announcedGames.add(game);
+		public void deleteGames() throws RemoteException {
+			announcedGames.clear();
+			runningGames.clear();
 		}
 
 		@Override
@@ -312,7 +299,7 @@ public class Client extends Service {
 				final FileReader reader = new FileReader(input);
 
 				json = (JsonObject) parser.parse(reader);
-			} catch (final FileNotFoundException e) {
+			} catch (final Exception e) {
 				throw new ClientRemoteException(
 					R.string.error_dtn_receiving, e
 				);

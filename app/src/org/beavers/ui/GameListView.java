@@ -4,11 +4,14 @@ import org.beavers.gameplay.Game;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 /**
  * list view for GameList
@@ -17,10 +20,9 @@ import android.widget.ListView;
  */
 @SuppressLint("ViewConstructor")
 public abstract class GameListView extends ListView
-	implements OnItemClickListener {
+	implements OnItemClickListener, OnMenuItemClickListener {
 
-	public GameListView(final Context pContext,
-	                    final GameListAdapter pAdapter) {
+	public GameListView(final Context pContext) {
 		super(pContext);
 
 		setPadding(20, 10, 10, 10);
@@ -28,8 +30,6 @@ public abstract class GameListView extends ListView
 				LinearLayout.LayoutParams.FILL_PARENT,
 				LinearLayout.LayoutParams.FILL_PARENT
 				));
-
-		setAdapter(pAdapter);
 
 		setChoiceMode(CHOICE_MODE_SINGLE);
 		setOnItemClickListener(this);
@@ -68,13 +68,46 @@ public abstract class GameListView extends ListView
 	}
 
 	@Override
+	protected void onCreateContextMenu(final ContextMenu pMenu) {
+		final Game game = getSelectedItem();
+
+		if(game == null)
+		{
+			pMenu.clear();
+			return;
+		}
+
+		onPrepareContextMenu(new MenuInflater(getContext()), pMenu, game);
+
+        for(int i = 0; i < pMenu.size(); ++i)
+        {
+        	pMenu.getItem(i).setOnMenuItemClickListener(this);
+        }
+	}
+
+	@Override
 	public void onItemClick(final AdapterView<?> pParent, final View pView,
 	                        final int pPosition, final long pID) {
-		Log.d(getClass().getSimpleName(), "selecting item "+pPosition);
-
 		setSelection(pPosition);
 		showContextMenu();
 	}
+
+	@Override
+	public void setAdapter(final ListAdapter pAdapter) {
+		if(pAdapter instanceof GameListAdapter) {
+			super.setAdapter(pAdapter);
+		}
+		else {
+			throw new IllegalArgumentException(
+				"Adapter has to be of type "
+				+ GameListAdapter.class.getName() + "!"
+			);
+		}
+	}
+
+	abstract protected void onPrepareContextMenu(
+		MenuInflater pInflater, ContextMenu pMenu, Game pGame
+	);
 
 	private int selectedItem = -1;
 }

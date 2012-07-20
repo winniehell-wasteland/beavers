@@ -12,15 +12,17 @@ import org.beavers.gameplay.Player;
  * @see {@link Client}
  */
 interface IClient {
-
-	void addDummyGames();
-
 	/**
 	 * quit game
 	 *
 	 * @param pGame game
 	 */
 	void abortGame(in Game pGame);
+	
+	/**
+	 * remove all games from list
+	 */
+	 void deleteGames();
 	
 	/**
 	 * @return announced games

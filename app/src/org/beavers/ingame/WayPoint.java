@@ -186,8 +186,8 @@ public class WayPoint extends Sprite implements IGameObject {
 		{
 			final float[] scenter = soldier.getCenter();
 
-			if((getTile().getCenterX() == scenter[0])
-			   && (getTile().getCenterY() == scenter[1])
+			if((getTile().getCenterX() == Math.round(scenter[0]))
+			   && (getTile().getCenterY() == Math.round(scenter[1]))
 			   && (getTextureRegion().getHeight() > 0)) {
 
 				getTextureRegion().setHeight(0);

@@ -64,6 +64,7 @@ import org.beavers.ingame.WayPoint;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
 import org.beavers.storage.Outcome;
+import org.beavers.storage.SoldierList;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -364,6 +365,8 @@ public class GameActivity extends BaseGameActivity
 
 		gameTimer.setAutoReset(true);
 		getEngine().registerUpdateHandler(gameTimer);
+
+		handleState();
 	}
 
 	@Override
@@ -674,21 +677,15 @@ public class GameActivity extends BaseGameActivity
 			finish();
 		}
 
-		holdDetector.setEnabled(
-			currentGame.isInState(this, GameState.PLANNING_PHASE)
-			&& !currentGame.hasDecisions(this, currentGameInfo.getTeam())
-		);
-
-		if(currentGame.isInState(this, GameState.PLANNING_PHASE)
-		   && currentGame.hasDecisions(this, currentGameInfo.getTeam())) {
-			Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
-		}
+		outcome_executor = Executors.newCachedThreadPool();
 	}
 
 	@Override
 	protected void onDestroy() {
 		unbindService(client);
 		unbindService(server);
+
+		outcome_executor.shutdownNow();
 
 		super.onDestroy();
 	}
@@ -796,17 +793,17 @@ public class GameActivity extends BaseGameActivity
 	private GameInfo currentGameInfo;
 	private AStarPathFinder<IMovableObject> pathFinder;
 
+	ExecutorService outcome_executor;
+
 	private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(final Context pContext, final Intent pIntent) {
 			final Game game =
 				pIntent.getParcelableExtra(Game.PARCEL_NAME);
 
-			if(game.isInState(GameActivity.this, GameState.EXECUTION_PHASE)) {
-				recordOutcome();
+			if(game.equals(currentGame)) {
+				handleState();
 			}
-
-			// TODO handle other states
 		}
 	};
 
@@ -979,14 +976,62 @@ public class GameActivity extends BaseGameActivity
 		}
 	}
 
-	private void recordOutcome() {
-		outcome = new Outcome(System.currentTimeMillis());
-		storage.setGameEventsListener(outcome);
-		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
-			// TODO load decisions
+	private void handleState() {
+		holdDetector.setEnabled(
+			currentGame.isInState(this, GameState.PLANNING_PHASE)
+			&& !currentGame.hasDecisions(this, currentGameInfo.getTeam())
+		);
+
+		if(currentGame.isInState(this, GameState.PLANNING_PHASE)
+		   && currentGame.hasDecisions(this, currentGameInfo.getTeam())) {
+			Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
 		}
 
-		final ExecutorService executor = Executors.newCachedThreadPool();
+		if(currentGame.isInState(GameActivity.this, GameState.EXECUTION_PHASE)) {
+			if(hasAllDecisions()) {
+				recordOutcome();
+			}
+		}
+
+		// TODO handle other states
+	}
+
+	private boolean hasAllDecisions() {
+		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+			if(!currentGame.hasDecisions(this, team)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private void recordOutcome() {
+		try {
+			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+				final SoldierList oldPositions =
+					(SoldierList) storage.getSoldiersByTeam(team).clone();
+				for(final Soldier soldier : oldPositions) {
+					soldier.detachSelf();
+					storage.removeSoldier(soldier);
+				}
+
+				final SoldierList decisions =
+					currentGame.getDecisions(this, team);
+				for(final Soldier soldier : decisions) {
+					mainScene.attachChild(soldier);
+					storage.addSoldier(soldier);
+				}
+
+				currentGame.deleteDecisions(this, team);
+			}
+		} catch(final Exception e) {
+			Log.e(TAG, "Could not load decisions!", e);
+			return;
+		}
+		
+		outcome = new Outcome(System.currentTimeMillis());
+		storage.setGameEventsListener(outcome);
 
 		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 			for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
@@ -995,7 +1040,7 @@ public class GameActivity extends BaseGameActivity
 					mainScene.attachChild(waypoint);
 				}
 
-				executor.execute(new Runnable() {
+				outcome_executor.execute(new Runnable() {
 
 					@Override
 					public void run() {
@@ -1006,6 +1051,13 @@ public class GameActivity extends BaseGameActivity
 					}
 				});
 			}
+		}
+
+		try {
+			currentGame.setState(this, GameState.PLANNING_PHASE);
+		} catch (final IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
