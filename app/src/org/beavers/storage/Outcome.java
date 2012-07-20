@@ -30,7 +30,7 @@ public class Outcome implements IGameEventsListener{
 		decisions.add(pDecisions);
 	}
 	
-	public void getDecisions(final int pTeam) {
+	public SoldierList getDecisions(final int pTeam) {
 		return decisions.get(pTeam);
 	}
 

@@ -61,6 +61,9 @@ import org.beavers.ingame.Soldier;
 import org.beavers.ingame.Tile;
 import org.beavers.ingame.WaitTimeDialog;
 import org.beavers.ingame.WayPoint;
+import org.beavers.storage.EventContainer;
+import org.beavers.storage.EventContainer.HPEvent;
+import org.beavers.storage.EventContainer.ShootEvent;
 import org.beavers.storage.GameStorage;
 import org.beavers.storage.GameStorage.UnexpectedTileContentException;
 import org.beavers.storage.Outcome;
@@ -222,6 +225,12 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
+	public void onDialogSelected(final WayPoint waypoint) {
+		new WaitTimeDialog(this, waypoint);
+		
+	}
+
+	@Override
 	public void onHold(final HoldDetector pHoldDetector, final long pHoldTimeMilliseconds,
 			final float pHoldX, final float pHoldY) {
 	}
@@ -351,21 +360,6 @@ public class GameActivity extends BaseGameActivity
 
 	@Override
 	public void onLoadComplete() {
-		final TimerHandler gameTimer =
-			new TimerHandler(0.2f, new ITimerCallback() {
-
-				@Override
-				public void onTimePassed(final TimerHandler pTimerHandler) {
-					checkTargets(0,1);
-					checkTargets(1,0);
-
-					updateHUD();
-				}
-		});
-
-		gameTimer.setAutoReset(true);
-		getEngine().registerUpdateHandler(gameTimer);
-
 		handleState();
 	}
 
@@ -574,6 +568,21 @@ public class GameActivity extends BaseGameActivity
 		}
 	}
 
+	public void onOutcomeFinished() {
+		try {
+			currentGame.saveOutcome(this, outcome);
+		} catch (final IOException e) {
+			Log.e(TAG, "Could not save outcome!", e);
+			return;
+		}
+		
+		try {
+			server.getService().distributeOutcome(currentGame);
+		} catch (final RemoteException e) {
+			Log.e(TAG, "Could not distribute outcome!", e);
+		}
+	}
+
 	@Override
 	public void onRemoveObject(final IGameObject pObject) {
 		if(pObject == null)
@@ -637,11 +646,6 @@ public class GameActivity extends BaseGameActivity
 	@Override
 	public void onTileVisitedByPathFinder(final int pTileColumn, final int pTileRow) {
 
-	}
-
-	public void playOutcome(final OutcomeContainer outcome)
-	{
-		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -987,10 +991,17 @@ public class GameActivity extends BaseGameActivity
 			Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
 		}
 
-		if(currentGame.isInState(GameActivity.this, GameState.EXECUTION_PHASE)) {
-			if(hasAllDecisions()) {
-				recordOutcome();
-			}
+		// execution phase on server
+		if(currentGame.isInState(GameActivity.this, GameState.EXECUTION_PHASE)
+		   && currentGame.isServer(getSettings().getPlayer()) && hasAllDecisions()) {
+			recordOutcome();
+		}
+		
+		// execution phase on client
+		if(currentGame.isInState(GameActivity.this, GameState.EXECUTION_PHASE)
+		   && !currentGame.isServer(getSettings().getPlayer())
+		   && currentGame.hasOutcome(this)) {
+			playOutcome();
 		}
 
 		// TODO handle other states
@@ -1004,6 +1015,68 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		return true;
+	}
+
+	private void playOutcome()
+	{
+		try {
+			outcome = currentGame.getOutcome(this);
+		} catch (final IOException e) {
+			Log.e(TAG, getString(R.string.error_game_load_outcome, currentGame), e);
+		}
+		
+		try {
+			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
+				final SoldierList oldPositions =
+					(SoldierList) storage.getSoldiersByTeam(team).clone();
+				for(final Soldier soldier : oldPositions) {
+					soldier.detachSelf();
+					storage.removeSoldier(soldier);
+				}
+
+				final SoldierList decisions =
+					outcome.getDecisions(team);
+				
+				for(final Soldier soldier : decisions) {
+					soldier.setSimulation(true);
+					mainScene.attachChild(soldier);
+					storage.addSoldier(soldier);
+				}
+			}
+		} catch(final Exception e) {
+			Log.e(TAG, getString(R.string.error_game_load_outcome, currentGame), e);
+			return;
+		}
+		
+		final TimerHandler outcomeTimer =
+			new TimerHandler(outcome.getEventList().get(0).getTimestamp(), new ITimerCallback() {
+
+				@Override
+				public void onTimePassed(final TimerHandler pTimerHandler) {
+					
+					final EventContainer event=outcome.getEventList().remove(0);
+					
+					if(event instanceof HPEvent){
+						final HPEvent hpEvent = (HPEvent)event;
+						storage.getSoldierById(hpEvent.getS()).changeHP(hpEvent.getHp());
+					}
+					else if(event instanceof ShootEvent){
+						final ShootEvent shootEvent = (ShootEvent)event;
+						storage.getSoldierById(shootEvent.getS()).fireShot(
+							storage.getSoldierById(shootEvent.getT()), GameActivity.this
+						);
+					}
+					
+					if(!outcome.getEventList().isEmpty()){
+						final long time = outcome.getEventList().get(0).getTimestamp() - event.getTimestamp();
+						pTimerHandler.setTimerSeconds(time/1000);
+						pTimerHandler.reset();
+					}
+				}
+				
+		});
+		
+		getEngine().registerUpdateHandler(outcomeTimer);
 	}
 
 	private void recordOutcome() {
@@ -1034,12 +1107,29 @@ public class GameActivity extends BaseGameActivity
 			return;
 		}
 
+		final TimerHandler checkTargetTimer =
+			new TimerHandler(0.2f, new ITimerCallback() {
+
+				@Override
+				public void onTimePassed(final TimerHandler pTimerHandler) {
+					checkTargets(0,1);
+					checkTargets(1,0);
+
+					updateHUD();
+				}
+		});
+
+		checkTargetTimer.setAutoReset(true);
+		getEngine().registerUpdateHandler(checkTargetTimer);
+
 		for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
 			for(final Soldier soldier : storage.getSoldiersByTeam(team)) {
+				/*
 				for(final WayPoint waypoint : soldier.getWaypoints())
 				{
 					mainScene.attachChild(waypoint);
 				}
+				*/
 
 				outcome_executor.execute(new Runnable() {
 
@@ -1073,12 +1163,4 @@ public class GameActivity extends BaseGameActivity
 			updateHUD();
 		}
 	}
-
-	@Override
-	public void onDialogSelected(final WayPoint waypoint) {
-		new WaitTimeDialog(this, waypoint);
-		
-	}
-
-
 }

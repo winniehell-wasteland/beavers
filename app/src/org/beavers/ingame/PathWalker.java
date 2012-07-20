@@ -52,10 +52,15 @@ public class PathWalker implements IModifierListener<IEntity> {
 		{
 			soldier.faceTarget(aim, null);
 		}
+		else {
+			onFinished();
+		}
 	}
 	
-	public void start()
+	public synchronized void start()
 	{
+		++runningInstances;
+		
 		waypoint = soldier.getFirstWaypoint();
 
 		nextWaypoint();
@@ -70,12 +75,29 @@ public class PathWalker implements IModifierListener<IEntity> {
 		}
 		else if(aim != null)
 		{
-			soldier.faceTarget(aim, null);
+			soldier.faceTarget(aim, new IModifierListener<IEntity>() {
+				
+				@Override
+				public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+					
+				}
+				
+				@Override
+				public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+					onFinished();
+				}
+			});
+		}
+		else {
+			onFinished();
 		}
 	}
 
 	private final GameActivity gameActivity;
 	private final Soldier soldier;
+	
+	private static int runningInstances = 0;
+	
 	private TimerHandler pauseTimer;
 	private WayPoint waypoint;
 
@@ -135,6 +157,14 @@ public class PathWalker implements IModifierListener<IEntity> {
 		else
 		{
 			targetTile = null;
+		}
+	}
+	
+	private void onFinished() {
+		--runningInstances;
+		
+		if(runningInstances <= 0) {
+			gameActivity.onOutcomeFinished();
 		}
 	}
 }

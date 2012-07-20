@@ -54,7 +54,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public float[] getCenter(){
 		return this.convertLocalToSceneCoordinates(getWidth()/2, getHeight()/2);
 	}
-
+	public boolean getSimulation(){
+		return simulation;
+	}
 	/**
 	 * adds a waypoint for this soldier
 	 * @param pWayPoint waypoint to add
@@ -475,6 +477,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			registerEntityModifier(lastRotate);
 		}
 	}
+	
+	public void setSimulation(final boolean simulation) {
+		this.simulation = simulation;
+	}
 	/**
 	 * @name speed constants
 	 * @{
@@ -488,7 +494,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 
 	private int id;
-	
+	private boolean simulation=false;
 	private final float maxAP=20;
 	private float ap=maxAP;
 	private int hp=100;

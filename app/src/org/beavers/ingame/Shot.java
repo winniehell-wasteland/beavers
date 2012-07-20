@@ -130,7 +130,9 @@ public class Shot implements IMovableObject {
 
 							if(!targetSoldier.isDead()){
 								if(findPath(activity.getPathFinder(),targetSoldier.getTile())!=null){
-									targetSoldier.changeHP(-damage);
+									if(!targetSoldier.getSimulation()){
+										targetSoldier.changeHP(-damage);
+									}
 									damage=0;
 
 									//target soldier defends himself

@@ -19,9 +19,9 @@ import org.beavers.communication.DTNService.Message;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
-import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.Outcome;
 import org.beavers.storage.SoldierList;
 
 import android.app.Service;
@@ -276,18 +276,15 @@ public class Server extends Service {
 		public void distributeOutcome(final Game pGame)
 		            throws ServerRemoteException
 		{
-			final Message message = new OutcomeMessage(pGame, pOutcome);
-
-			if(!pGame.hasOutcome(Server.this)) {
-				return;
+			Outcome outcome;
+			
+			try {
+				outcome = pGame.getOutcome(Server.this);
+			} catch (final IOException e) {
+				throw new ServerRemoteException(R.string.error_game_load_outcome, e, pGame);
 			}
 			
-			for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
-				if(!pGame.hasDecisions(Server.this, team)) {
-					// wait for the rest
-					return;
-				}
-			}
+			final Message message = new OutcomeMessage(pGame, outcome);
 			
 			try {
 				dtn.getService().sendToClients(message.saveToFile(Server.this));

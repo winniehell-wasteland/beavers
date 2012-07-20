@@ -94,6 +94,18 @@ public class GameStorage {
 		pWaypoint.setMenuDialogListener(menuListener);
 	}
 
+	public Soldier getSoldierById(final int pSoldierId) {
+		for(final SoldierList team : teams) {
+			for(final Soldier soldier : team) {
+				if(soldier.getId() == pSoldierId) {
+					return soldier;
+				}
+			}
+		}
+		
+		return null;
+	}
+	
 	public Soldier getSoldierByTile(final Tile pTile)
 		           throws UnexpectedTileContentException{
 

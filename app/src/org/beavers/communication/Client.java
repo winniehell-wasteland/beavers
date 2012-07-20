@@ -21,9 +21,9 @@ import org.beavers.communication.DTNService.Message;
 import org.beavers.gameplay.Game;
 import org.beavers.gameplay.GameInfo;
 import org.beavers.gameplay.GameState;
-import org.beavers.gameplay.OutcomeContainer;
 import org.beavers.gameplay.Player;
 import org.beavers.storage.CustomGSON;
+import org.beavers.storage.Outcome;
 import org.beavers.storage.SoldierList;
 
 import android.app.Service;
@@ -35,6 +35,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
@@ -354,16 +355,16 @@ public class Client extends Service {
 			{
 				if(runningGames.contains(game))
 				{
-					if(!json.has(OutcomeContainer.JSON_TAG)) {
+					if(!json.has(Outcome.JSON_TAG)) {
 						throw new ClientRemoteException(
 							R.string.error_json_missing_element,
-							OutcomeContainer.JSON_TAG
+							Outcome.JSON_TAG
 						);
 					}
 
-					final OutcomeContainer outcome =
-						gson.fromJson(json.get(OutcomeContainer.JSON_TAG),
-						              OutcomeContainer.class);
+					final JsonElement outcome =
+						json.get(Outcome.JSON_TAG);
+					
 					onReceiveOutcome(game, outcome);
 				}
 
@@ -377,7 +378,7 @@ public class Client extends Service {
 					if(!json.has(Player.JSON_TAG_COLLECTION)) {
 						throw new ClientRemoteException(
 							R.string.error_json_missing_element,
-							OutcomeContainer.JSON_TAG
+							Player.JSON_TAG_COLLECTION
 						);
 					}
 
@@ -656,10 +657,37 @@ public class Client extends Service {
 		 *
 		 * @param pGame game
 		 * @param pOutcome
+		 * @throws ClientRemoteException
 		 */
 		private void onReceiveOutcome(final Game pGame,
-		                              final OutcomeContainer pOutcome) {
-			// TODO handle outcome
+		                              final JsonElement pOutcome)
+		             throws ClientRemoteException {
+
+			if(!pGame.isInState(Client.this, GameState.PLANNING_PHASE))
+			{
+				throw new ClientRemoteException(
+					R.string.error_game_wrong_state,
+					pGame, pGame.getState(Client.this)
+				);
+			}
+
+			try {
+				pGame.writeOutcome(Client.this, pOutcome);
+			} catch (final IOException e) {
+				throw new ClientRemoteException(
+					R.string.error_game_write_outcome, e, pGame
+				);
+			}
+
+			try {
+				pGame.setState(Client.this, GameState.EXECUTION_PHASE);
+			} catch (final IOException e) {
+				throw new ClientRemoteException(
+					R.string.error_game_save_state, e, pGame
+				);
+			}
+			
+			broadcastGameInfo(pGame);
 		}
 
 		/**
