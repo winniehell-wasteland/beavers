@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.beavers"
+    package="de.winniehell.battlebeavers"
     android:versionCode="1"
     android:versionName="1.0" android:installLocation="preferExternal">
 
@@ -34,7 +34,7 @@
 		<receiver android:enabled="true" android:name=".communication.DTNService$Receiver">
 		    <intent-filter>
 		       	<action android:name="de.tubs.ibr.dtn.intent.RECEIVE"/>
-		       	<category android:name="org.beavers"/>
+		       	<category android:name="de.winniehell.battlebeavers"/>
 		    </intent-filter>
 		</receiver>
         
