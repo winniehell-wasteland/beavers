@@ -64,6 +64,28 @@ import org.anddev.andengine.util.Debug;
 import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.astar.AStarPathFinder;
+
+import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Display;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.Surface;
+import android.view.View;
+import android.widget.Toast;
 import de.winniehell.battlebeavers.App;
 import de.winniehell.battlebeavers.R;
 import de.winniehell.battlebeavers.Settings;
@@ -87,28 +109,6 @@ import de.winniehell.battlebeavers.storage.GameStorage;
 import de.winniehell.battlebeavers.storage.GameStorage.UnexpectedTileContentException;
 import de.winniehell.battlebeavers.storage.Outcome;
 import de.winniehell.battlebeavers.storage.SoldierList;
-
-import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ActivityInfo;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.os.Bundle;
-import android.os.RemoteException;
-import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Display;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MenuItem.OnMenuItemClickListener;
-import android.view.Surface;
-import android.view.View;
-import android.widget.Toast;
 
 /**
  * Activity for game display
@@ -510,9 +510,10 @@ public class GameActivity extends BaseGameActivity
 		case R.id.menu_execute:
 		{
 			try {
+				final int team = getInfo().getTeam();
+
 				currentGame.saveDecisions(
-					this, currentGameInfo.getTeam(),
-					storage.getSoldiersByTeam(currentGameInfo.getTeam())
+					this, team, storage.getSoldiersByTeam(team)
 				);
 			} catch (final IOException e) {
 				Log.e(TAG,
@@ -546,7 +547,7 @@ public class GameActivity extends BaseGameActivity
 		}
 		case R.id.menu_execute_second:
 		{
-			final int team = 1 - currentGameInfo.getTeam();
+			final int team = 1 - getInfo().getTeam();
 
 			try {
 				currentGame.saveDecisions(
@@ -593,20 +594,25 @@ public class GameActivity extends BaseGameActivity
 			return;
 		}
 
-		if(currentGame.isServer(getSettings().getPlayer()));
-		outcome.printEvents();
+		if(currentGame.isServer(getSettings().getPlayer())) {
+			outcome.printEvents();
 
-		try {
-			currentGame.saveOutcome(this, outcome);
-		} catch (final IOException e) {
-			Log.e(TAG, "Could not save outcome!", e);
-			return;
+			try {
+				currentGame.saveOutcome(this, outcome);
+			} catch (final IOException e) {
+				Log.e(TAG, "Could not save outcome!", e);
+				return;
+			}
+
+			try {
+				server.getService().distributeOutcome(currentGame);
+			} catch (final RemoteException e) {
+				Log.e(TAG, "Could not distribute outcome!", e);
+			}
 		}
-
-		try {
-			server.getService().distributeOutcome(currentGame);
-		} catch (final RemoteException e) {
-			Log.e(TAG, "Could not distribute outcome!", e);
+		else {
+			currentGame.deleteOutcome(this);
+			handleState();
 		}
 	}
 
@@ -695,12 +701,6 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		currentGame = getIntent().getParcelableExtra(Game.PARCEL_NAME);
-
-		try {
-			currentGameInfo = GameInfo.fromFile(this, currentGame);
-		} catch (final FileNotFoundException e) {
-			finish();
-		}
 
 		// don't show game if we have nothing to show
 		if(currentGame == null)
@@ -821,7 +821,6 @@ public class GameActivity extends BaseGameActivity
 	private Line parallelA,parallelB,lineA,lineB;
 
 	private Game currentGame;
-	private GameInfo currentGameInfo;
 	private AStarPathFinder<IMovableObject> pathFinder;
 
 	ExecutorService outcome_executor;
@@ -861,8 +860,10 @@ public class GameActivity extends BaseGameActivity
 				}
 			});
 
-			TMXLoader.setAssetBasePath("maps/" + currentGameInfo.getMapName() + "/");
-			TSXLoader.setAssetBasePath("maps/" + currentGameInfo.getMapName() + "/");
+			final String mapPath = "maps/" +getInfo().getMapName() + "/";
+
+			TMXLoader.setAssetBasePath(mapPath);
+			TSXLoader.setAssetBasePath(mapPath);
 
 			map = tmxLoader.loadFromAsset(this, "map.tmx");
 
@@ -1008,30 +1009,44 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	private void handleState() {
-		holdDetector.setEnabled(
-			currentGame.isInState(this, GameState.PLANNING_PHASE)
-			&& !currentGame.hasDecisions(this, currentGameInfo.getTeam())
-		);
-
-		if(currentGame.isInState(this, GameState.PLANNING_PHASE)
-		   && currentGame.hasDecisions(this, currentGameInfo.getTeam())) {
-			Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
+		// planning phase
+		if(currentGame.isInState(this, GameState.PLANNING_PHASE)) {
+			if(currentGame.hasDecisions(this, getInfo().getTeam())) {
+				Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
+			}
+			// still in execution phase
+			else if(currentGame.hasOutcome(this)) {
+				playOutcome();
+			}
+			else {
+				holdDetector.setEnabled(true);
+			}
 		}
-
-		// execution phase on server
-		if(currentGame.isInState(GameActivity.this, GameState.EXECUTION_PHASE)
-		   && currentGame.isServer(getSettings().getPlayer()) && hasAllDecisions()) {
-			recordOutcome();
+		else if(currentGame.isInState(this, GameState.EXECUTION_PHASE)) {
+			// execution phase on server
+			if(currentGame.isServer(getSettings().getPlayer())) {
+				if(hasAllDecisions()) {
+					recordOutcome();
+				}
+			}
+			// execution phase on client
+			else if(currentGame.hasOutcome(this)) {
+				playOutcome();
+			}
 		}
-
-		// execution phase on client
-		if(currentGame.isInState(GameActivity.this, GameState.EXECUTION_PHASE)
-		   && !currentGame.isServer(getSettings().getPlayer())
-		   && currentGame.hasOutcome(this)) {
-			playOutcome();
+		else {
+			Log.e(TAG, getString(R.string.error_game_wrong_state, currentGame));
 		}
+	}
 
-		// TODO handle other states
+	private GameInfo getInfo() {
+		try {
+			return GameInfo.fromFile(this, currentGame);
+		} catch (final FileNotFoundException e) {
+			Log.e(TAG, "Could not load game info!", e);
+			finish();
+			return null;
+		}
 	}
 
 	private boolean hasAllDecisions() {

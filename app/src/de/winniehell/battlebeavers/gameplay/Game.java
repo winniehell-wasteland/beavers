@@ -25,10 +25,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.UUID;
 
-import de.winniehell.battlebeavers.storage.CustomGSON;
-import de.winniehell.battlebeavers.storage.Outcome;
-import de.winniehell.battlebeavers.storage.SoldierList;
-
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -36,6 +32,10 @@ import android.os.Parcelable;
 import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
+import de.winniehell.battlebeavers.storage.CustomGSON;
+import de.winniehell.battlebeavers.storage.Outcome;
+import de.winniehell.battlebeavers.storage.SoldierList;
 
 /**
  * class to uniquely identify a game
@@ -111,6 +111,15 @@ public final class Game extends UniqueID {
 		new File(getDecisionsFile(pContext, pTeam)).delete();
 	}
 
+	/** delete outcome file */
+	public void deleteOutcome(final Context pContext) {
+		if(!hasOutcome(pContext)) {
+			return ;
+		}
+
+		new File(getOutcomeFile(pContext)).delete();
+	}
+
 	@Override
 	public boolean equals(final Object other) {
 		if(other instanceof Game)
@@ -139,7 +148,7 @@ public final class Game extends UniqueID {
 			reader.close();
 		}
 	}
-	
+
 	/** load outcome from file */
 	public Outcome getOutcome(final Context pContext) throws IOException {
 		if(!hasOutcome(pContext)) {
@@ -219,7 +228,7 @@ public final class Game extends UniqueID {
 	/** save outcome to file */
 	public void saveOutcome(final Context pContext, final Outcome pOutcome)
 	            throws IOException {
-		writeOutcome(pContext, 
+		writeOutcome(pContext,
 		             CustomGSON.getInstance().toJsonTree(pOutcome));
 	}
 
