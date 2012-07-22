@@ -212,6 +212,8 @@ public class GameListActivity extends FragmentActivity {
 					} catch (final RemoteException e) {
 						((ClientRemoteException)e).log();
 					}
+					
+					tabHost.setCurrentTabByTag(TAB_RUNNING);
 
 					return true;
 				}

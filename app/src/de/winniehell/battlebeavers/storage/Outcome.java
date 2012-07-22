@@ -24,8 +24,8 @@ import java.util.Iterator;
 
 import de.winniehell.battlebeavers.ingame.IGameEventsListener;
 import de.winniehell.battlebeavers.ingame.Soldier;
-import de.winniehell.battlebeavers.storage.EventContainer.HPEvent;
-import de.winniehell.battlebeavers.storage.EventContainer.ShootEvent;
+import de.winniehell.battlebeavers.storage.Event.HPEvent;
+import de.winniehell.battlebeavers.storage.Event.ShootEvent;
 
 import android.util.Log;
 
@@ -36,13 +36,13 @@ public class Outcome implements IGameEventsListener{
 
 	private final transient long startTime;
 	private final ArrayList<SoldierList> decisions;
-	private final ArrayList<EventContainer> eventList;
+	private final ArrayList<Event> eventList;
 	
 	
 	public Outcome(final long startT){
 		startTime = startT;
 		decisions = new ArrayList<SoldierList>();
-		eventList= new ArrayList<EventContainer>();
+		eventList= new ArrayList<Event>();
 	}
 	
 	public void addDecisions(final SoldierList pDecisions) {
@@ -66,7 +66,7 @@ public class Outcome implements IGameEventsListener{
 	}
 	
 	
-	public ArrayList<EventContainer> getEventList() {
+	public ArrayList<Event> getEventList() {
 		return eventList;
 	}
 	
@@ -74,15 +74,15 @@ public class Outcome implements IGameEventsListener{
 	public void printEvents(){
 		final Iterator i =eventList.iterator();
 		while(i.hasNext()){
-			final EventContainer e=(EventContainer)i.next();
-			Log.e("EventContainer", e.toString());
+			final Event e=(Event)i.next();
+			Log.e("Event", e.toString());
 		}
 
-		Log.d("EventContainer", "size: "+eventList.size());
+		Log.d("Event", "size: "+eventList.size());
 		final String json = CustomGSON.getInstance().toJson(eventList);
-		Log.d("EventContainer", json);
-		final ArrayList<EventContainer> test = CustomGSON.getInstance().fromJson(json, eventList.getClass());
-		Log.d("EventContainer", "size: "+test.size());
+		Log.d("Event", json);
+		final ArrayList<Event> test = CustomGSON.getInstance().fromJson(json, eventList.getClass());
+		Log.d("Event", "size: "+test.size());
 	}
 	
 

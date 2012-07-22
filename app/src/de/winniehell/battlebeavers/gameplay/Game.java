@@ -182,7 +182,9 @@ public final class Game extends UniqueID {
 		try {
 			final GameInfo info = GameInfo.fromFile(pContext, this);
 			return info.getState();
-		} catch (final FileNotFoundException e) {
+		} catch(final NullPointerException e) {
+			return GameState.UNKNOWN;
+		} catch(final FileNotFoundException e) {
 			return GameState.UNKNOWN;
 		}
 	}

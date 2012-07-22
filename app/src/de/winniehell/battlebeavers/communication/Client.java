@@ -263,6 +263,8 @@ public class Client extends Service {
 		public void deleteGames() throws RemoteException {
 			announcedGames.clear();
 			runningGames.clear();
+			
+			broadcastGameInfo(null);
 		}
 
 		@Override
@@ -543,9 +545,10 @@ public class Client extends Service {
 			SoldierList decisions;
 
 			try {
-				GameInfo info;
-				info = GameInfo.fromFile(Client.this, pGame);
+				final GameInfo info = GameInfo.fromFile(Client.this, pGame);
+				
 				decisions = pGame.getDecisions(Client.this, info.getTeam());
+				pGame.deleteDecisions(Client.this, info.getTeam());
 			} catch (final IOException e) {
 				throw new ClientRemoteException(
 					R.string.error_game_load_decisions, e,
@@ -681,7 +684,13 @@ public class Client extends Service {
 		private void onReceiveOutcome(final Game pGame,
 		                              final JsonElement pOutcome)
 		             throws ClientRemoteException {
-
+			Log.d(TAG, "Receive outcome...");
+			
+			if(pGame.isServer(getSettings().getPlayer())) {
+				Log.d(TAG, "I am the server - ignore it!");
+				return;
+			}
+			
 			if(!pGame.isInState(Client.this, GameState.PLANNING_PHASE))
 			{
 				throw new ClientRemoteException(
@@ -692,6 +701,7 @@ public class Client extends Service {
 
 			try {
 				pGame.writeOutcome(Client.this, pOutcome);
+				Log.d(TAG, "Writing "+CustomGSON.getInstance().toJson(pOutcome));
 			} catch (final IOException e) {
 				throw new ClientRemoteException(
 					R.string.error_game_write_outcome, e, pGame

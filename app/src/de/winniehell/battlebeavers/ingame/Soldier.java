@@ -21,6 +21,8 @@ package de.winniehell.battlebeavers.ingame;
 
 import java.util.ArrayDeque;
 
+import org.anddev.andengine.engine.handler.timer.ITimerCallback;
+import org.anddev.andengine.engine.handler.timer.TimerHandler;
 import org.anddev.andengine.entity.IEntity;
 import org.anddev.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.anddev.andengine.entity.modifier.MoveModifier;
@@ -52,6 +54,11 @@ import android.util.Log;
 public class Soldier extends AnimatedSprite implements IGameObject, IMovableObject {
 
 	/**
+	 * JSON tag
+	 */
+	public static final String JSON_TAG = "soldier";
+	
+	/**
 	 * default constructor
 	 * @param pTeam team this soldier is in
 	 * @param pInitialPosition initial position
@@ -60,8 +67,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		this(pTeam, pInitialPosition, getTexture(pTeam));
 	}
 
-	public Shot getShot(){
-		return shot;
+	public Attack getAttack(){
+		return attack;
 	}
 
 	public Line getLineA(){
@@ -109,7 +116,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public int changeHP(final int pOffset){
 		hp += pOffset;
 		try{
-			if(gameListener!=null)gameListener.onHPEvent(System.currentTimeMillis(), this, pOffset);
+			if((gameListener != null) && !simulation) {
+				gameListener.onHPEvent(System.currentTimeMillis(), this, pOffset);
+			}
+			
 			}catch(final Exception e){
 				Log.e(null, "no gameListener");
 			}
@@ -119,30 +129,28 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			hp=0;
 			die();
 		}
+		
+		Log.d(getClass().getName(), "hp: "+hp);
 
 		return hp;
-
 	}
 
-	public void ignoreShots(final boolean ignore){
-		ignoreShots=ignore;
+	private void setIgnoreShots(final boolean pIgnore){
+		ignoreShots = pIgnore;
 	}
 
-	public boolean getIgnore(){
+	public boolean isIgnoringShots(){
 		return ignoreShots;
 	}
 
-	public void die(){
+	private void die(){
 		Log.e(Soldier.class.getName(), "die!!!");
 
 		if(hasParent()){
-			removeListener.onRemoveObject(this);
+			positionListener.onObjectRemoved(this);
 			detachSelf();
 
-			if(isShooting()){
-				setShooting(false);
-				shot.stopShooting();
-			}
+			stopAttacking();
 
 			for(final WayPoint waypoint : waypoints)
 			{
@@ -151,13 +159,18 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			waypoints.clear();
 		}
+		
+		// let Pathwalker know, that we are dead
+		if(walker != null) {
+			walker.finish();
+		}
 	}
 	/**
 	 * turn soldier to face target tile
 	 * @param pTarget target tile
 	 * @param pListener listener for rotation
 	 */
-	public void faceTarget(final Tile pTarget, final IModifierListener<IEntity> pListener){
+	private void faceTarget(final Tile pTarget, final IModifierListener<IEntity> pListener){
 		final float angle = calcViewAngle((getX()+getWidth()/2), (getY()+getHeight()/2), pTarget);
 
 		if(angle == 0)
@@ -195,26 +208,33 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	}
 
 	/**
-	 * fire shot to target tile
-	 * @param pShot shot object
+	 * attack target soldier
 	 * @param pTarget target soldier
 	 */
-	public void fireShot(final Soldier target, final GameActivity pActivity){
-		if(target.getHP()<=0)return;
-		final Tile pTarget=target.getTile();
-		final Shot tmpshot = new Shot(this, pActivity);
-		if(tmpshot.findPath(pActivity.getPathFinder(), pTarget)==null)return;
-		if(shot!=null){
-			shot.stopShooting();
+	public synchronized void attack(final Soldier pTarget, final GameActivity pActivity){
+		// don't shoot zombies and don't let them shoot back
+		if(isDead() || pTarget.isDead()) {
+			return;
 		}
-		shot = tmpshot;
-		stop();
-		try{
-			gameListener.onShootEvent(System.currentTimeMillis(), this, target);
-			}catch(final Exception e){
-				Log.e(null, "no gameListener");
-			}
-		faceTarget(pTarget, new IModifierListener<IEntity>() {
+		
+		// can't you see, I'm busy
+		if(isAttacking() || isIgnoringShots()) {
+			return;
+		}
+		
+		final Attack tmp = Attack.create(pActivity, this, pTarget);
+		if(tmp == null) {
+			return;
+		}
+		
+		attack = tmp;
+		pause();
+
+		if((gameListener != null) && !simulation) {
+			gameListener.onShootEvent(System.currentTimeMillis(), this, pTarget);
+		}
+		
+		faceTarget(pTarget.getTile(), new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
 
@@ -222,9 +242,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			@Override
 			public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
-				
-				shot.fire(target);
-				shooting=true;
+				if(isAttacking()) {
+					attack.fire();
+				}
 			}
 		});
 	}
@@ -325,16 +345,20 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		return (getHP() <= 0);
 	}
 
-	public boolean isShooting(){
-		return shooting;
+	public boolean isAttacking(){
+		return (attack != null);
 	}
 	
 	public void setId(final int id) {
 		this.id = id;
 	}
 
-	public void setShooting(final boolean shoot){
-		shooting=shoot;
+	public void setAim(Aim pAim) {
+		this.aim = (pAim != null)?pAim.getTile():null; 
+	}
+	
+	public void stopAttacking() {
+		attack = null;
 	}
 
 	/**
@@ -371,7 +395,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @param pTarget target tile
 	 * @param pListener listener for movement
 	 */
-	public void move(final Tile pTarget, final Tile pAim, final IModifierListener<IEntity> pListener) {
+	private void move(final Tile pTarget) {		
 		final float distx =
 			Math.abs(pTarget.getCenterX() - (getX()+getWidth()/2));
 		final float disty =
@@ -384,9 +408,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				getX(), pTarget.getCenterX() - getWidth()/2,
 				getY(), pTarget.getCenterY() - getHeight()/2);
 
-		movement.addModifierListener(pListener);
-
-		faceTarget(pAim != null?pAim:pTarget, new IModifierListener<IEntity>() {
+		movement.addModifierListener(walker);
+		
+		faceTarget((aim != null)?aim:pTarget, new IModifierListener<IEntity>() {
 			@Override
 			public void onModifierStarted(final IModifier<IEntity> pModifier,
 					final IEntity pItem) {
@@ -399,13 +423,12 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				Soldier.this.registerEntityModifier(movement);
 				Soldier.this.animate(new long[]{200, 200}, 1, 2, true);
 
-				if(pAim != null)
+				if(aim != null)
 				{
 					final float angle =
-						calcViewAngle(pTarget.getCenterX(), pTarget.getCenterY(), pAim);
+						calcViewAngle(pTarget.getCenterX(), pTarget.getCenterY(), aim);
 					final RotationByModifier rotation = new RotationByModifier(movement.getDuration(), angle);
 					Soldier.this.registerEntityModifier(rotation);
-
 				}
 			}
 		});
@@ -415,34 +438,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	public void onAttached() {
 		super.onAttached();
 		getParent().sortChildren();
-	}
-
-	/**
-	 * remove first waypoint
-	 * (does not remove it from {@link GameActivity})
-	 * @return new first waypoint
-	 */
-	public WayPoint popWayPoint() {
-		if(!getFirstWaypoint().equals(getLastWaypoint()))
-		{
-			waypoints.removeFirst();
-
-			return getFirstWaypoint();
-		}
-		else
-		{
-			return null;
-		}
-	}
-
-	@Override
-	public void setRemoveObjectListener(final IRemoveObjectListener pListener) {
-		removeListener = pListener;
-	}
-	
-	public void setGameEventsListener(final IGameEventsListener eListener){
-		gameListener = eListener;
-		//Log.e(null, ""+eListener.toString());
 	}
 
 	/**
@@ -456,28 +451,34 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			waypoints.removeLast();
 		}
 	}
+	
+	public void setGameEventsListener(final IGameEventsListener eListener){
+		gameListener = eListener;
+		//Log.e(null, ""+eListener.toString());
+	}
+
+	@Override
+	public void setPositionListener(final IObjectPositionListener pListener) {
+		positionListener = pListener;
+	}
 
 	/**
-	 * stop moving or turning
+	 * pause movement or rotation
 	 */
-	private MoveModifier lastMove;
-	private RotationByModifier lastRotate;
-
-	public void stop()
+	private void pause()
 	{
 		stopAnimation(0);
-		//BUG
 		unregisterEntityModifiers(new IEntityModifierMatcher() {
 
 			@Override
 			public boolean matches(final IModifier<IEntity> pObject) {
 				if(pObject.isFinished())return false;
 				if(pObject instanceof MoveModifier){
-					lastMove=(MoveModifier)pObject;
+					lastMovement=(MoveModifier)pObject;
 					return true;
 				}
 				if(pObject instanceof RotationByModifier){
-					lastRotate=(RotationByModifier)pObject;
+					lastRotation=(RotationByModifier)pObject;
 					return true;
 				}
 
@@ -489,17 +490,23 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	}
 
 	public void resume(){
-		if(lastMove!=null){
-			registerEntityModifier(lastMove);
+		if(lastMovement!=null){
+			registerEntityModifier(lastMovement);
 		}
-		if(lastRotate!=null){
-			registerEntityModifier(lastRotate);
+		if(lastRotation!=null){
+			registerEntityModifier(lastRotation);
 		}
 	}
 	
 	public void setSimulation(final boolean simulation) {
 		this.simulation = simulation;
 	}
+	
+	public void startWalking(GameActivity pGameActivity) {
+		walker = new PathWalker(pGameActivity);
+		walker.start();
+	}
+	
 	/**
 	 * @name speed constants
 	 * @{
@@ -517,7 +524,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private final float maxAP=20;
 	private float ap=maxAP;
 	private int hp=100;
-	private boolean shooting=false;
 	private boolean ignoreShots=false;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
@@ -528,50 +534,74 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	/** waypoints of the soldier */
 	private final ArrayDeque<WayPoint> waypoints;
 
-	private Shot shot;
+	private Tile aim;
+	private Attack attack;
 	private final Line lineA,lineB;
 
-	private IRemoveObjectListener removeListener;
+	/**
+	 * @name stored modifiers
+	 * @{
+	 */
+	private MoveModifier lastMovement;
+	private RotationByModifier lastRotation;
+	/**
+	 * @}
+	 */
+	
+	/**
+	 * @name listeners
+	 * @{
+	 */
+	private IObjectPositionListener positionListener;
 	private IGameEventsListener gameListener;
+	/**
+	 * @}
+	 */
 
-		/**
-		 * automatically center soldier on tile using the texture region
-		 * @see Soldier#Soldier(int, Tile)
-		 * @param pTiledTextureRegion
-		 */
-		private Soldier(final int pTeam, final Tile pTile,
-		                final TiledTextureRegion pTiledTextureRegion) {
-			super(pTile.getCenterX() - pTiledTextureRegion.getTileWidth()/2,
-			      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
-			      pTiledTextureRegion);
-
-			team=pTeam;
-			//Selection Circle
-			final TextureRegion selectionTexture =
-				Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
-			selectionMark = new Sprite(
-				getWidth()/2 - selectionTexture.getWidth()/2-1,
-				getHeight()/2 - selectionTexture.getHeight()/2-1,
-				selectionTexture);
-
-			waypoints = new ArrayDeque<WayPoint>();
-			waypoints.add(new WayPoint(this, null, pTile));
-
-			stopAnimation(0);
-			setRotationCenter(getWidth()/2, getHeight()/2);
-
-			setZIndex(GameActivity.ZINDEX_SOLDIERS);
-
-			lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
-			lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
-			//this.attachChild(lineA);
-			//this.attachChild(lineB);
-
-
-			//cone.setVisible(false);
-		}
+	private PathWalker walker;
+	
+	/**
+	 * automatically center soldier on tile using the texture region
+	 * @see Soldier#Soldier(int, Tile)
+	 * @param pTiledTextureRegion
+	 */
+	private Soldier(final int pTeam, final Tile pTile,
+	                final TiledTextureRegion pTiledTextureRegion) {
+		super(pTile.getCenterX() - pTiledTextureRegion.getTileWidth()/2,
+		      pTile.getCenterY() - pTiledTextureRegion.getTileHeight()/2,
+		      pTiledTextureRegion);
+	
+		team=pTeam;
+		//Selection Circle
+		final TextureRegion selectionTexture =
+			Textures.SOLDIER_SELECTION_CIRCLE.deepCopy();
+		selectionMark = new Sprite(
+			getWidth()/2 - selectionTexture.getWidth()/2-1,
+			getHeight()/2 - selectionTexture.getHeight()/2-1,
+			selectionTexture);
+	
+		waypoints = new ArrayDeque<WayPoint>();
+		waypoints.add(new WayPoint(this, null, pTile));
+	
+		stopAnimation(0);
+		setRotationCenter(getWidth()/2, getHeight()/2);
+	
+		setZIndex(GameActivity.ZINDEX_SOLDIERS);
+	
+		lineA= new Line(getWidth()/2,getHeight()/2, -160,-400 );
+		lineB= new Line(getWidth()/2,getHeight()/2,160,-400);
+		//this.attachChild(lineA);
+		//this.attachChild(lineB);
+	
+	
+		//cone.setVisible(false);
+	}
 
 	private float calcViewAngle(final float pCurrentX, final float pCurrentY, final Tile pTarget) {
+		if(pTarget == null) {
+			return 0;
+		}
+		
 		final float angleX = pTarget.getCenterX() - pCurrentX;
 		final float angleY = pTarget.getCenterY() - pCurrentY;
 		float angle = (float) Math.toDegrees(Math.atan2(angleY,angleX))+90;
@@ -593,6 +623,135 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		case 1:
 			return Textures.SOLDIER_TEAM1.deepCopy();
 		default: return null;
+		}
+	}
+	
+
+	/**
+	 * let a soldier walk its waypoints
+	 * @author <a href="https://github.com/winniehell/">winniehell</a>
+	 */
+	private class PathWalker implements IModifierListener<IEntity>, ITimerCallback {
+	
+		public PathWalker(final GameActivity pGameActivity) {
+			gameActivity = pGameActivity;
+			finished = false;
+			
+			targetTile = null;
+			stepIndex = 0;
+		}
+	
+		public synchronized void finish() {
+			if(!finished) {
+				Log.d(PathWalker.class.getName(), "finished() "+id);
+				gameActivity.onSoldierStopped();
+					
+				finished = true;
+			}
+		}
+
+		@Override
+		public void onModifierStarted(final IModifier<IEntity> pModifier, final IEntity pItem) {
+	
+		}
+	
+		@Override
+		public void onModifierFinished(final IModifier<IEntity> pModifier, final IEntity pItem) {
+			if(pModifier instanceof MoveModifier)
+			{
+				stopAnimation(0);
+				nextTile();
+			}
+			
+			soldierContinue();
+		}
+
+		@Override
+		public void onTimePassed(TimerHandler pTimerHandler) {
+			pauseTimer = null;
+			soldierContinue();
+		}
+		
+		public void soldierContinue()
+		{
+			if(pauseTimer != null) {
+				registerUpdateHandler(pauseTimer);
+			}
+			else if(targetTile != null)
+			{
+				move(targetTile);
+			}
+			else if(aim != null)
+			{
+				faceTarget(aim, this);
+			}
+			else {
+				finish();
+			}
+		}
+		
+		public synchronized void start()
+		{
+			Log.d(PathWalker.class.getName(), "start() "+id);
+
+			processWaypoint();
+			
+			if(nextWaypoint()) {
+				nextTile();
+			}
+			
+			soldierContinue();			
+		}
+
+		private final GameActivity gameActivity;
+		private boolean finished;
+		
+		private TimerHandler pauseTimer;
+	
+		private int stepIndex;
+		private Tile targetTile;
+		
+		private void nextTile() {
+			Log.d(PathWalker.class.getName(), "nextTile() "+waypoints.size()+" "+stepIndex);
+			
+			// finished walking the path
+			if(stepIndex >= getFirstWaypoint().getPath().getLength())
+			{
+				if(!nextWaypoint()) {
+					targetTile = null;
+					return;
+				}
+			}
+			
+			targetTile = new Tile(getFirstWaypoint().getPath().getStep(stepIndex));
+			++stepIndex;
+			
+			positionListener.onObjectMoved(Soldier.this, getTile(), targetTile);
+		}
+
+		private boolean nextWaypoint() {
+			if(waypoints.size() > 1) {
+				waypoints.removeFirst().remove();
+				stepIndex = 1;
+				
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		
+		private void processWaypoint() {
+			WayPoint waypoint = getFirstWaypoint();
+			
+			waypoint.dropPath();
+			
+			setAim(waypoint.getAim());
+			setIgnoreShots(waypoint.ignoresShots());
+
+			if(waypoint.getWait() > 0) {
+				pauseTimer = new TimerHandler(waypoint.getWait(), false, this);
+			}
 		}
 	}
 }

@@ -21,8 +21,9 @@ package de.winniehell.battlebeavers.storage;
 
 import java.lang.reflect.Type;
 
-import de.winniehell.battlebeavers.storage.EventContainer.HPEvent;
-import de.winniehell.battlebeavers.storage.EventContainer.ShootEvent;
+import de.winniehell.battlebeavers.ingame.Soldier;
+import de.winniehell.battlebeavers.storage.Event.HPEvent;
+import de.winniehell.battlebeavers.storage.Event.ShootEvent;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -30,9 +31,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
-class EventContainerDeserializer implements JsonDeserializer<EventContainer> {
+class EventDeserializer implements JsonDeserializer<Event> {
     @Override
-    public EventContainer deserialize(final JsonElement pJson, final Type pType,
+    public Event deserialize(final JsonElement pJson, final Type pType,
                             final JsonDeserializationContext pContext)
                             throws JsonParseException {
     	if(!pJson.isJsonObject())
@@ -42,15 +43,23 @@ class EventContainerDeserializer implements JsonDeserializer<EventContainer> {
 
     	final JsonObject object = pJson.getAsJsonObject();
     	
-    	if(!object.has("s") || !object.has("timestamp")) {
+    	if(!object.has(Soldier.JSON_TAG) || !object.has("timestamp")) {
     		return null;
     	}
     	
-    	if(object.has("t")) {
-    		return new ShootEvent(object.get("timestamp").getAsLong(), object.get("s").getAsInt(), object.get("t").getAsInt());
+    	if(object.has("target")) {
+    		return new ShootEvent(
+    			object.get("timestamp").getAsLong(),
+    			object.get(Soldier.JSON_TAG).getAsInt(), 
+    			object.get("target").getAsInt()
+    		);
     	}
     	else if(object.has("hp")) {
-    		return new HPEvent(object.get("timestamp").getAsLong(), object.get("s").getAsInt(), object.get("hp").getAsInt());
+    		return new HPEvent(
+    			object.get("timestamp").getAsLong(),
+    			object.get(Soldier.JSON_TAG).getAsInt(),
+    			object.get("hp").getAsInt()
+    		);
     	}
     	
     	return null;

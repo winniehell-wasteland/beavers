@@ -118,7 +118,7 @@ public class CustomGSON {
 					Step.class,
 					Tile.class,
 					WayPoint.class,
-					EventContainer.class
+					Event.class
 				};
 
 				for(final Class<?> c : classes)

@@ -41,8 +41,6 @@ import android.view.MenuItem;
  */
 public class WayPoint extends Sprite implements IGameObject {
 
-	
-
 	/**
 	 * default constructor
 	 * @param pSoldier soldier this waypoint belongs to
@@ -74,6 +72,10 @@ public class WayPoint extends Sprite implements IGameObject {
 		}
 
 		setZIndex(GameActivity.ZINDEX_WAYPOINTS);
+	}
+
+	public void dropPath() {
+		path = null;
 	}
 
 	public Aim getAim() {
@@ -138,9 +140,9 @@ public class WayPoint extends Sprite implements IGameObject {
 	public void remove(){
 		detachSelf();
 
-		if(removeListener != null)
+		if(positionListener != null)
 		{
-			removeListener.onRemoveObject(this);
+			positionListener.onObjectRemoved(this);
 		}
 	}
 
@@ -234,21 +236,21 @@ public class WayPoint extends Sprite implements IGameObject {
 
 		super.onManagedUpdate(pSecondsElapsed);
 	}
-
-	@Override
-	public void setRemoveObjectListener(final IRemoveObjectListener pListener) {
-		removeListener = pListener;
-	}
 	
 	public void setMenuDialogListener(final IMenuDialogListener mListener){
 		menuListener = mListener;
+	}
+
+	@Override
+	public void setPositionListener(final IObjectPositionListener pListener) {
+		positionListener = pListener;
 	}
 	
 	private final Soldier soldier;
 	private final Tile tile;
 
 	/** path from previous waypoint	*/
-	private final WeightedPath path;
+	private WeightedPath path;
 	private final LinkedList<Line> pathLines;
 
 	/**
@@ -264,7 +266,7 @@ public class WayPoint extends Sprite implements IGameObject {
 	private boolean ignoreShots;
 	private int wait;
 
-	private IRemoveObjectListener removeListener;
+	private IObjectPositionListener positionListener;
 	private IMenuDialogListener menuListener;
 
 	private void drawPath() {

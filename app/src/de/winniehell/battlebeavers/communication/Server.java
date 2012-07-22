@@ -310,6 +310,10 @@ public class Server extends Service {
 			} catch (final RemoteException e) {
 				throw new ServerRemoteException(R.string.error_dtn_sending, e);
 			}
+			
+			if(!pGame.isInState(Server.this, GameState.WON, GameState.LOST)) {
+				startPlanningPhase(pGame);
+			}
 		}
 
 		/**
@@ -684,7 +688,7 @@ public class Server extends Service {
 			Log.d(TAG, "Starting planning phase...");
 
 			// we are not part of our game
-			if(!pGame.isInState(Server.this, GameState.JOINED))
+			if(!pGame.isInState(Server.this, GameState.JOINED, GameState.EXECUTION_PHASE))
 			{
 				throw new ServerRemoteException(
 					R.string.error_game_wrong_state,

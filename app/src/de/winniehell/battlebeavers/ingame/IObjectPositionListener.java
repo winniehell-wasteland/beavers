@@ -19,6 +19,7 @@
 
 package de.winniehell.battlebeavers.ingame;
 
-public interface IRemoveObjectListener {
-	void onRemoveObject(IGameObject pObject);
+public interface IObjectPositionListener {
+	void onObjectRemoved(IGameObject pObject);
+	void onObjectMoved(IGameObject pObject, Tile pFrom, Tile pTo);
 }

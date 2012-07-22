@@ -38,7 +38,7 @@ import de.winniehell.battlebeavers.gameplay.GameInfo;
 import de.winniehell.battlebeavers.ingame.IGameEventsListener;
 import de.winniehell.battlebeavers.ingame.IGameObject;
 import de.winniehell.battlebeavers.ingame.IMenuDialogListener;
-import de.winniehell.battlebeavers.ingame.IRemoveObjectListener;
+import de.winniehell.battlebeavers.ingame.IObjectPositionListener;
 import de.winniehell.battlebeavers.ingame.Soldier;
 import de.winniehell.battlebeavers.ingame.Tile;
 import de.winniehell.battlebeavers.ingame.WayPoint;
@@ -91,7 +91,7 @@ public class GameStorage {
 
 		gameObjects.put(pSoldier.getTile(), pSoldier);
 		teams.get(pSoldier.getTeam()).add(pSoldier);
-		pSoldier.setRemoveObjectListener(removeListener);
+		pSoldier.setPositionListener(positionListener);
 		pSoldier.setGameEventsListener(gameListener);
 	}
 
@@ -109,7 +109,7 @@ public class GameStorage {
 		}
 
 		gameObjects.put(pWaypoint.getTile(), pWaypoint);
-		pWaypoint.setRemoveObjectListener(removeListener);
+		pWaypoint.setPositionListener(positionListener);
 		pWaypoint.setMenuDialogListener(menuListener);
 	}
 
@@ -197,6 +197,17 @@ public class GameStorage {
 		teams.get(soldier.getTeam()).remove(soldier);
 	}
 
+	public void removeSoldiers() throws UnexpectedTileContentException {
+		for(SoldierList team : teams) {
+			SoldierList oldList = (SoldierList) team.clone();
+			
+			for(final Soldier soldier : oldList) {
+				soldier.detachSelf();
+				removeSoldier(soldier);
+			}
+		}
+	}
+	
 	public void removeWaypoint(final WayPoint pWaypoint)
 	            throws UnexpectedTileContentException {
 
@@ -254,13 +265,13 @@ public class GameStorage {
 		
 	}
 
-	public void setRemoveObjectListener(final IRemoveObjectListener pListener)
+	public void setPositionListener(final IObjectPositionListener pListener)
 	{
-		removeListener = pListener;
+		positionListener = pListener;
 
 		for(final IGameObject object : gameObjects.values())
 		{
-			object.setRemoveObjectListener(pListener);
+			object.setPositionListener(pListener);
 		}
 	}
 
@@ -286,7 +297,7 @@ public class GameStorage {
 	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<SoldierList> teams;
 
-	private IRemoveObjectListener removeListener;
+	private IObjectPositionListener positionListener;
 	private IMenuDialogListener menuListener;
 	private IGameEventsListener gameListener;
 

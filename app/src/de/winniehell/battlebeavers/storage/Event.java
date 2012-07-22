@@ -19,17 +19,17 @@
 
 package de.winniehell.battlebeavers.storage;
 
-public abstract class EventContainer{
+public abstract class Event{
 	
 	long timestamp;
 	int s;
 	
-	public EventContainer(final long timestamp, final int s){
+	public Event(final long timestamp, final int s){
 		this.timestamp=timestamp;
 		this.s=s;
 	}
 	
-	public int getS() {
+	public int getSoldier() {
 		return s;
 	}
 	
@@ -37,7 +37,7 @@ public abstract class EventContainer{
 		return timestamp;
 	}
 	
-	public static class HPEvent extends EventContainer{
+	public static class HPEvent extends Event{
 		int hp;
 		public HPEvent(final long timestamp, final int s, final int hp) {
 			super(timestamp, s);
@@ -51,25 +51,25 @@ public abstract class EventContainer{
 		@Override
 		public String toString() {
 		
-			return "HP Evenet: Time: "+getTimestamp()+" | ID: "+getS()+" | HP lost: "+ getHp();
+			return "HP Evenet: Time: "+getTimestamp()+" | ID: "+getSoldier()+" | HP lost: "+ getHp();
 		}
 	}
 	
-	public static class ShootEvent extends EventContainer{
+	public static class ShootEvent extends Event{
 		int t;
 		public ShootEvent(final long timestamp, final int s, final int t) {
 			super(timestamp, s);
 			this.t=t;
 		}
 		
-		public int getT() {
+		public int getTarget() {
 			return t;
 		}
 		
 		@Override
 		public String toString() {
 			
-			return "Shoot Event: Time: "+getTimestamp()+" | Soldier: "+getS()+" | Target " +getT();
+			return "Shoot Event: Time: "+getTimestamp()+" | Soldier: "+getSoldier()+" | Target " +getTarget();
 		}
 	}
 }
