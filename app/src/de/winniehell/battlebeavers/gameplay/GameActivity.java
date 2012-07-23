@@ -264,7 +264,8 @@ public class GameActivity extends BaseGameActivity
 			Log.d(TAG, "Hold on tile "+tile);
 
 			// create new Aim if necessary
-			if(selectedWaypoint.isWaitingForAim())
+			if((selectedWaypoint != null)
+			   && selectedWaypoint.isWaitingForAim())
 			{
 				if(!selectedWaypoint.getTile().equals(tile))
 				{
