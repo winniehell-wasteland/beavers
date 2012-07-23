@@ -169,10 +169,12 @@ public class WayPoint extends Sprite implements IGameObject {
 			return true;
 
 		case R.id.context_menu_ignore_attacks:
-			ignoreShots= true;
+			setIgnoreShots(true);
+			
 			return true;
 		case R.id.context_menu_react_on_attacks:
-			ignoreShots= false;
+			setIgnoreShots(false);
+
 			return true;
 		case R.id.context_menu_wait:
 			menuListener.onDialogSelected(this);
@@ -230,6 +232,10 @@ public class WayPoint extends Sprite implements IGameObject {
 		}
 
 		super.onManagedUpdate(pSecondsElapsed);
+	}
+
+	public void setIgnoreShots(final boolean pIgnore) {
+		ignoreShots = pIgnore;
 	}
 	
 	public void setMenuDialogListener(final IMenuDialogListener mListener){

@@ -758,10 +758,14 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			final WayPoint waypoint = getFirstWaypoint();
 			
 			setAim(waypoint.getAim());
+			waypoint.setAim(null);
+			
 			setIgnoreShots(waypoint.ignoresShots());
-
+			waypoint.setIgnoreShots(false);
+			
 			if(waypoint.getWait() > 0) {
 				pauseTimer = new TimerHandler(waypoint.getWait(), false, this);
+				waypoint.setWait(0);
 			}
 		}
 	}
