@@ -44,6 +44,7 @@ import org.anddev.andengine.util.path.WeightedPath;
 import android.util.Log;
 import de.winniehell.battlebeavers.Textures;
 import de.winniehell.battlebeavers.gameplay.GameActivity;
+import de.winniehell.battlebeavers.storage.CustomGSON;
 
 /**
  * soldier sprite
@@ -366,6 +367,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 */
 	public void markSelected(){
 		attachChild(selectionMark);
+		
+		Log.w(getClass().getName(), "selected: "+CustomGSON.getInstance().toJson(this));
 
 		assert getParent() instanceof Scene;
 		final Scene scene = (Scene) getParent();
