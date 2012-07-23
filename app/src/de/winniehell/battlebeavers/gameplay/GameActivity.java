@@ -264,80 +264,70 @@ public class GameActivity extends BaseGameActivity
 			Log.d(TAG, "Hold on tile "+tile);
 
 			// create new Aim if necessary
-			if(selectedWaypoint instanceof WayPoint)
+			if(selectedWaypoint.isWaitingForAim())
 			{
-				final WayPoint selectedWayPoint = selectedWaypoint;
-
-				if(selectedWayPoint.isWaitingForAim())
+				if(!selectedWaypoint.getTile().equals(tile))
 				{
-					if(!selectedWayPoint.getTile().equals(tile))
-					{
-						selectedWayPoint.setAim(tile);
-						mainScene.sortChildren();
-					}
-
-					return;
+					selectedWaypoint.setAim(tile);
+					mainScene.sortChildren();
 				}
+
+				return;
 			}
 
 			selectedWaypoint = null;
 
-			// there is an something on the tile
-			if(storage.isTileOccupied(tile))
+			GameInfo info;
+			try {
+				info = GameInfo.fromFile(this, currentGame);
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "Could not load game info!", e);
+				return;
+			}
+			
+			// soldier on the tile
+			if(storage.hasSoldierOnTile(info.getTeam(), tile))
 			{
-				if(storage.hasSoldierOnTile(tile))
-				{
-					try {
-						final Soldier soldier = storage.getSoldierByTile(tile);
+				try {						
+					final Soldier soldier = storage.getSoldierByTile(info.getTeam(), tile);
 
-						if(soldier.equals(selectedSoldier))
-						{
-							selectedWaypoint = soldier.getFirstWaypoint();
-						}
-						else
-						{
-							selectSoldier(soldier);
-						}
-					} catch (final UnexpectedTileContentException e) {
-						Log.e(TAG, e.getMessage());
+					if(soldier.equals(selectedSoldier))
+					{
+						selectedWaypoint = soldier.getFirstWaypoint();
 					}
-				}
-				else if(storage.hasWaypointOnTile(tile))
-				{
-					try {
-						final WayPoint waypoint =
-							storage.getWaypointByTile(tile);
-
-						if(!waypoint.getSoldier().equals(selectedSoldier))
-						{
-							selectSoldier(waypoint.getSoldier());
-							runOnUiThread(new Runnable() {
-
-								@Override
-								public void run() {
-									Toast.makeText(GameActivity.this,
-										"Selected soldier by waypoint...",
-										Toast.LENGTH_SHORT).show();
-								}
-							});
-						}
-						else
-						{
-							selectedWaypoint = waypoint;
-						}
-					} catch (final UnexpectedTileContentException e) {
-						Log.e(TAG, e.getMessage());
+					else
+					{
+						selectSoldier(soldier);
 					}
+				} catch (final UnexpectedTileContentException e) {
+					Log.e(TAG, e.getMessage());
 				}
+			}
+			else if(storage.hasWaypointOnTile(selectedSoldier, tile))
+			{
+				try {
+					final WayPoint waypoint =
+						storage.getWaypointByTile(selectedSoldier, tile);
 
-				if(selectedWaypoint != null)
-				{
-					runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							mRenderSurfaceView.showContextMenu();
-						}
-					});
+					if(!waypoint.getSoldier().equals(selectedSoldier))
+					{
+						selectSoldier(waypoint.getSoldier());
+						runOnUiThread(new Runnable() {
+
+							@Override
+							public void run() {
+								Toast.makeText(GameActivity.this,
+									"Selected soldier by waypoint...",
+									Toast.LENGTH_SHORT).show();
+							}
+						});
+					}
+					else
+					{
+						selectedWaypoint = waypoint;
+					}
+				} catch (final UnexpectedTileContentException e) {
+					Log.e(TAG, e.getMessage());
 				}
 			}
 			else if(!isTileBlocked(null, tile.getColumn(), tile.getRow())
@@ -372,6 +362,17 @@ public class GameActivity extends BaseGameActivity
 			else
 			{
 				Log.e(TAG, "no obj");
+			}
+			
+
+			if(selectedWaypoint != null)
+			{
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						mRenderSurfaceView.showContextMenu();
+					}
+				});
 			}
 		}
 	}
@@ -504,20 +505,6 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	public void onObjectMoved(final IGameObject pObject, final Tile pFrom, final Tile pTo) {
-		if(pObject == null)
-		{
-			// ignore
-			return;
-		}
-
-		if(pObject instanceof Soldier)
-		{
-			storage.moveSoldier((Soldier) pObject, pFrom, pTo);
-		}
-	}
-
-	@Override
 	public void onObjectRemoved(final IGameObject pObject) {
 		if(pObject == null)
 		{
@@ -544,12 +531,6 @@ public class GameActivity extends BaseGameActivity
 		else if(pObject instanceof WayPoint)
 		{
 			final WayPoint waypoint = (WayPoint) pObject;
-
-			try {
-				storage.removeWaypoint(waypoint);
-			} catch (final UnexpectedTileContentException e) {
-				Log.e(TAG, "Could not remove waypoint from game storage!", e);
-			}
 
 			if(waypoint.equals(selectedWaypoint))
 			{

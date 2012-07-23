@@ -141,15 +141,6 @@ public class WayPoint extends Sprite implements IGameObject {
 		pMenu.findItem(R.id.context_menu_wait).setVisible(!isLast());
 	}
 
-	public void remove(){
-		detachSelf();
-
-		if(positionListener != null)
-		{
-			positionListener.onObjectRemoved(this);
-		}
-	}
-
 	@Override
 	public void onAttached() {
 		super.onAttached();
@@ -164,7 +155,7 @@ public class WayPoint extends Sprite implements IGameObject {
 				soldier.changeAP(getPath().getCost());
 				soldier.removeLastWayPoint();
 
-				remove();
+				detachSelf();
 			}
 
 			return true;
@@ -247,7 +238,7 @@ public class WayPoint extends Sprite implements IGameObject {
 
 	@Override
 	public void setPositionListener(final IObjectPositionListener pListener) {
-		positionListener = pListener;
+
 	}
 	
 	private final Soldier soldier;
@@ -270,7 +261,6 @@ public class WayPoint extends Sprite implements IGameObject {
 	private boolean ignoreShots;
 	private int wait;
 
-	private IObjectPositionListener positionListener;
 	private IMenuDialogListener menuListener;
 
 	private void drawPath() {

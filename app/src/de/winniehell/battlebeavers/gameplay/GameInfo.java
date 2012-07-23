@@ -19,6 +19,7 @@
 
 package de.winniehell.battlebeavers.gameplay;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
@@ -92,6 +93,7 @@ public final class GameInfo {
 		writer.close();
 
 		Log.d(getClass().getSimpleName(), "Stored in "+getFileName(pContext, pGame));
+		Log.d(getClass().getSimpleName(), "exists: "+new File(getFileName(pContext, pGame)).exists());
 	}
 
 	/**

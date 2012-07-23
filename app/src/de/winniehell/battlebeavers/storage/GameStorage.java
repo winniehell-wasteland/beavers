@@ -69,7 +69,6 @@ public class GameStorage {
 		game = pGame;
 
 		// initialize game object containers
-		gameObjects = new HashMap<Tile, IGameObject>();
 		teams = new ArrayList<SoldierList>(getSettings().getMaxPlayers());
 
 		for(int i = 0; i < getSettings().getMaxPlayers(); ++i)
@@ -84,12 +83,14 @@ public class GameStorage {
 	public void addSoldier(final Soldier pSoldier)
 	             throws UnexpectedTileContentException {
 
-		if(isTileOccupied(pSoldier.getTile()))
-		{
-			throw new UnexpectedTileContentException("Tile is not empty!");
+		for(SoldierList team : teams) {
+			for(Soldier soldier : team) {
+				if(soldier.getTile().equals(pSoldier.getTile())) {
+					throw new UnexpectedTileContentException("Tile is not empty!");
+				}
+			}
 		}
-
-		gameObjects.put(pSoldier.getTile(), pSoldier);
+			
 		teams.get(pSoldier.getTeam()).add(pSoldier);
 		pSoldier.setPositionListener(positionListener);
 		pSoldier.setGameEventsListener(gameListener);
@@ -103,12 +104,8 @@ public class GameStorage {
 	public void addWaypoint(final WayPoint pWaypoint)
 	            throws UnexpectedTileContentException {
 
-		if(isTileOccupied(pWaypoint.getTile()))
-		{
-			throw new UnexpectedTileContentException("Tile is not empty!");
-		}
+		// TODO isTileOccupied(pWaypoint.getTile()))
 
-		gameObjects.put(pWaypoint.getTile(), pWaypoint);
 		pWaypoint.setPositionListener(positionListener);
 		pWaypoint.setMenuDialogListener(menuListener);
 	}
@@ -125,15 +122,16 @@ public class GameStorage {
 		return null;
 	}
 	
-	public Soldier getSoldierByTile(final Tile pTile)
+	public Soldier getSoldierByTile(final int pTeam, final Tile pTile)
 		           throws UnexpectedTileContentException{
 
-		if(!hasSoldierOnTile(pTile))
-		{
-			throw new UnexpectedTileContentException("No soldier on that tile!");
+		for(Soldier soldier : teams.get(pTeam)) {
+			if(soldier.getTile().equals(pTile)) {
+				return soldier;
+			}
 		}
-
-		return (Soldier) gameObjects.get(pTile);
+		
+		throw new UnexpectedTileContentException("No soldier on that tile!");
 	}
 
 	public SoldierList getSoldiersByTeam(final int pTeam) {
@@ -147,60 +145,57 @@ public class GameStorage {
 		}
 	}
 
-	public WayPoint getWaypointByTile(final Tile pTile)
+	public WayPoint getWaypointByTile(final Soldier pSoldier, final Tile pTile)
 	       throws UnexpectedTileContentException{
-
-		if(!hasWaypointOnTile(pTile))
-		{
+		if(pSoldier == null) {
 			throw new UnexpectedTileContentException("No waypoint on that tile!");
 		}
-
-		return (WayPoint) gameObjects.get(pTile);
-	}
-
-	public boolean hasSoldierOnTile(final Tile pTile) {
-		return (gameObjects.get(pTile) instanceof Soldier);
-	}
-
-	public boolean hasWaypointOnTile(final Tile pTile) {
-		return (gameObjects.get(pTile) instanceof WayPoint);
-	}
-
-	public boolean isTileOccupied(final Tile pTile) {
-		return gameObjects.containsKey(pTile);
-	}
-
-	/**
-	 * move a {@link Soldier} to a new tile
-	 * @param pSoldier moving soldier
-	 * @param pFrom old position
-	 * @param pTo new position
-	 */
-	public void moveSoldier(final Soldier pSoldier,
-	                        final Tile pFrom, final Tile pTo) {
-		if(hasSoldierOnTile(pFrom))
-		{
-			gameObjects.remove(pFrom);
-			gameObjects.put(pTo, pSoldier);
-		}
-	}
-
-	public void removeSoldier(final Soldier soldier)
-                throws UnexpectedTileContentException {
-
-		if(!hasSoldierOnTile(soldier.getTile()))
-		{
-			throw new UnexpectedTileContentException(
-				"No soldier on that tile! "
-				+soldier.getTile()+" "+gameObjects.get(soldier.getTile())
-			);
+		
+		for(WayPoint waypoint : pSoldier.getWaypoints()) {
+			if(waypoint.getTile().equals(pTile)) {
+				return waypoint;
+			}
 		}
 
-		gameObjects.remove(soldier.getTile());
-		teams.get(soldier.getTeam()).remove(soldier);
+		throw new UnexpectedTileContentException("No waypoint on that tile!");
+	}
+
+	public boolean hasSoldierOnTile(final int pTeam, final Tile pTile) {
+		if((pTeam < 0) || (pTeam >= teams.size())) {
+			return false;
+		}
+		
+		for(Soldier soldier : teams.get(pTeam)) {
+			if(soldier.getTile().equals(pTile)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	public boolean hasWaypointOnTile(final Soldier pSoldier, final Tile pTile) {
+		if(pSoldier == null) {
+			return false;
+		}
+		
+		for(WayPoint waypoint : pSoldier.getWaypoints()) {
+			if(waypoint.getTile().equals(pTile)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	public void removeSoldier(final Soldier pSoldier)
+                throws UnexpectedTileContentException {		
+		teams.get(pSoldier.getTeam()).remove(pSoldier);
 	}
 
 	public void removeSoldiers() throws UnexpectedTileContentException {
+		Log.d(TAG, "old state: "+CustomGSON.getInstance().toJson(teams));
+		
 		for(SoldierList team : teams) {
 			SoldierList oldList = (SoldierList) team.clone();
 			
@@ -209,17 +204,6 @@ public class GameStorage {
 				removeSoldier(soldier);
 			}
 		}
-	}
-	
-	public void removeWaypoint(final WayPoint pWaypoint)
-	            throws UnexpectedTileContentException {
-
-		if(!hasWaypointOnTile(pWaypoint.getTile()))
-		{
-			throw new UnexpectedTileContentException("No waypoint on that tile!");
-		}
-
-		gameObjects.remove(pWaypoint.getTile());
 	}
 
 	public void saveToFile() throws FileNotFoundException {
@@ -255,26 +239,25 @@ public class GameStorage {
 		menuListener=mListener;
 	}
 	
-	public void setGameEventsListener(final IGameEventsListener eListener){
-		gameListener=eListener;
-		for(final IGameObject object : gameObjects.values())
-		{
-			
-			if(object instanceof Soldier){
-				((Soldier)object).setGameEventsListener(gameListener);
+	public void setGameEventsListener(final IGameEventsListener pListener){
+		gameListener= pListener;
+		
+		for(final SoldierList team : teams) {
+			for(final Soldier soldier : team) {
+				soldier.setGameEventsListener(gameListener);
 				Log.e("GameListener", ""+gameListener.toString()+" is set");
 			}
 		}
-		
 	}
 
 	public void setPositionListener(final IObjectPositionListener pListener)
 	{
 		positionListener = pListener;
 
-		for(final IGameObject object : gameObjects.values())
-		{
-			object.setPositionListener(pListener);
+		for(final SoldierList team : teams) {
+			for(final Soldier soldier : team) {
+				soldier.setPositionListener(pListener);
+			}
 		}
 	}
 
@@ -297,7 +280,6 @@ public class GameStorage {
 	private final Context context;
 	private final Game game;
 
-	private final HashMap<Tile, IGameObject> gameObjects;
 	private final ArrayList<SoldierList> teams;
 
 	private IObjectPositionListener positionListener;

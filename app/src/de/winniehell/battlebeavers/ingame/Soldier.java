@@ -155,7 +155,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 			for(final WayPoint waypoint : waypoints)
 			{
-				waypoint.remove();
+				waypoint.detachSelf();
 			}
 
 			waypoints.clear();
@@ -737,16 +737,14 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 					return;
 				}
 			}
-			
+
 			targetTile = new Tile(getFirstWaypoint().getPath().getStep(stepIndex));
 			++stepIndex;
-			
-			positionListener.onObjectMoved(Soldier.this, getTile(), targetTile);
 		}
 
 		private boolean nextWaypoint() {
 			if(waypoints.size() > 1) {
-				waypoints.removeFirst().remove();
+				waypoints.removeFirst().detachSelf();
 				stepIndex = 1;
 				
 				return true;

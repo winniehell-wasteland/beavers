@@ -28,6 +28,7 @@ import java.util.UUID;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.google.gson.JsonElement;
 import com.google.gson.stream.JsonReader;
@@ -183,8 +184,10 @@ public final class Game extends UniqueID {
 			final GameInfo info = GameInfo.fromFile(pContext, this);
 			return info.getState();
 		} catch(final NullPointerException e) {
+			Log.e(Game.class.getName(), e.toString());
 			return GameState.UNKNOWN;
 		} catch(final FileNotFoundException e) {
+			Log.e(Game.class.getName(), e.getMessage());
 			return GameState.UNKNOWN;
 		}
 	}
