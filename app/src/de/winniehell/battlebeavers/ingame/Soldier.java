@@ -530,7 +530,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	private boolean simulation=false;
 	private final float maxAP=20;
 	private float ap=maxAP;
-	private int hp=100;
+	private int hp;
 	private boolean ignoreShots=false;
 	/** token to mark the selected soldier */
 	private final Sprite selectionMark;
