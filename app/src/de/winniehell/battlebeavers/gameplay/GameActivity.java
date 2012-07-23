@@ -646,7 +646,7 @@ public class GameActivity extends BaseGameActivity
 		Log.d(TAG, "Outcome finished...");
 		
 		if(!currentGame.isInState(this, GameState.EXECUTION_PHASE)) {
-			Log.e(TAG, getString(R.string.error_game_wrong_state, currentGame));
+			Log.e(TAG, getString(R.string.error_game_wrong_state, currentGame, currentGame.getState(this)));
 			return;
 		}
 		
@@ -711,6 +711,7 @@ public class GameActivity extends BaseGameActivity
 			outcomeTimer = null;
 			currentGame.deleteOutcome(this);
 			handleState();
+			Log.w("","handlestate");
 		}
 	}
 
@@ -1092,6 +1093,7 @@ public class GameActivity extends BaseGameActivity
 		
 		// planning phase
 		if(currentGame.isInState(this, GameState.PLANNING_PHASE)) {
+			Log.w("outcome","in planning phase");
 			if(currentGame.hasDecisions(this, getInfo().getTeam())) {
 				Toast.makeText(this, "Waiting for outcome!", Toast.LENGTH_LONG).show();
 			}
@@ -1102,6 +1104,7 @@ public class GameActivity extends BaseGameActivity
 				playOutcome();
 			}
 			else {
+				Log.w("outcome","enable hold detector");
 				holdDetector.setEnabled(true);
 			}
 		}
@@ -1181,26 +1184,29 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		outcomeTimer =
-			new TimerHandler(outcome.getEventList().get(0).getTimestamp(), new ITimerCallback() {
+			new TimerHandler(((float)outcome.getEventList().get(0).getTimestamp())/1000, new ITimerCallback() {
 
 				@Override
 				public void onTimePassed(final TimerHandler pTimerHandler) {
-
+					Log.e("replay","time"+pTimerHandler.getTimerSeconds());
 					final Event event=outcome.getEventList().remove(0);
 
 					if(event instanceof HPEvent){
+						
 						final HPEvent hpEvent = (HPEvent)event;
+						Log.e("replay","hp");
 						storage.getSoldierById(hpEvent.getSoldier()).changeHP(hpEvent.getHp());
 					}
 					else if(event instanceof ShootEvent){
 						final ShootEvent shootEvent = (ShootEvent)event;
+						Log.e("replay","shot");
 						storage.getSoldierById(shootEvent.getSoldier()).attack(
 							storage.getSoldierById(shootEvent.getTarget()), GameActivity.this
 						);
 					}
 
 					if(!outcome.getEventList().isEmpty()){
-						final long time = outcome.getEventList().get(0).getTimestamp() - event.getTimestamp();
+						final float time = outcome.getEventList().get(0).getTimestamp() - event.getTimestamp();
 						pTimerHandler.setTimerSeconds(time/1000);
 						pTimerHandler.reset();
 					}
