@@ -190,7 +190,10 @@ public class GameStorage {
 
 		if(!hasSoldierOnTile(soldier.getTile()))
 		{
-			throw new UnexpectedTileContentException("No soldier on that tile!");
+			throw new UnexpectedTileContentException(
+				"No soldier on that tile! "
+				+soldier.getTile()+" "+gameObjects.get(soldier.getTile())
+			);
 		}
 
 		gameObjects.remove(soldier.getTile());
