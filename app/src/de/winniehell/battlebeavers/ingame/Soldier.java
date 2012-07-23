@@ -665,6 +665,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				stopAnimation(0);
 				nextTile();
 			}
+			else if(pModifier instanceof RotationByModifier) {
+				aim = null;
+			}
 			
 			soldierContinue();
 		}
@@ -675,7 +678,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			soldierContinue();
 		}
 		
-		public void soldierContinue()
+		private void soldierContinue()
 		{
 			if(pauseTimer != null) {
 				registerUpdateHandler(pauseTimer);
@@ -720,8 +723,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			// finished walking the path
 			if(stepIndex >= getFirstWaypoint().getPath().getLength())
 			{
+				processWaypoint();
+				
 				if(!nextWaypoint()) {
-					targetTile = null;
+					targetTile = null;					
 					return;
 				}
 			}
@@ -737,6 +742,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				waypoints.removeFirst().remove();
 				stepIndex = 1;
 				
+				getFirstWaypoint().dropPath();
+				
 				return true;
 			}
 			else {
@@ -746,8 +753,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		
 		private void processWaypoint() {
 			final WayPoint waypoint = getFirstWaypoint();
-			
-			waypoint.dropPath();
 			
 			setAim(waypoint.getAim());
 			setIgnoreShots(waypoint.ignoresShots());
