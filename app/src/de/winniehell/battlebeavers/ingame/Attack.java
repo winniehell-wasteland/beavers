@@ -33,6 +33,7 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.NegativeStepCostException;
 import org.anddev.andengine.util.path.WeightedPath;
+
 import de.winniehell.battlebeavers.Textures;
 import de.winniehell.battlebeavers.gameplay.GameActivity;
 
@@ -75,7 +76,7 @@ public class Attack implements IMovableObject, ITimerCallback {
 			new Rectangle(pTo.getX()+1, pTo.getY()+1,
 			              pTo.getTileWidth()-2, pTo.getTileHeight()-2);
 
-		final Line targetLine = 
+		final Line targetLine =
 			new Line(soldier.getTile().getCenterX(), soldier.getTile().getCenterY(),
 		             target.getTile().getCenterX(), target.getTile().getCenterY());
 
@@ -95,7 +96,7 @@ public class Attack implements IMovableObject, ITimerCallback {
 	}
 	
 	@Override
-	public void onTimePassed(TimerHandler pTimerHandler) {
+	public void onTimePassed(final TimerHandler pTimerHandler) {
 		
 		if(soldier.isAttacking()) {
 			currentShot = this.new Shot();
@@ -109,9 +110,9 @@ public class Attack implements IMovableObject, ITimerCallback {
 		}
 	}
 
-	public static Attack create(GameActivity pActivity, Soldier pSoldier,
-			Soldier pTarget) {
-		Attack attack = new Attack(pActivity, pSoldier, pTarget);
+	public static Attack create(final GameActivity pActivity, final Soldier pSoldier,
+			final Soldier pTarget) {
+		final Attack attack = new Attack(pActivity, pSoldier, pTarget);
 		
 		if(attack.hasPath()) {
 			return attack;
@@ -150,7 +151,7 @@ public class Attack implements IMovableObject, ITimerCallback {
 	}
 	
 	private static float calcDelay() {
-		return (float) (0.1+Math.random()*0.4);
+		return (float) (0.2+Math.random()*0.4);
 	}
 	
 	// bullet
@@ -185,21 +186,21 @@ public class Attack implements IMovableObject, ITimerCallback {
 			final float disty=Math.abs(getY() - target.getCenter()[1]);
 			final MoveModifier moveMod= new MoveModifier(
 				(float) (Math.sqrt(distx*distx+disty*disty)/SPEED), getX(),
-				(float) (target.getCenter()[0]-10+Math.random()*20), getY(), 
+				(float) (target.getCenter()[0]-10+Math.random()*20), getY(),
 				(float) (target.getCenter()[1]-10+Math.random()*20)
 			);
 
 			moveMod.addModifierListener(new IModifierListener<IEntity>() {
 
 				@Override
-				public void onModifierStarted(IModifier<IEntity> pModifier,
-						IEntity pItem) {
+				public void onModifierStarted(final IModifier<IEntity> pModifier,
+						final IEntity pItem) {
 					
 				}
 
 				@Override
-				public void onModifierFinished(IModifier<IEntity> pModifier,
-						IEntity pItem) {
+				public void onModifierFinished(final IModifier<IEntity> pModifier,
+						final IEntity pItem) {
 					Shot.this.onHit(moveMod);
 				}
 			});

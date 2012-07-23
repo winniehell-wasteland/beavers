@@ -80,12 +80,10 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
-import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
 import de.winniehell.battlebeavers.App;
@@ -384,9 +382,9 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	public Engine onLoadEngine() {       
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        Configuration configuration = getResources().getConfiguration();
+	public Engine onLoadEngine() {
+        final DisplayMetrics metrics = getResources().getDisplayMetrics();
+        final Configuration configuration = getResources().getConfiguration();
 
         ScreenOrientation orientation;
         
@@ -506,7 +504,7 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	public void onObjectMoved(IGameObject pObject, Tile pFrom, Tile pTo) {
+	public void onObjectMoved(final IGameObject pObject, final Tile pFrom, final Tile pTo) {
 		if(pObject == null)
 		{
 			// ignore
@@ -655,7 +653,7 @@ public class GameActivity extends BaseGameActivity
 		if(storage.getSoldiersByTeam(1 - getInfo().getTeam()).size() == 0) {
 			try {
 				currentGame.setState(this, GameState.WON);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				Log.e(TAG, getString(R.string.error_game_save_state, currentGame), e);
 			}
 			
@@ -670,7 +668,7 @@ public class GameActivity extends BaseGameActivity
 		else if(storage.getSoldiersByTeam(getInfo().getTeam()).size() == 0) {
 			try {
 				currentGame.setState(this, GameState.LOST);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				Log.e(TAG, getString(R.string.error_game_save_state, currentGame), e);
 			}
 
@@ -691,7 +689,7 @@ public class GameActivity extends BaseGameActivity
 
 			try {
 				for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {
-					final SoldierList decisions = 
+					final SoldierList decisions =
 						currentGame.getDecisions(this, team);
 					outcome.addDecisions(decisions);
 					currentGame.deleteDecisions(this, team);
@@ -796,7 +794,7 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	protected void onDestroy() {		
+	protected void onDestroy() {
 		unbindService(client);
 		unbindService(server);
 
@@ -1043,7 +1041,7 @@ public class GameActivity extends BaseGameActivity
 			// stop shooting if we can not see the target anymore
 			if(s.isAttacking())
 			{
-				if(s.getAttack().hasPath())
+				if(!s.getAttack().hasPath())
 				{
 					s.stopAttacking();
 				}
@@ -1100,6 +1098,7 @@ public class GameActivity extends BaseGameActivity
 			// client is still in execution phase
 			else if(currentGame.hasOutcome(this)
 			        && !currentGame.isServer(getSettings().getPlayer())) {
+				Log.w("GameActivity","play outcome still in exe");
 				playOutcome();
 			}
 			else {
@@ -1115,6 +1114,7 @@ public class GameActivity extends BaseGameActivity
 			}
 			// execution phase on client
 			else if(currentGame.hasOutcome(this)) {
+				Log.w("GameActivity","play outcome exe...");
 				playOutcome();
 			}
 		}
@@ -1210,7 +1210,6 @@ public class GameActivity extends BaseGameActivity
 
 		getEngine().registerUpdateHandler(outcomeTimer);
 		
-		startTargetChecking();
 		startSoldierMovement();
 	}
 
@@ -1281,6 +1280,7 @@ public class GameActivity extends BaseGameActivity
 		});
 
 		getEngine().registerUpdateHandler(checkTargetTimer);
+		
 	}
 
 	private synchronized void selectSoldier(final Soldier pSoldier) {
