@@ -223,10 +223,11 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			return;
 		}
 		
-		final Attack tmp = Attack.create(pActivity, this, pTarget);
-		if(tmp == null) {
+		final Attack tmp = new Attack(pActivity, this, pTarget);
+		if(!tmp.hasPath() && !simulation) {
 			return;
 		}
+		
 		Log.e("Soldier", "attack!");
 		attack = tmp;
 		pause();

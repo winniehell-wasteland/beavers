@@ -39,6 +39,16 @@ import de.winniehell.battlebeavers.gameplay.GameActivity;
 
 public class Attack implements IMovableObject, ITimerCallback {
 
+	public Attack(final GameActivity pActivity,
+	             final Soldier pSoldier, final Soldier pTarget){
+        activity = pActivity;
+
+		soldier = pSoldier;
+		target = pTarget;
+		
+		timer = new TimerHandler(calcDelay(), false, this);
+	}
+	
 	@Override
 	public synchronized WeightedPath findPath(final IWeightedPathFinder<IMovableObject> pPathFinder, final Tile pTarget) {
 		final int distance = Math.max(
@@ -110,18 +120,6 @@ public class Attack implements IMovableObject, ITimerCallback {
 		}
 	}
 
-	public static Attack create(final GameActivity pActivity, final Soldier pSoldier,
-			final Soldier pTarget) {
-		final Attack attack = new Attack(pActivity, pSoldier, pTarget);
-		
-		if(attack.hasPath()) {
-			return attack;
-		}
-		else {
-			return null;
-		}
-	}
-
 	/**
 	 * @name constants
 	 * @{
@@ -139,16 +137,6 @@ public class Attack implements IMovableObject, ITimerCallback {
 	
 	private final TimerHandler timer;
 	private Shot currentShot = null;
-
-	private Attack(final GameActivity pActivity,
-	             final Soldier pSoldier, final Soldier pTarget){
-        activity = pActivity;
-
-		soldier = pSoldier;
-		target = pTarget;
-		
-		timer = new TimerHandler(calcDelay(), false, this);
-	}
 	
 	private static float calcDelay() {
 		return (float) (0.2+Math.random()*0.4);
