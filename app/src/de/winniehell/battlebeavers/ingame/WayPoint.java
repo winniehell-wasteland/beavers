@@ -76,6 +76,10 @@ public class WayPoint extends Sprite implements IGameObject {
 
 	public void dropPath() {
 		path = null;
+		
+		for(final Line line : pathLines) {
+			line.detachSelf();
+		}
 	}
 
 	public Aim getAim() {

@@ -49,6 +49,7 @@ class SoldierSerializer implements JsonSerializer<Soldier> {
 		object.add("tile", pContext.serialize(pSrc.getTile()));
 		object.add("view_angle", pContext.serialize(pSrc.getRotation()));
 		object.add("waypoints", pContext.serialize(pSrc.getWaypoints()));
+		object.add("hp", pContext.serialize(pSrc.getHP()));
 
 		return object;
 	}

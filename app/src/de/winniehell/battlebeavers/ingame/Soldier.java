@@ -500,6 +500,10 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			registerEntityModifier(lastRotation);
 		}
 	}
+
+	public void setHp(final int pHp) {
+		hp = pHp;
+	}
 	
 	public void setSimulation(final boolean simulation) {
 		this.simulation = simulation;

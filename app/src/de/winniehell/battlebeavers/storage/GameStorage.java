@@ -232,7 +232,7 @@ public class GameStorage {
 
 		try {
 			writer.beginArray();
-			for(final HashSet<Soldier> team : teams)
+			for(final SoldierList team : teams)
 			{
 				for(final Soldier soldier : team)
 				{

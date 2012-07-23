@@ -50,7 +50,7 @@ class SoldierDeserializer implements JsonDeserializer<Soldier> {
     	final JsonObject object = pJson.getAsJsonObject();
 
     	if(!object.has("id") || !object.has("team") || !object.has("tile")
-    	   || !object.has("view_angle"))
+    	   || !object.has("view_angle") || !object.has("hp"))
     	{
     		return null;
     	}
@@ -60,6 +60,7 @@ class SoldierDeserializer implements JsonDeserializer<Soldier> {
 
     	soldier.setId(object.get("id").getAsInt());
     	soldier.setRotation(object.get("view_angle").getAsFloat());
+    	soldier.setHp(object.get("hp").getAsInt());
 
     	if(object.has("waypoints") && object.get("waypoints").isJsonArray()) {
         	currentSoldier = soldier;
