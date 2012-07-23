@@ -1098,7 +1098,7 @@ public class GameActivity extends BaseGameActivity
 			// client is still in execution phase
 			else if(currentGame.hasOutcome(this)
 			        && !currentGame.isServer(getSettings().getPlayer())) {
-				Log.w("GameActivity","play outcome still in exe");
+				Log.w("GameActivity","play outcome a");
 				playOutcome();
 			}
 			else {
@@ -1114,7 +1114,7 @@ public class GameActivity extends BaseGameActivity
 			}
 			// execution phase on client
 			else if(currentGame.hasOutcome(this)) {
-				Log.w("GameActivity","play outcome exe...");
+				Log.w("GameActivity","play outcome b");
 				playOutcome();
 			}
 		}

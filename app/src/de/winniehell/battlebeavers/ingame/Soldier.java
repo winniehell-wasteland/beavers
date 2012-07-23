@@ -40,10 +40,10 @@ import org.anddev.andengine.util.path.ITiledMap;
 import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.NegativeStepCostException;
 import org.anddev.andengine.util.path.WeightedPath;
-import de.winniehell.battlebeavers.Textures;
-import de.winniehell.battlebeavers.gameplay.GameActivity;
 
 import android.util.Log;
+import de.winniehell.battlebeavers.Textures;
+import de.winniehell.battlebeavers.gameplay.GameActivity;
 
 /**
  * soldier sprite
@@ -226,7 +226,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		if(tmp == null) {
 			return;
 		}
-		
+		Log.e("Soldier", "attack!");
 		attack = tmp;
 		pause();
 
@@ -353,8 +353,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		this.id = id;
 	}
 
-	public void setAim(Aim pAim) {
-		this.aim = (pAim != null)?pAim.getTile():null; 
+	public void setAim(final Aim pAim) {
+		aim = (pAim != null)?pAim.getTile():null;
 	}
 	
 	public void stopAttacking() {
@@ -395,7 +395,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @param pTarget target tile
 	 * @param pListener listener for movement
 	 */
-	private void move(final Tile pTarget) {		
+	private void move(final Tile pTarget) {
 		final float distx =
 			Math.abs(pTarget.getCenterX() - (getX()+getWidth()/2));
 		final float disty =
@@ -502,7 +502,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		this.simulation = simulation;
 	}
 	
-	public void startWalking(GameActivity pGameActivity) {
+	public void startWalking(final GameActivity pGameActivity) {
 		walker = new PathWalker(pGameActivity);
 		walker.start();
 	}
@@ -667,7 +667,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		}
 
 		@Override
-		public void onTimePassed(TimerHandler pTimerHandler) {
+		public void onTimePassed(final TimerHandler pTimerHandler) {
 			pauseTimer = null;
 			soldierContinue();
 		}
@@ -700,7 +700,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				nextTile();
 			}
 			
-			soldierContinue();			
+			soldierContinue();
 		}
 
 		private final GameActivity gameActivity;
@@ -742,7 +742,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		}
 		
 		private void processWaypoint() {
-			WayPoint waypoint = getFirstWaypoint();
+			final WayPoint waypoint = getFirstWaypoint();
 			
 			waypoint.dropPath();
 			
