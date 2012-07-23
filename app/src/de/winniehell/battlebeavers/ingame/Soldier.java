@@ -726,7 +726,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 				processWaypoint();
 				
 				if(!nextWaypoint()) {
-					targetTile = null;					
+					targetTile = null;
+					getFirstWaypoint().dropPath();
+
 					return;
 				}
 			}
@@ -741,8 +743,6 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			if(waypoints.size() > 1) {
 				waypoints.removeFirst().remove();
 				stepIndex = 1;
-				
-				getFirstWaypoint().dropPath();
 				
 				return true;
 			}
