@@ -645,11 +645,11 @@ public class GameActivity extends BaseGameActivity
 	public void onOutcomeFinished() {
 		Log.d(TAG, "Outcome finished...");
 		
-		if(!currentGame.isInState(this, GameState.EXECUTION_PHASE)) {
+		if(!currentGame.isInState(this, GameState.EXECUTION_PHASE,GameState.PLANNING_PHASE)) {
 			Log.e(TAG, getString(R.string.error_game_wrong_state, currentGame, currentGame.getState(this)));
 			return;
 		}
-		
+		Log.e(TAG, "Outcome REALY finished");
 		if(storage.getSoldiersByTeam(1 - getInfo().getTeam()).size() == 0) {
 			try {
 				currentGame.setState(this, GameState.WON);
@@ -1179,9 +1179,9 @@ public class GameActivity extends BaseGameActivity
 			return;
 		}
 		
-		if(outcome.getEventList().isEmpty()) {
-			return;
-		}
+		if(!outcome.getEventList().isEmpty()) {
+		
+		
 
 		outcomeTimer =
 			new TimerHandler(((float)outcome.getEventList().get(0).getTimestamp())/1000, new ITimerCallback() {
@@ -1213,9 +1213,9 @@ public class GameActivity extends BaseGameActivity
 				}
 
 		});
-
-		getEngine().registerUpdateHandler(outcomeTimer);
 		
+		getEngine().registerUpdateHandler(outcomeTimer);
+		}
 		startSoldierMovement();
 	}
 
