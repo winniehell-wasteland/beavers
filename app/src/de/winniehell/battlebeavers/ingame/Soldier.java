@@ -131,9 +131,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			hp=0;
 			die();
 		}
-		
 		Log.d(getClass().getName(), "hp: "+hp);
-
+		changeListener.onChange(this);
 		return hp;
 	}
 
@@ -149,7 +148,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		Log.e(Soldier.class.getName(), "die!!!");
 
 		if(hasParent()){
-			positionListener.onObjectRemoved(this);
+			changeListener.onDeath(this);
 			detachSelf();
 
 			stopAttacking();
@@ -339,7 +338,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		else if(ap<0){
 			ap=0;
 		}
-
+		changeListener.onChange(this);
 		return ap;
 	}
 
@@ -463,8 +462,8 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	}
 
 	@Override
-	public void setPositionListener(final IObjectPositionListener pListener) {
-		positionListener = pListener;
+	public void setPositionListener(final ISoldierListener pListener) {
+		changeListener = pListener;
 	}
 
 	/**
@@ -530,7 +529,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 	private int id;
 	private boolean simulation=false;
-	private final float maxAP=20;
+	private final float maxAP=10;
 	private float ap=maxAP;
 	private int hp;
 	private boolean ignoreShots=false;
@@ -561,7 +560,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 	 * @name listeners
 	 * @{
 	 */
-	private IObjectPositionListener positionListener;
+	private ISoldierListener changeListener;
 	private IGameEventsListener gameListener;
 	/**
 	 * @}

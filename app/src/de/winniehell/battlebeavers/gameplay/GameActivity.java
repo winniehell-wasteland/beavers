@@ -93,10 +93,9 @@ import de.winniehell.battlebeavers.Textures;
 import de.winniehell.battlebeavers.communication.Client;
 import de.winniehell.battlebeavers.communication.Client.ClientRemoteException;
 import de.winniehell.battlebeavers.communication.Server;
-import de.winniehell.battlebeavers.ingame.IGameObject;
 import de.winniehell.battlebeavers.ingame.IMenuDialogListener;
 import de.winniehell.battlebeavers.ingame.IMovableObject;
-import de.winniehell.battlebeavers.ingame.IObjectPositionListener;
+import de.winniehell.battlebeavers.ingame.ISoldierListener;
 import de.winniehell.battlebeavers.ingame.Soldier;
 import de.winniehell.battlebeavers.ingame.Tile;
 import de.winniehell.battlebeavers.ingame.WaitTimeDialog;
@@ -120,7 +119,7 @@ public class GameActivity extends BaseGameActivity
 		IOnSceneTouchListener,
 		IHoldDetectorListener,
 		IScrollDetectorListener,
-		IObjectPositionListener,
+		ISoldierListener,
 		IMenuDialogListener
 {
 	/**
@@ -286,7 +285,7 @@ public class GameActivity extends BaseGameActivity
 			GameInfo info;
 			try {
 				info = GameInfo.fromFile(this, currentGame);
-			} catch (FileNotFoundException e) {
+			} catch (final FileNotFoundException e) {
 				Log.e(TAG, "Could not load game info!", e);
 				return;
 			}
@@ -294,7 +293,7 @@ public class GameActivity extends BaseGameActivity
 			// soldier on the tile
 			if(storage.hasSoldierOnTile(info.getTeam(), tile))
 			{
-				try {						
+				try {
 					final Soldier soldier = storage.getSoldierByTile(info.getTeam(), tile);
 
 					if(soldier.equals(selectedSoldier))
@@ -509,40 +508,39 @@ public class GameActivity extends BaseGameActivity
 
 		return mainScene;
 	}
-
+	
 	@Override
-	public void onObjectRemoved(final IGameObject pObject) {
-		if(pObject == null)
+	public void onChange(final Soldier pSoldier) {
+		if(pSoldier==null)return;
+		if(pSoldier.equals(selectedSoldier))
+		{
+			updateHUD();
+		}
+	}
+	
+	@Override
+	public void onDeath(final Soldier pSoldier) {
+		if(pSoldier == null)
 		{
 			// ignore
 			return;
 		}
 
-		if(pObject instanceof Soldier)
-		{
-			final Soldier soldier = (Soldier) pObject;
-
+		
 			try {
-				storage.removeSoldier(soldier);
+				storage.removeSoldier(pSoldier);
 			} catch (final UnexpectedTileContentException e) {
 				Log.e(TAG, "Could not remove soldier from storage!", e);
 			}
 
-			if(soldier.equals(selectedSoldier))
+			if(pSoldier.equals(selectedSoldier))
 			{
 				updateHUD();
 				selectedSoldier = null;
 			}
-		}
-		else if(pObject instanceof WayPoint)
-		{
-			final WayPoint waypoint = (WayPoint) pObject;
-
-			if(waypoint.equals(selectedWaypoint))
-			{
-				selectedWaypoint = null;
-			}
-		}
+		
+		
+		
 	}
 
 	@Override
@@ -1249,4 +1247,6 @@ public class GameActivity extends BaseGameActivity
 			updateHUD();
 		}
 	}
+
+	
 }

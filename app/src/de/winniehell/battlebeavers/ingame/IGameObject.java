@@ -23,5 +23,5 @@ import org.anddev.andengine.entity.IEntity;
 
 public interface IGameObject extends IEntity {
 	Tile getTile();
-	void setPositionListener(IObjectPositionListener pListener);
+	void setPositionListener(ISoldierListener pListener);
 }
