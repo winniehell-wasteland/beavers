@@ -38,7 +38,7 @@ import de.winniehell.battlebeavers.gameplay.GameInfo;
 import de.winniehell.battlebeavers.ingame.IGameEventsListener;
 import de.winniehell.battlebeavers.ingame.IGameObject;
 import de.winniehell.battlebeavers.ingame.IMenuDialogListener;
-import de.winniehell.battlebeavers.ingame.IObjectPositionListener;
+import de.winniehell.battlebeavers.ingame.ISoldierListener;
 import de.winniehell.battlebeavers.ingame.Soldier;
 import de.winniehell.battlebeavers.ingame.Tile;
 import de.winniehell.battlebeavers.ingame.WayPoint;
@@ -261,7 +261,7 @@ public class GameStorage {
 		}
 	}
 
-	public void setPositionListener(final IObjectPositionListener pListener)
+	public void setPositionListener(final ISoldierListener pListener)
 	{
 		positionListener = pListener;
 
@@ -293,7 +293,7 @@ public class GameStorage {
 
 	private final ArrayList<SoldierList> teams;
 
-	private IObjectPositionListener positionListener;
+	private ISoldierListener positionListener;
 	private IMenuDialogListener menuListener;
 	private IGameEventsListener gameListener;
 

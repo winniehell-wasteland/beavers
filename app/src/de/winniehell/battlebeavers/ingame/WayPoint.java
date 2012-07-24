@@ -243,7 +243,7 @@ public class WayPoint extends Sprite implements IGameObject {
 	}
 
 	@Override
-	public void setPositionListener(final IObjectPositionListener pListener) {
+	public void setPositionListener(final ISoldierListener pListener) {
 
 	}
 	

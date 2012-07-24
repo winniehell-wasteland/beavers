@@ -19,6 +19,7 @@
 
 package de.winniehell.battlebeavers.ingame;
 
-public interface IObjectPositionListener {
-	void onObjectRemoved(IGameObject pObject);
+public interface ISoldierListener {
+	void onDeath(Soldier pSoldier);
+	void onChange(Soldier pSoldier);
 }
