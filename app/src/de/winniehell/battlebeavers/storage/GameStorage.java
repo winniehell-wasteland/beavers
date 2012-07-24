@@ -83,17 +83,21 @@ public class GameStorage {
 	public void addSoldier(final Soldier pSoldier)
 	             throws UnexpectedTileContentException {
 
-		for(SoldierList team : teams) {
-			for(Soldier soldier : team) {
+		for(final SoldierList team : teams) {
+			for(final Soldier soldier : team) {
 				if(soldier.getTile().equals(pSoldier.getTile())) {
 					throw new UnexpectedTileContentException("Tile is not empty!");
 				}
 			}
 		}
-			
+		
 		teams.get(pSoldier.getTeam()).add(pSoldier);
 		pSoldier.setPositionListener(positionListener);
 		pSoldier.setGameEventsListener(gameListener);
+		
+		for(final WayPoint waypoint : pSoldier.getWaypoints()) {
+			waypoint.setMenuDialogListener(menuListener);
+		}
 	}
 
 	/**
@@ -106,7 +110,6 @@ public class GameStorage {
 
 		// TODO isTileOccupied(pWaypoint.getTile()))
 
-		pWaypoint.setPositionListener(positionListener);
 		pWaypoint.setMenuDialogListener(menuListener);
 	}
 
@@ -236,7 +239,15 @@ public class GameStorage {
 	}
 	
 	public void setMenuDialogListener(final IMenuDialogListener mListener){
-		menuListener=mListener;
+		menuListener = mListener;
+		
+		for(final SoldierList team : teams) {
+			for(final Soldier soldier : team) {
+				for(final WayPoint waypoint : soldier.getWaypoints()) {
+					waypoint.setMenuDialogListener(mListener);
+				}
+			}
+		}
 	}
 	
 	public void setGameEventsListener(final IGameEventsListener pListener){
