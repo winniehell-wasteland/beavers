@@ -131,8 +131,9 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 			hp=0;
 			die();
 		}
-		Log.d(getClass().getName(), "hp: "+hp);
+
 		changeListener.onChange(this);
+
 		return hp;
 	}
 
@@ -679,6 +680,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 
 		@Override
 		public void onTimePassed(final TimerHandler pTimerHandler) {
+			Log.d(JSON_TAG, "onTimePassed()");
 			pauseTimer = null;
 			soldierContinue();
 		}
@@ -686,6 +688,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		private void soldierContinue()
 		{
 			if(pauseTimer != null) {
+				Log.d(JSON_TAG, "wait "+pauseTimer.getTimerSeconds());
 				registerUpdateHandler(pauseTimer);
 			}
 			else if(targetTile != null)
@@ -723,7 +726,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		private Tile targetTile;
 		
 		private void nextTile() {
-			Log.d(PathWalker.class.getName(), "nextTile() "+waypoints.size()+" "+stepIndex);
+			//Log.d(PathWalker.class.getName(), "nextTile() "+waypoints.size()+" "+stepIndex);
 			
 			// finished walking the path
 			if(stepIndex >= getFirstWaypoint().getPath().getLength())

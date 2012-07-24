@@ -625,7 +625,7 @@ public class GameActivity extends BaseGameActivity
 		}
 
 		if(currentGame.isServer(getSettings().getPlayer())) {
-			outcome.printEvents();
+			//outcome.printEvents();
 
 			try {
 				for(int team = 0; team < getSettings().getMaxPlayers(); ++team) {

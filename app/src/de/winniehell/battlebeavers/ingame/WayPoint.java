@@ -68,7 +68,7 @@ public class WayPoint extends Sprite implements IGameObject {
 		{
 			drawPath();
 
-			Log.e(getClass().getName(), CustomGSON.getInstance().toJson(this));
+			//Log.e(getClass().getName(), CustomGSON.getInstance().toJson(this));
 		}
 
 		setZIndex(GameActivity.ZINDEX_WAYPOINTS);
@@ -138,7 +138,6 @@ public class WayPoint extends Sprite implements IGameObject {
 		pMenu.findItem(R.id.context_menu_react_on_attacks).setVisible(ignoreShots == true);
 		pMenu.findItem(R.id.context_menu_add_aim).setVisible(aim == null);
 		pMenu.findItem(R.id.context_menu_remove_aim).setVisible(aim != null);
-		pMenu.findItem(R.id.context_menu_wait).setVisible(!isLast() || isFirst());
 	}
 
 	@Override
