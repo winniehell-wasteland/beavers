@@ -56,6 +56,10 @@ class WayPointSerializer implements JsonSerializer<WayPoint> {
 			object.add("aim", pContext.serialize(pSrc.getAim().getTile()));
 		}
 
+		if(pSrc.getWait() > 0) {
+			object.addProperty("wait", pSrc.getWait());
+		}
+		
 		return object;
 	}
 }

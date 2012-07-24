@@ -72,6 +72,11 @@ class WayPointDeserializer implements JsonDeserializer<WayPoint> {
     			(Tile) pContext.deserialize(object.get("aim"), Tile.class));
     	}
 
+    	if(object.has("wait") && !object.get("wait").isJsonNull())
+    	{
+    		waypoint.setWait(object.get("wait").getAsInt());
+    	}
+
     	return waypoint;
     }
 }
