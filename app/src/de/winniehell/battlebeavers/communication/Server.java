@@ -31,18 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import de.winniehell.battlebeavers.App;
-import de.winniehell.battlebeavers.R;
-import de.winniehell.battlebeavers.Settings;
-import de.winniehell.battlebeavers.communication.DTNService.Message;
-import de.winniehell.battlebeavers.gameplay.Game;
-import de.winniehell.battlebeavers.gameplay.GameInfo;
-import de.winniehell.battlebeavers.gameplay.GameState;
-import de.winniehell.battlebeavers.gameplay.Player;
-import de.winniehell.battlebeavers.storage.CustomGSON;
-import de.winniehell.battlebeavers.storage.Outcome;
-import de.winniehell.battlebeavers.storage.SoldierList;
-
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -58,6 +46,18 @@ import com.google.gson.JsonParser;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+
+import de.winniehell.battlebeavers.App;
+import de.winniehell.battlebeavers.R;
+import de.winniehell.battlebeavers.Settings;
+import de.winniehell.battlebeavers.communication.DTNService.Message;
+import de.winniehell.battlebeavers.gameplay.Game;
+import de.winniehell.battlebeavers.gameplay.GameInfo;
+import de.winniehell.battlebeavers.gameplay.GameState;
+import de.winniehell.battlebeavers.gameplay.Player;
+import de.winniehell.battlebeavers.storage.CustomGSON;
+import de.winniehell.battlebeavers.storage.Outcome;
+import de.winniehell.battlebeavers.storage.SoldierList;
 
 /**
  * server for game communication
@@ -265,12 +265,9 @@ public class Server extends Service {
 		{
 			Log.d(TAG, pPlayer.getName() + " joins "+pGame.getName());
 
-			// we already joined this game
+			// game is unjoinable
 			if(!pGame.isInState(Server.this, GameState.JOINED)) {
-				throw new ServerRemoteException(
-					R.string.error_game_wrong_state,
-					pGame, pGame.getState(Server.this)
-				);
+				return;
 			}
 
 			final HashSet<Player> gamePlayers = playerMap.get(pGame);
