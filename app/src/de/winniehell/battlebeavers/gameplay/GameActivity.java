@@ -22,6 +22,8 @@ package de.winniehell.battlebeavers.gameplay;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -659,7 +661,13 @@ public class GameActivity extends BaseGameActivity
 		--activeSoldiers;
 		
 		if(activeSoldiers <= 0) {
-			onOutcomeFinished();
+			new Timer().schedule(new TimerTask() {
+				
+				@Override
+				public void run() {
+					onOutcomeFinished();
+				}
+			}, 5000);
 		}
 		else
 		{
