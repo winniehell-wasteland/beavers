@@ -72,17 +72,11 @@ public class Outcome implements IGameEventsListener{
 	
 	
 	public void printEvents(){
-		final Iterator i =eventList.iterator();
+		final Iterator<Event> i =eventList.iterator();
 		while(i.hasNext()){
 			final Event e=(Event)i.next();
 			Log.e("Event", e.toString());
 		}
-
-		Log.d("Event", "size: "+eventList.size());
-		final String json = CustomGSON.getInstance().toJson(eventList);
-		Log.d("Event", json);
-		final ArrayList<Event> test = CustomGSON.getInstance().fromJson(json, eventList.getClass());
-		Log.d("Event", "size: "+test.size());
 	}
 	
 

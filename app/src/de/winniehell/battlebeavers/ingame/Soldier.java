@@ -41,6 +41,7 @@ import org.anddev.andengine.util.path.IWeightedPathFinder;
 import org.anddev.andengine.util.path.NegativeStepCostException;
 import org.anddev.andengine.util.path.WeightedPath;
 
+import android.util.FloatMath;
 import android.util.Log;
 import de.winniehell.battlebeavers.Textures;
 import de.winniehell.battlebeavers.gameplay.GameActivity;
@@ -405,7 +406,7 @@ public class Soldier extends AnimatedSprite implements IGameObject, IMovableObje
 		final float disty =
 			Math.abs(pTarget.getCenterY() - (getY()+getHeight()/2));
 
-		final float duration = (float) (Math.sqrt(distx*distx+disty*disty)/WALKING_SPEED);
+		final float duration = FloatMath.sqrt(distx*distx+disty*disty/WALKING_SPEED);
 
 		final MoveModifier movement =
 			new MoveModifier(duration,

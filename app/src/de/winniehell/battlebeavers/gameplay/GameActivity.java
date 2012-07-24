@@ -235,13 +235,18 @@ public class GameActivity extends BaseGameActivity
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(final Menu menu) {
+	public boolean onCreateOptionsMenu(final Menu pMenu) {
 	    final MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.game_menu, menu);
+		inflater.inflate(R.menu.game_menu, pMenu);
 
 		return true;
 	}
 
+	@Override
+	public boolean onPrepareOptionsMenu(Menu pMenu) {
+		return currentGame.isInState(this, GameState.PLANNING_PHASE);
+	}
+	
 	@Override
 	public void onDialogSelected(final WayPoint waypoint) {
 		new WaitTimeDialog(this, waypoint);
@@ -565,51 +570,6 @@ public class GameActivity extends BaseGameActivity
 				((ClientRemoteException)e).log();
 				return true;
 			}
-
-			// deselect soldier
-			selectSoldier(null);
-
-			// disable user interaction
-			holdDetector.setEnabled(false);
-
-			return true;
-		}
-		case R.id.menu_reset_hold_detector:
-		{
-
-			holdDetector.setEnabled(true);
-
-			return true;
-		}
-		case R.id.menu_execute_second:
-		{
-			final int team = 1 - getInfo().getTeam();
-
-			try {
-				currentGame.saveDecisions(
-					this, team,
-					storage.getSoldiersByTeam(team)
-				);
-			} catch (final IOException e) {
-				Log.e(TAG,
-					getString(R.string.error_game_write_decisions, currentGame),
-					e
-				);
-				return true;
-			}
-
-			try {
-				currentGame.setState(this, GameState.EXECUTION_PHASE);
-			} catch (final IOException e) {
-				Log.e(TAG,
-					getString(R.string.error_game_save_state, currentGame), e
-				);
-				return true;
-			}
-
-			final Intent update_intent = new Intent(Game.STATE_CHANGED_INTENT);
-			update_intent.putExtra(Game.PARCEL_NAME, currentGame);
-			sendBroadcast(update_intent);
 
 			// deselect soldier
 			selectSoldier(null);

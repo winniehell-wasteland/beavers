@@ -23,7 +23,6 @@ import de.winniehell.battlebeavers.R;
 import de.winniehell.battlebeavers.gameplay.GameActivity;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,7 +34,6 @@ public class WaitTimeDialog {
 
 	private final GameActivity activity;
 	private WayPoint waypoint;
-	private Dialog dialog;
 	private SeekBar seeker;
 	private int wait;
 	/** default constructor */
@@ -107,13 +105,6 @@ public class WaitTimeDialog {
 			    	dialog.show();
 			    	
 			    }
-	
-		public void show(/*final WayPoint waypoint*/){
-			waypoint=waypoint;
-			//waypoint.setWaiting(false);
-			
-			dialog.show();
-		}
 			   
 	}
 

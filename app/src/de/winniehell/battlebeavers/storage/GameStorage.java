@@ -26,8 +26,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 
 import org.anddev.andengine.util.StreamUtils;
 import de.winniehell.battlebeavers.App;
@@ -36,7 +34,6 @@ import de.winniehell.battlebeavers.Settings;
 import de.winniehell.battlebeavers.gameplay.Game;
 import de.winniehell.battlebeavers.gameplay.GameInfo;
 import de.winniehell.battlebeavers.ingame.IGameEventsListener;
-import de.winniehell.battlebeavers.ingame.IGameObject;
 import de.winniehell.battlebeavers.ingame.IMenuDialogListener;
 import de.winniehell.battlebeavers.ingame.IObjectPositionListener;
 import de.winniehell.battlebeavers.ingame.Soldier;

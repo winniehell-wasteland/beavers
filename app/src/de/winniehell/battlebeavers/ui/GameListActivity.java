@@ -33,7 +33,6 @@ import de.winniehell.battlebeavers.communication.Server.ServerRemoteException;
 import de.winniehell.battlebeavers.gameplay.Game;
 import de.winniehell.battlebeavers.gameplay.GameActivity;
 import de.winniehell.battlebeavers.gameplay.GameState;
-import de.winniehell.battlebeavers.gameplay.Player;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -217,23 +216,6 @@ public class GameListActivity extends FragmentActivity {
 
 					return true;
 				}
-				case R.id.context_menu_add_player:
-				{
-					Log.d(TAG, "Adding dummy player...");
-
-					try {
-						final Player dummyPlayer =
-							new Player(UUID.randomUUID(), "dummy player");
-
-						server.getService().addPlayer(game, dummyPlayer);
-					} catch (final RemoteException e) {
-						((ServerRemoteException)e).log();
-					}
-
-					showGame(game);
-
-					return true;
-				}
 				default:
 					return false;
 				}
@@ -261,6 +243,13 @@ public class GameListActivity extends FragmentActivity {
 				final ContextMenu pMenu, final Game pGame) {
 
 				pInflater.inflate(R.menu.context_running_game, pMenu);
+				
+				pMenu.findItem(R.id.context_menu_load_game)
+				.setVisible(
+					pGame.isInState(GameListActivity.this,
+						GameState.PLANNING_PHASE, GameState.EXECUTION_PHASE
+					)
+				);
 			}
 
 			@Override
