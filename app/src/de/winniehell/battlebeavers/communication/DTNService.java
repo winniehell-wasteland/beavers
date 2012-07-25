@@ -25,19 +25,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import de.winniehell.battlebeavers.App;
-import de.winniehell.battlebeavers.Settings;
-import de.winniehell.battlebeavers.gameplay.Game;
-import de.winniehell.battlebeavers.gameplay.GameState;
-import de.winniehell.battlebeavers.gameplay.Player;
-import de.winniehell.battlebeavers.storage.CustomGSON;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -56,7 +48,6 @@ import com.google.gson.annotations.SerializedName;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
-import de.tubs.ibr.dtn.api.CallbackMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
@@ -64,6 +55,13 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
+import de.tubs.ibr.dtn.api.TransferMode;
+import de.winniehell.battlebeavers.App;
+import de.winniehell.battlebeavers.Settings;
+import de.winniehell.battlebeavers.gameplay.Game;
+import de.winniehell.battlebeavers.gameplay.GameState;
+import de.winniehell.battlebeavers.gameplay.Player;
+import de.winniehell.battlebeavers.storage.CustomGSON;
 
 /**
  * service for DTN communication
@@ -263,15 +261,15 @@ public class DTNService extends Service {
 		@Override
 		public void sendToServer(final Player pServer,
 		                         final String pFileName) {
+			File pFile = new File(pFileName);
+			
 			try {
-				final ParcelFileDescriptor data = ParcelFileDescriptor.open(
-					new File(pFileName),
-					ParcelFileDescriptor.MODE_READ_ONLY
-				);
+				ParcelFileDescriptor data = ParcelFileDescriptor.open(pFile, ParcelFileDescriptor.MODE_READ_ONLY);
 
 				Log.d(TAG, "Sending to server...");
 
-				sendFileDescriptor(SERVER_EID, data);
+				dtnClient.getSession().send(SERVER_EID, getSettings().getDTNLifetime(), data, pFile.length());
+				data.close();
 			} catch (final Exception e) {
 				Log.e(TAG, "Could not send DTN packet!", e);
 			}
@@ -282,15 +280,15 @@ public class DTNService extends Service {
 
 		@Override
 		public void sendToClients(final String pFileName) {
+			File pFile = new File(pFileName);
+			
 			try {
-				final ParcelFileDescriptor data = ParcelFileDescriptor.open(
-						new File(pFileName),
-						ParcelFileDescriptor.MODE_READ_ONLY
-					);
+				final ParcelFileDescriptor data = ParcelFileDescriptor.open(pFile, ParcelFileDescriptor.MODE_READ_ONLY);
 
 				Log.d(TAG, "Sending to client...");
 
-				sendFileDescriptor(CLIENT_EID, data);
+				dtnClient.getSession().send(CLIENT_EID, getSettings().getDTNLifetime(), data, pFile.length());
+				data.close();
 			} catch (final Exception e) {
 				Log.e(TAG, "Could not send DTN packet!", e);
 			}
@@ -306,7 +304,7 @@ public class DTNService extends Service {
 			try {
 				Log.d(TAG, "Query task running...");
 
-				while(dtnClient.query());
+				while(dtnClient.getSession().queryNext());
 			} catch (final Exception e) {
 				Log.e(TAG, "Problem while querying from DTN client!", e);
 			}
@@ -353,7 +351,7 @@ public class DTNService extends Service {
 		}
 
 		@Override
-		public void startBlock(final Block block) {
+		public TransferMode startBlock(final Block block) {
 			if ((block.type == 1) && (file == null))
 			{
 				Log.d(TAG, "startBlock()");
@@ -368,11 +366,14 @@ public class DTNService extends Service {
 
 					file = File.createTempFile("incoming-", ".msg", cacheDir);
 					Log.i(TAG, "Writing "+file.getAbsolutePath());
+					return TransferMode.FILEDESCRIPTOR;
 				} catch (final IOException e) {
 					Log.e(TAG, "Problem with creating file!", e);
 					file = null;
 				}
 			}
+			
+			return TransferMode.NULL;
 		}
 
 		@Override
@@ -470,11 +471,6 @@ public class DTNService extends Service {
 
 	private class CustomDTNClient extends DTNClient
 	{
-		public CustomDTNClient()
-		{
-			super(getApplicationInfo().packageName);
-		}
-
 		public void initialize() {
 	        try {
 	        	final Registration registration = new Registration(null);
@@ -489,52 +485,10 @@ public class DTNService extends Service {
 		}
 
 		@Override
-		protected void sessionConnected(final Session session) {
+		protected void onConnected(Session session) {
 			Log.i(TAG, "session connected!");
 	        executor.execute(queryTask);
 		}
-
-		@Override
-		protected CallbackMode sessionMode() {
-			return CallbackMode.FILEDESCRIPTOR;
-		}
-
-		@Override
-		protected void online() {
-
-		}
-
-		@Override
-		protected void offline() {
-
-		}
-	}
-
-	protected void sendFileDescriptor(final GroupEndpoint pEndpoint, final ParcelFileDescriptor pData)
-	               throws SessionDestroyedException, InterruptedException, IOException {
-		// this is a workaround for
-		//session.sendFileDescriptor(SERVER_EID, 100, pData, channel.size());
-
-		final Session session = dtnClient.getSession();
-		final AutoCloseInputStream stream = new AutoCloseInputStream(pData);
-
-		try {
-			final FileChannel channel = stream.getChannel();
-			final MappedByteBuffer buf = channel.map(
-				FileChannel.MapMode.READ_ONLY, 0, channel.size());
-
-			if(!session.send(pEndpoint, getSettings().getDTNLifetime(),
-				             Charset.defaultCharset().decode(buf).toString()))
-			{
-				// could not send
-				return;
-			}
-		}
-		finally {
-			stream.close();
-		}
-
-		Log.d(TAG, "Successfully sent!");
 	}
 
 	public Settings getSettings() {
