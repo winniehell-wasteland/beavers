@@ -1,4 +1,5 @@
 # Battle Beavers
+This project is unmaintained.
 
 ## Building
 You need to checkout the submodules AndEngine and ibrdtn-api.
